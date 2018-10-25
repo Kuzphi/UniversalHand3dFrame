@@ -1,0 +1,23 @@
+CURRENT_EPOCH: 0
+DATASET:
+  NAME: Test
+  BATCH_SIZE: 2
+  NUM_JOINTS: 21
+  SHUFFLE: False
+  DATA_FORM: 'block_file' #img_root, block_file
+  DATA_PATH: data/Testdata/20181010_S093_1.fingertapping_left_crop.h5 #image_root, h5, pickle
+END_EPOCH: 100
+GPUS:
+- 0
+- 1
+- 2
+- 3
+LOG_DIR: ''
+MODEL:
+  NAME: ICCV17
+  PRETRAINED_WEIGHT_PATH: 'pretrained_weight/iccv17_pretrained.torch'
+  num_joints: 21
+OUTPUT_DIR: inference result/
+START_EPOCH: 0
+WORKERS: 1
+DARW_RESULT: True
