@@ -1,5 +1,4 @@
 *.pyc
-!pretrained_weight/
 pretrained_weight/*
 inference result/*
 data/*
