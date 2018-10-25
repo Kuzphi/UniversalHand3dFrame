@@ -1,5 +1,6 @@
 *.pyc
-pretrained_weight/?*
-inference result/?*
-data/?*
-output/?*
+!pretrained_weight/
+pretrained_weight/*
+inference result/*
+data/*
+output/*
