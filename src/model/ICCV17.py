@@ -2,7 +2,7 @@ from __future__ import division
 
 import torch.nn as nn
 import torch
-
+import torch.nn.functional as F
 # print net.params
 __all__ = ['ICCV17']
 
@@ -68,13 +68,14 @@ class PosePior(nn.Module):
 	"""docstring for PosePior"""
 	def __init__(self, num_joints):
 		super(PosePior, self).__init__()
+		self.num_joints = num_joints
 		self.relu     = nn.ReLU(inplace = True)
 		self.conv_0_1 = nn.Conv2d(21,  32, 3)
-		self.conv_0_2 = nn.Conv2d(32,  32, 3, stride = 2)
+		self.conv_0_2 = nn.Conv2d(32,  32, 3, stride = 2, padding = 1)
 		self.conv_1_1 = nn.Conv2d(32,  64, 3)
-		self.conv_1_2 = nn.Conv2d(64,  64, 3, stride = 2)
+		self.conv_1_2 = nn.Conv2d(64,  64, 3, stride = 2, padding = 1)
 		self.conv_2_1 = nn.Conv2d(64, 128, 3)
-		self.conv_2_2 = nn.Conv2d(128, 128, 3, stride = 2)
+		self.conv_2_2 = nn.Conv2d(128, 128, 3, stride = 2, padding = 1)
 
 		self.fc_0 	  = nn.Linear(2050, 512) # 4*4*128 + 2 = 2050
 		self.fc_1 	  = nn.Linear(512, 512)
@@ -89,8 +90,9 @@ class PosePior(nn.Module):
 		"""
 
 		# flip hand according to hand side
-		cond_right = torch.equal(torch.argmax(hand_side, 1), 1)
-		cond_right_all = cond_right.view(-1, 1, 1).repeat(1, 1, 3)
+		
+		cond_right = torch.argmax(hand_side, 1) == 1
+		cond_right = cond_right.view(-1, 1, 1).repeat(1, self.num_joints, 3)
 
 		expanded = False
 		s = coords_xyz_canonical.size()
@@ -111,20 +113,25 @@ class PosePior(nn.Module):
 		return coords_xyz_canonical_left
 
 	def forward(self, x, hand_side):
-		out = self.relu(self.conv_0_1(x))
+		
+		out = self.relu(self.conv_0_1(x))	
+		out = F.pad(out, [0, 1, 0, 1])
 		out = self.relu(self.conv_0_2(out))
-		out = self.relu(self.conv_1_1(out))
-		out = self.relu(self.conv_1_2(out))
-		out = self.relu(self.conv_2_1(out))
-		out = self.relu(self.conv_2_2(out))
 
+		out = self.relu(self.conv_1_1(out))
+		out = F.pad(out, [0, 1, 0, 1])
+		out = self.relu(self.conv_1_2(out))
+
+		out = self.relu(self.conv_2_1(out))
+		out = F.pad(out, [0, 1, 0, 1])
+		out = self.relu(self.conv_2_2(out))
 		out = out.view(out.size(0), -1)
 		out = torch.cat([out, hand_side], 1)
 
 		out = self.relu(self.fc_0(out))
 		out = self.relu(self.fc_1(out))
 		out = self.fc_out(out)
-		out = out.view(out.size(0), num_joints, 3)
+		out = out.view(out.size(0), self.num_joints, 3)
 		out = self._flip_right_hand(out, hand_side)
 		return out
 
@@ -134,11 +141,11 @@ class ViewPoint(nn.Module):
 		super(ViewPoint, self).__init__()
 		self.relu     = nn.ReLU(inplace = True)
 		self.conv_0_1 = nn.Conv2d(21,  64, 3)
-		self.conv_0_2 = nn.Conv2d(64,  64, 3, stride = 2)
+		self.conv_0_2 = nn.Conv2d(64,  64, 3, stride = 2, padding = 1)
 		self.conv_1_1 = nn.Conv2d(64,  128, 3)
-		self.conv_1_2 = nn.Conv2d(128, 128, 3, stride = 2)
+		self.conv_1_2 = nn.Conv2d(128, 128, 3, stride = 2, padding = 1)
 		self.conv_2_1 = nn.Conv2d(128, 256, 3)
-		self.conv_2_2 = nn.Conv2d(256, 256, 3, stride = 2)		
+		self.conv_2_2 = nn.Conv2d(256, 256, 3, stride = 2, padding = 1)
 		self.fc_0 	  = nn.Linear(4098, 256)
 		self.fc_1 	  = nn.Linear(256, 128)
 		self.fc_ux    = nn.Linear(128, 1)
@@ -163,19 +170,26 @@ class ViewPoint(nn.Module):
 		ux = ux_b[:, 0] * norm_fac
 		uy = uy_b[:, 0] * norm_fac
 		uz = uz_b[:, 0] * norm_fac
-
-		return torch.tensor([ct+ux*ux*one_ct, ux*uy*one_ct-uz*st, ux*uz*one_ct+uy*st,
-							uy*ux*one_ct+uz*st, ct+uy*uy*one_ct, uy*uz*one_ct-ux*st,
-							uz*ux*one_ct-uy*st, uz*uy*one_ct+ux*st, ct+uz*uz*one_ct])
+		l1 = torch.stack([ct+ux*ux*one_ct, ux*uy*one_ct-uz*st, ux*uz*one_ct+uy*st], dim = -1)
+		l2 = torch.stack([uy*ux*one_ct+uz*st, ct+uy*uy*one_ct, uy*uz*one_ct-ux*st], dim = -1)
+		l3 = torch.stack([uz*ux*one_ct-uy*st, uz*uy*one_ct+ux*st, ct+uz*uz*one_ct], dim = -1)
+		mat = torch.stack([l1,l2,l3],dim = -1)
+		return mat
 
 	def forward(self, x, hand_side):
+		
 		out = self.relu(self.conv_0_1(x))
+		out = F.pad(out, [0, 1, 0, 1])
 		out = self.relu(self.conv_0_2(out))
-		out = self.relu(self.conv_1_1(out))
-		out = self.relu(self.conv_1_2(out))
-		out = self.relu(self.conv_2_1(out))
-		out = self.relu(self.conv_2_2(out))
 
+		out = self.relu(self.conv_1_1(out))
+		out = F.pad(out, [0, 1, 0, 1])
+		out = self.relu(self.conv_1_2(out))
+
+		out = self.relu(self.conv_2_1(out))
+		out = F.pad(out, [0, 1, 0, 1])
+		out = self.relu(self.conv_2_2(out))
+		
 		out = out.view(out.size(0), -1)
 		out = torch.cat([out, hand_side], 1)
 
@@ -185,7 +199,7 @@ class ViewPoint(nn.Module):
 		uy = self.fc_ux(out)
 		uz = self.fc_ux(out)
 
-		return _get_rot_mat(ux, uy, uz)
+		return self._get_rot_mat(ux, uy, uz)
 
 		
 
@@ -197,11 +211,13 @@ class ICCV17(nn.Module):
 		self.view_point = ViewPoint()
 
 	def forward(self, x):
-		img = x['img']
-		hand_side = x['hand_side']
+		img = x['img'].cuda()
+		hand_side = x['hand_side'].cuda()
 
-		heat_map = self.pose_net(x)
+		heat_map = self.pose_net(img)
 		pose_can = self.pose_pior(heat_map[-1], hand_side)
 		rotate_mat = self.view_point(heat_map[-1], hand_side)
 		out = torch.matmul(pose_can, rotate_mat)
-		return out
+		# print(pose_can.size(), rotate_mat.size(), out.size())
+		return {'3d-pose': out, 
+				'heat_map': heat_map}

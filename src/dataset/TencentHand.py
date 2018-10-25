@@ -82,9 +82,9 @@ class TencentHand(JointsDataset):
         meta = edict({
                 'name': w[1] + ' ' + w[2] + ' ' + w[0]})
 
-        return { 'input': img.cuda(),
-                 'coor': to_torch(coor).cuda(),
-                 'heat_map': to_torch(heat_map).cuda(),
+        return { 'input': img,
+                 'coor': to_torch(coor),
+                 'heat_map': to_torch(heat_map),
                  'weight': 1,
                  'meta': meta}
         

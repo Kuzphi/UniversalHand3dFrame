@@ -9,15 +9,12 @@ DATASET:
 END_EPOCH: 100
 GPUS:
 - 0
-- 1
-- 2
-- 3
 LOG_DIR: ''
 MODEL:
   NAME: ICCV17
   PRETRAINED_WEIGHT_PATH: 'pretrained_weight/iccv17_pretrained.torch'
   num_joints: 21
-OUTPUT_DIR: inference result/
+OUTPUT_DIR: infer result/
 START_EPOCH: 0
 WORKERS: 1
 DARW_RESULT: True

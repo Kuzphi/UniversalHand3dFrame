@@ -20,7 +20,7 @@ from src import Bar
 from src.core.debug import debug
 from src.core.evaluate import eval_result, get_preds
 from src.core.loss import CPMMSELoss as criterion
-from src.utils.misc import AverageMeter, to_torch
+from src.utils.misc import AverageMeter, to_torch, to_cuda, to_cpu
 
 def train(cfg, train_loader, model, optimizer, log):
     acc = AverageMeter()
@@ -40,7 +40,7 @@ def train(cfg, train_loader, model, optimizer, log):
         data_time.update(time.time() - end)
 
         # compute output
-        outputs = model(batch['input'])
+        outputs = model(to_cuda(batch['input']))
 
         #calculate loss
         loss = criterion(outputs, batch)
@@ -51,11 +51,11 @@ def train(cfg, train_loader, model, optimizer, log):
         optimizer.step()
 
         #convert output from cuda tensor to cpu tensor
-        outputs = [out.detach().cpu() for out in outputs]
+        outputs = to_cpu(outputs) #[out.detach().cpu() for out in outputs]
 
         # debug, print intermediate result
         if cfg.DEBUG:
-            debug(outputs[-1], batch, loss)
+            debug(outputs, batch, loss)
 
         # measure accuracy and record loss
         losses.update(loss.item(), size)
@@ -97,13 +97,11 @@ def validate(cfg, val_loader, model, log):
     model.eval()
 
     num_samples = len(val_loader.dataset)
-    all_preds = np.zeros((num_samples, cfg.DATASET.NUM_JOINTS, cfg.DATASET.DIM_JOINT),
-                         dtype=np.float32)
+    all_preds = []
 
     idx = 0
     bar = Bar('Processing', max=len(val_loader))
     with torch.no_grad():
-        idx = 0
         end = time.time()
         for i, batch in enumerate(val_loader):
             size = batch['weight'].size(0)
@@ -112,22 +110,22 @@ def validate(cfg, val_loader, model, log):
             data_time.update(time.time() - end)
             
             # compute output
-            outputs = model(batch['input'])
+            outputs = model(to_cuda(batch['input']))
 
             #calculate loss
             loss = criterion(outputs, batch)
 
             #convert output from cuda tensor to cpu tensor
-            outputs = [out.detach().cpu() for out in outputs]
+            outputs = to_cpu(outputs)
 
             # debug, print intermediate result
             if cfg.DEBUG:
-                debug(outputs[-1], batch, loss)
+                debug(outputs, batch, loss)
 
             # measure accuracy and record loss
             losses.update(loss.item(), size)
 
-            avg_acc, avg_dis = eval_result(outputs[-1], batch, num_joints = cfg.DATASET.NUM_JOINTS)
+            avg_acc, avg_dis = eval_result(outputs, batch, num_joints = cfg.DATASET.NUM_JOINTS)
             acc.update(avg_acc[0], size)
             dis.update(avg_dis[0], size)
 
@@ -135,10 +133,8 @@ def validate(cfg, val_loader, model, log):
             batch_time.update(time.time() - end)
             end = time.time()
 
-            preds = get_preds(outputs[-1])
-            all_preds[idx:idx + size, :, :] = preds
-
-            idx += size
+            preds = val_loader.dataset.get_preds(outputs)
+            all_preds.append(preds)
 
             bar.suffix  = '({batch}/{size}) Data:{data:.1f}s Batch:{bt:.1f}s Total:{total:} ETA:{eta:}' \
                             'Loss:{loss:.4f} Acc:{acc: .4f} Dis:{dis:.3f}'.format(
@@ -157,20 +153,18 @@ def validate(cfg, val_loader, model, log):
     metric = {  'loss':losses.avg, 
                 'acc':acc.avg,
                 'dis': dis.avg}
-    return metric, all_preds
+    return metric, reduce(combine, all_preds)
+
 
 def inference(cfg, infer_loader, model):
-    dis = AverageMeter()
-    acc = AverageMeter()
-    losses = AverageMeter()
+    data_time = AverageMeter()    
     batch_time = AverageMeter()
 
     # switch to evaluate mode
     model.eval()
 
     num_samples = len(infer_loader.dataset)
-    all_preds = np.zeros((num_samples, cfg.DATASET.NUM_JOINTS, 3),
-                         dtype=np.float32)
+    all_preds = []
 
     idx = 0
     bar = Bar('Processing', max=len(infer_loader))
@@ -178,33 +172,26 @@ def inference(cfg, infer_loader, model):
         end = time.time()
         idx = 0
         for i, batch in enumerate(infer_loader):
+            data_time.update(time.time() - end)
+
             # compute output
-            output = model(batch['input'])
+            output = model(to_cuda(batch['input']))
 
             # measure elapsed time
             batch_time.update(time.time() - end)
             end = time.time()
 
-            preds = get_preds(output)
+            # preds = get_preds(output)
+            preds = infer_loader.get_preds(output)
+            all_preds.append(preds)
 
-            size = preds.size(0)
-
-            all_preds[idx:idx + size, :, :] = preds
-            idx += input.size(0)
-
-            bar.suffix  = '({batch}/{size}) Data:{data:.1f}s Batch:{bt:.1f}s Total:{total:} ETA:{eta:} \
-                            Loss:{loss:.4f} Acc:{acc: .4f} Dis:{dis:.3f}'.format(
+            bar.suffix  = '({batch}/{size}) Data:{data:.1f}s Batch:{bt:.1f}s Total:{total:} ETA:{eta:}'.format(
                             batch=i + 1,
-                            size=len(train_loader),
+                            size=len(infer_loader),
                             data=data_time.val,
                             bt=batch_time.avg,
                             total=bar.elapsed_td,
-                            eta=bar.eta_td,
-                            loss=losses.avg,
-                            acc=acces.avg,
-                            dis=dis.avg)
+                            eta=bar.eta_td)
             bar.next()
-        log.info(bar.suffix)
         bar.finish()
-    metric = edict({'acc':acc.avg,'dis': dis.avg})
-    return metric, all_preds
+    return reduce(combine, all_preds)

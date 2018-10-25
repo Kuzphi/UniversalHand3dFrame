@@ -36,18 +36,19 @@ class Test(InferenceDataset):
         if isleft:
             img = self.db['left_hand'][idx]
         else:
-            idx -= len(self.db['len_hand'])
+            idx -= len(self.db['left_hand'])
             img = self.db['right_hand'][idx]
         img = Image.open(io.BytesIO(img))
         img = np.array(img)
-        print (type(img), img.shape)
+        img = cv2.resize(img,(256,256))
+        # print (type(img), img.shape)
+        img = img / 255. - .5
         img = im_to_torch(img)
         meta = {'isleft': isleft,
-                'idx': idx
-                }
-        img = im_to_torch(img)
-        return { 'input': { "img": img.cuda(),
-                            "hand_side": torch.tensor([isleft, 1 - isleft]).cuda()},
+                'idx': idx}
+
+        return { 'input': { "img": img,
+                            "hand_side": torch.tensor([isleft, 1 - isleft]).float()},
                  'meta': meta}
 
     def __len__(self):

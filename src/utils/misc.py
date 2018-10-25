@@ -43,6 +43,43 @@ def to_torch(ndarray):
                          .format(type(ndarray)))
     return ndarray.float()
 
+def to_cpu(outputs):
+    if isinstance(outputs,dict):
+        return {key, to_cpu(outputs[key]) for key in outputs}
+    if isinstance(outputs,list):
+        return [to_cpu(output) for output in outputs]
+    if isinstance(outputs, torch.Tensor):
+        return outputs.detach().cpu() if outputs.is_cuda else outputs        
+    # return outputs
+    raise Exception("Unrecognized type {}".format(type(output)))
+
+def to_cuda(outputs):
+    if isinstance(outputs,dict):
+        return {key, to_cuda(outputs[key]) for key in outputs}
+    if isinstance(outputs,list):
+        return [to_cuda(output) for output in outputs]
+    if isinstance(outputs, torch.Tensor):
+        return outputs if not outputs.is_cuda else outputs.cuda()
+
+    raise Exception("Unrecognized type {}".format(type(output)))
+    # return outputs
+def combine(x , y):
+    assert type(x) == tpye(y), 'combine two different type items'
+    if isinstance(x, dict):
+        assert x.keys() == y.keys()
+        return {combine(x[kx],y[ky]) for kx, ky in zip(x.keys(), y.keys())}
+    if isinstance(x, list):
+        assert len(x) == len(y), 'lists size does not match'
+        return [combine(a,b) for a, b in zip(x, y)]
+    if isinstance(x, torch.Tensor):
+        return torch.cat([x,y], 0)
+    raise Exception("Unrecognized type {}".format(type(output)))
+
+def combine_list(all_preds):
+    assert len(all_preds) > 0, "lenght of preds list is 0"
+    result = all_preds[0]
+    for i in range()
+
 def get_config(fpath, type = 'train'):
     cfg = yaml.load(open(fpath))
     cfg = edict(cfg)
@@ -81,8 +118,10 @@ def save_checkpoint(state, preds, cfg, log, is_best, fpath, filename='checkpoint
     if is_best:
         shutil.copytree(latest_filepath, os.path.join(fpath, "best"))
 
-def save_preds(preds, checkpoint='checkpoint', filename='preds_valid.mat'):
+def save_preds(preds, checkpoint='checkpoint', filename='preds.npy'):
     import scipy.io
     preds = to_numpy(preds)
+    if not os.path.exists(checkpoint):
+        os.makedirs(checkpoint)
     filepath = os.path.join(checkpoint, filename)
-    scipy.io.savemat(filepath, mdict={'preds' : preds})
+    preds.dump(filepath)
