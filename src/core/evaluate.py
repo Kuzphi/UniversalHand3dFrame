@@ -10,7 +10,7 @@ from src.utils.transforms import transform, transform_preds
 
 __all__ = ['accuracy', 'AverageMeter']
 
-def get_preds(scores):
+def get_preds_from_heatmap(scores):
     ''' get predictions from score maps in torch Tensor
         return type: torch.LongTensor
     '''

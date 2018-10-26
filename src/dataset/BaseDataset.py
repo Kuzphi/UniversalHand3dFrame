@@ -60,5 +60,7 @@ class InferenceDataset(Dataset):
         return len(self.db)
 
     def __getitem__(self, idx):
-        #return input
+        raise NotImplementedError
+        
+    def get_preds(outputs):
         raise NotImplementedError

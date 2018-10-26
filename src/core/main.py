@@ -18,9 +18,9 @@ import torch
 
 from src import Bar
 from src.core.debug import debug
-from src.core.evaluate import eval_result, get_preds
+from src.core.evaluate import eval_result
 from src.core.loss import CPMMSELoss as criterion
-from src.utils.misc import AverageMeter, to_torch, to_cuda, to_cpu
+from src.utils.misc import AverageMeter, to_torch, to_cuda, to_cpu, combine
 
 def train(cfg, train_loader, model, optimizer, log):
     acc = AverageMeter()
@@ -155,7 +155,6 @@ def validate(cfg, val_loader, model, log):
                 'dis': dis.avg}
     return metric, reduce(combine, all_preds)
 
-
 def inference(cfg, infer_loader, model):
     data_time = AverageMeter()    
     batch_time = AverageMeter()
@@ -175,14 +174,14 @@ def inference(cfg, infer_loader, model):
             data_time.update(time.time() - end)
 
             # compute output
-            output = model(to_cuda(batch['input']))
+            outputs = model(to_cuda(batch['input']))
 
             # measure elapsed time
             batch_time.update(time.time() - end)
             end = time.time()
 
             # preds = get_preds(output)
-            preds = infer_loader.get_preds(output)
+            preds = infer_loader.dataset.get_preds(outputs)
             all_preds.append(preds)
 
             bar.suffix  = '({batch}/{size}) Data:{data:.1f}s Batch:{bt:.1f}s Total:{total:} ETA:{eta:}'.format(

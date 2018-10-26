@@ -9,6 +9,7 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
+import os
 import time
 import torch
 from torch.utils.data import DataLoader
@@ -17,7 +18,7 @@ from src import model
 from src import dataset
 from src.core import inference
 from src.utils.misc import get_config, save_preds
-from src.utils.imutils import 
+
 def main(args):
     print("Reading configuration file")
     cfg = get_config(args.cfg, type = 'infer')
@@ -43,14 +44,11 @@ def main(args):
     preds = inference(cfg, infer_loader, model)
     save_preds(preds, cfg.CHECKPOINT)
 
-    if cfg.SAVE_IMG_RESULT:
-        os.path.mkdirs(cfg.)
     if cfg.DARW_RESULT:
-        # to-do draw all the result here
-        for batch, pred in zip(infer_data, preds)
-            result = infer_data.demo_result(batch, preds)
-            if cfg.SAVE_IMG_RESULT:
-                cv2.imwrite(result, cfg.)
+        fpath = os.path.join(cfg.CHECKPOINT, 'image')
+        os.makedirs(fpath)
+        infer_data.preds_demo(preds, fpath)
+
 
         
 

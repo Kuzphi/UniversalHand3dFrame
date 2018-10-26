@@ -201,8 +201,6 @@ class ViewPoint(nn.Module):
 
 		return self._get_rot_mat(ux, uy, uz)
 
-		
-
 class ICCV17(nn.Module):
 	def __init__(self, num_joints, **kwargs):
 		super(ICCV17, self).__init__()
@@ -214,10 +212,10 @@ class ICCV17(nn.Module):
 		img = x['img'].cuda()
 		hand_side = x['hand_side'].cuda()
 
-		heat_map = self.pose_net(img)
-		pose_can = self.pose_pior(heat_map[-1], hand_side)
-		rotate_mat = self.view_point(heat_map[-1], hand_side)
+		heatmap = self.pose_net(img)
+		pose_can = self.pose_pior(heatmap[-1], hand_side)
+		rotate_mat = self.view_point(heatmap[-1], hand_side)
 		out = torch.matmul(pose_can, rotate_mat)
 		# print(pose_can.size(), rotate_mat.size(), out.size())
-		return {'3d-pose': out, 
-				'heat_map': heat_map}
+		return {'pose3d' : out, 
+				'heatmap': heatmap}

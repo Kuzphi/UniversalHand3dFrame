@@ -7,6 +7,33 @@ import scipy.misc
 
 from .misc import *
 
+colors = [[100.,  100.,  100.], 
+          [100.,    0.,    0.],
+          [150.,    0.,    0.],
+          [200.,    0.,    0.],
+          [255.,    0.,    0.],
+          [100.,  100.,    0.],
+          [150.,  150.,    0.],
+          [200.,  200.,    0.],
+          [255.,  255.,    0.],
+          [  0.,  100.,   50.],
+          [  0.,  150.,   75.],
+          [  0.,  200.,  100.],
+          [  0.,  255.,  125.],
+          [  0.,   50.,  100.],
+          [  0.,   75.,  150.],
+          [  0.,  100.,  200.],
+          [  0.,  125.,  255.],
+          [100.,    0.,  100.],
+          [150.,    0.,  150.],
+          [200.,    0.,  200.],
+          [255.,    0.,  255.]]
+
+bones = [[0, 1],[1 , 2],[2 , 3],[3 , 4],
+         [0, 5],[5 , 6],[6 , 7],[7 , 8],
+         [0, 9],[9 ,10],[10,11],[11,12],
+         [0,13],[13,14],[14,15],[15,16],
+         [0,17],[17,18],[18,19],[19,20]]
 def im_to_numpy(img):
     img = to_numpy(img)
     img = np.transpose(img, (1, 2, 0)) # H*W*C
@@ -113,13 +140,30 @@ def imshow(img, scale = '01'):
     plt.axis('off')
     plt.pause(10)
 
-def show_joints(img, pts):
-    imshow(img)
-    for i in range(pts.size(0)):
-        if pts[i, 2] > 0:
-            plt.plot(pts[i, 0], pts[i, 1], 'yo')
-    plt.axis('off')
+def draw_joint2d(canvas, joint, numclass =21, with_number = False, Edge = True):
 
+    import cv2
+    print canvas.shape, joint.shape
+    for i in range(joint.shape[0]):        
+        cv2.circle(canvas, tuple(joint[i,:2]), 4, colors[i], thickness=-1)
+        if with_number:
+            cv2.putText(canvas,str(i),tuple(joint[i,:2]),cv2.FONT_HERSHEY_SIMPLEX,1,colors[i],1)
+    if Edge:    
+        for edge in bones:
+            u,v = edge
+            cv2.line(canvas,tuple(joint[u,:2]),tuple(joint[v,:2]),colors[v],3)
+    return canvas
+
+def draw_joint3d(coords_xyz, axis, color_fixed=None, linewidth='5'):
+    """ Plots a hand stick figure into a matplotlib figure. """
+    for idx, connection in enumerate(bones):
+        color = colors[idx ]
+        coord1 = coords_xyz[connection[0], :]
+        coord2 = coords_xyz[connection[1], :]
+        coords = np.stack([coord1, coord2])
+        axis.plot(coords[:, 0], coords[:, 1], coords[:, 2], color=color, linewidth=linewidth)
+
+    axis.view_init(azim=-90., elev=90.)
 def show_sample(inputs, target):
     num_sample = inputs.size(0)
     num_joints = target.size(1)
