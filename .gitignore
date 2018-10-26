@@ -1,4 +1,6 @@
 *.pyc
+*.npy
+*.jpg
 pretrained_weight/*
 inference result/*
 data/*
