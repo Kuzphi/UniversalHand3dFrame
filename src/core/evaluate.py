@@ -10,24 +10,19 @@ from src.utils.transforms import transform, transform_preds
 
 __all__ = ['accuracy', 'AverageMeter']
 
-def get_preds_from_heatmap(scores):
-    ''' get predictions from score maps in torch Tensor
-        return type: torch.LongTensor
-    '''
-    assert scores.dim() == 4, 'Score maps should be 4-dim'
-    maxval, idx = torch.max(scores.view(scores.size(0), scores.size(1), -1), 2)
+def get_preds_from_heatmap(scoremaps):
+    """ Performs detection per scoremap for the hands keypoints. """
+    s = scoremaps.shape
+    assert len(s) == 4, "This function was only designed for 4D Scoremaps(B * C * H * W)."
+    # assert (s[2] < s[1]) and (s[2] < s[0]), "Probably the input is not correct, because [H, W, C] is expected."
 
-    maxval = maxval.view(scores.size(0), scores.size(1), 1)
-    idx = idx.view(scores.size(0), scores.size(1), 1) + 1
-
-    preds = idx.repeat(1, 1, 2).float()
-
-    preds[:,:,0] = (preds[:,:,0] - 1) % scores.size(3) + 1
-    preds[:,:,1] = torch.floor((preds[:,:,1] - 1) / scores.size(3)) + 1
-
-    pred_mask = maxval.gt(0).repeat(1, 1, 2).float()
-    preds *= pred_mask
-    return preds
+    keypoint_coords = np.zeros((s[0], s[1], 2))
+    for idx in range(s[0]):
+        for i in range(s[1]):
+            v, u = np.unravel_index(np.argmax(scoremaps[idx, i, :, :]), (s[2], s[3]))
+            keypoint_coords[idx, i, 0] = v
+            keypoint_coords[idx, i, 1] = u
+    return keypoint_coords
 
 def calc_dists(preds, target):
     preds = preds.float()

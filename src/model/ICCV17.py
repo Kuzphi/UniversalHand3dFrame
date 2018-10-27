@@ -7,10 +7,11 @@ import torch.nn.functional as F
 __all__ = ['ICCV17']
 
 class Repeat(nn.Module):
-	def __init__(self, channels, kernels, paddings = None):
+	def __init__(self, channels, kernels, paddings = None, out = False, fg = False):
 		super(Repeat, self).__init__()
 		assert len(channels) == len(kernels) + 1, 'number of conv is not consistent'
-
+		self.out = out
+		self.fg = fg 
 		if paddings == None:
 			paddings = [ks // 2 for ks in kernels]
 
@@ -23,11 +24,15 @@ class Repeat(nn.Module):
 
 			self.convs.append(nn.Conv2d( **params))
 
-		self.relu  = nn.ReLU(inplace = True)
+		self.relu  = nn.functional.leaky_relu
 
 	def forward(self, x):
-		for conv in self.convs:
-			x = self.relu(conv(x))
+		for idx in range(len(self.convs)):			
+			x = self.convs[idx](x)
+			if not self.out or idx < len(self.convs) - 1:
+				x = self.relu(x)
+			# if self.fg:
+			# 	print("!!!!", x.sum(), x.size())
 		return x
 
 class PoseNet(nn.Module):
@@ -35,15 +40,15 @@ class PoseNet(nn.Module):
 	def __init__(self, num_class, **kwargs):
 		super(PoseNet, self).__init__()
 		self.pool    = nn.MaxPool2d(2, padding = 0)
-		self.relu    = nn.ReLU(inplace = True)
+		self.relu    = nn.functional.leaky_relu
 		self.stage1_block_1 = Repeat([3,64,64], [3,3])
 		self.stage1_block_2 = Repeat([64,128,128], [3,3])
 		self.stage1_block_3 = Repeat([128,256,256,256,256], [3,3,3,3])
 		self.stage1_block_4 = Repeat([256,512,512,256,256,256,256,128], [3,3,3,3,3,3,3])
-		self.stage1_block_5 = Repeat([128,512,num_class],[1, 1])
+		self.stage1_block_5 = Repeat([128,512,num_class],[1, 1], out = True)
 
-		self.stage2 		= Repeat([149,128,128,128,128,128,128,num_class], [7,7,7,7,7,1,1]) # cat x and out1 128 + 21 = 149
-		self.stage3			= Repeat([149,128,128,128,128,128,128,num_class], [7,7,7,7,7,1,1]) # cat x and out2 128 + 21 = 149
+		self.stage2 		= Repeat([149,128,128,128,128,128,128,num_class], [7,7,7,7,7,1,1], out = True, fg = True) # cat x and out1 128 + 21 = 149
+		self.stage3			= Repeat([149,128,128,128,128,128,128,num_class], [7,7,7,7,7,1,1], out = True) # cat x and out2 128 + 21 = 149
 	def forward(self, x):
 		x = self.stage1_block_1(x)
 		x = self.pool(x)
@@ -52,14 +57,11 @@ class PoseNet(nn.Module):
 		x = self.stage1_block_3(x)
 		x = self.pool(x)
 		x = self.stage1_block_4(x)
-
-		out1 = torch.cat([x], 1) #need creating a new copy of x, otherwise x would be change in next line!!
+		out1 = x.clone() #need creating a new copy of x, otherwise x would be change in next line!!
 		out1 = self.stage1_block_5(out1)
-
-		out2 = torch.cat([x, out1], 1)
+		out2 = torch.cat([out1, x], 1)
 		out2 = self.stage2(out2)
-
-		out3 = torch.cat([x, out2], 1)
+		out3 = torch.cat([out2, x], 1)
 		out3 = self.stage3(out3)
 
 		return [out1, out2, out3]
@@ -69,13 +71,13 @@ class PosePior(nn.Module):
 	def __init__(self, num_joints):
 		super(PosePior, self).__init__()
 		self.num_joints = num_joints
-		self.relu     = nn.ReLU(inplace = True)
-		self.conv_0_1 = nn.Conv2d(21,  32, 3)
-		self.conv_0_2 = nn.Conv2d(32,  32, 3, stride = 2, padding = 1)
-		self.conv_1_1 = nn.Conv2d(32,  64, 3)
-		self.conv_1_2 = nn.Conv2d(64,  64, 3, stride = 2, padding = 1)
-		self.conv_2_1 = nn.Conv2d(64, 128, 3)
-		self.conv_2_2 = nn.Conv2d(128, 128, 3, stride = 2, padding = 1)
+		self.relu  = nn.functional.leaky_relu
+		self.conv_0_1 = nn.Conv2d(21,  32, 3, padding = 1)
+		self.conv_0_2 = nn.Conv2d(32,  32, 3, stride = 2)
+		self.conv_1_1 = nn.Conv2d(32,  64, 3, padding = 1)
+		self.conv_1_2 = nn.Conv2d(64,  64, 3, stride = 2)
+		self.conv_2_1 = nn.Conv2d(64, 128, 3, padding = 1)
+		self.conv_2_2 = nn.Conv2d(128, 128, 3, stride = 2)
 
 		self.fc_0 	  = nn.Linear(2050, 512) # 4*4*128 + 2 = 2050
 		self.fc_1 	  = nn.Linear(512, 512)
@@ -113,8 +115,7 @@ class PosePior(nn.Module):
 		return coords_xyz_canonical_left
 
 	def forward(self, x, hand_side):
-		
-		out = self.relu(self.conv_0_1(x))	
+		out = self.relu(self.conv_0_1(x))
 		out = F.pad(out, [0, 1, 0, 1])
 		out = self.relu(self.conv_0_2(out))
 
@@ -125,7 +126,9 @@ class PosePior(nn.Module):
 		out = self.relu(self.conv_2_1(out))
 		out = F.pad(out, [0, 1, 0, 1])
 		out = self.relu(self.conv_2_2(out))
-		out = out.view(out.size(0), -1)
+
+		out = out.contiguous().permute(0,2,3,1)
+		out = out.contiguous().view(out.size(0), -1)
 		out = torch.cat([out, hand_side], 1)
 
 		out = self.relu(self.fc_0(out))
@@ -139,13 +142,13 @@ class ViewPoint(nn.Module):
 	"""docstring for ViewPoint"""
 	def __init__(self):
 		super(ViewPoint, self).__init__()
-		self.relu     = nn.ReLU(inplace = True)
-		self.conv_0_1 = nn.Conv2d(21,  64, 3)
-		self.conv_0_2 = nn.Conv2d(64,  64, 3, stride = 2, padding = 1)
-		self.conv_1_1 = nn.Conv2d(64,  128, 3)
-		self.conv_1_2 = nn.Conv2d(128, 128, 3, stride = 2, padding = 1)
-		self.conv_2_1 = nn.Conv2d(128, 256, 3)
-		self.conv_2_2 = nn.Conv2d(256, 256, 3, stride = 2, padding = 1)
+		self.relu  = nn.functional.leaky_relu
+		self.conv_0_1 = nn.Conv2d(21,  64, 3, padding = 1)
+		self.conv_0_2 = nn.Conv2d(64,  64, 3, stride = 2)
+		self.conv_1_1 = nn.Conv2d(64,  128, 3, padding = 1)
+		self.conv_1_2 = nn.Conv2d(128, 128, 3, stride = 2)
+		self.conv_2_1 = nn.Conv2d(128, 256, 3, padding = 1)
+		self.conv_2_2 = nn.Conv2d(256, 256, 3, stride = 2)
 		self.fc_0 	  = nn.Linear(4098, 256)
 		self.fc_1 	  = nn.Linear(256, 128)
 		self.fc_ux    = nn.Linear(128, 1)
@@ -174,6 +177,7 @@ class ViewPoint(nn.Module):
 		l2 = torch.stack([uy*ux*one_ct+uz*st, ct+uy*uy*one_ct, uy*uz*one_ct-ux*st], dim = -1)
 		l3 = torch.stack([uz*ux*one_ct-uy*st, uz*uy*one_ct+ux*st, ct+uz*uz*one_ct], dim = -1)
 		mat = torch.stack([l1,l2,l3],dim = -1)
+		mat = mat.permute(0,2,1)
 		return mat
 
 	def forward(self, x, hand_side):
@@ -189,16 +193,16 @@ class ViewPoint(nn.Module):
 		out = self.relu(self.conv_2_1(out))
 		out = F.pad(out, [0, 1, 0, 1])
 		out = self.relu(self.conv_2_2(out))
-		
-		out = out.view(out.size(0), -1)
+
+		out = out.contiguous().permute(0,2,3,1)
+		out = out.contiguous().view(out.size(0), -1)
 		out = torch.cat([out, hand_side], 1)
 
 		out = self.relu(self.fc_0(out))
 		out = self.relu(self.fc_1(out))
 		ux = self.fc_ux(out)
-		uy = self.fc_ux(out)
-		uz = self.fc_ux(out)
-
+		uy = self.fc_uy(out)
+		uz = self.fc_uz(out)
 		return self._get_rot_mat(ux, uy, uz)
 
 class ICCV17(nn.Module):
@@ -211,11 +215,13 @@ class ICCV17(nn.Module):
 	def forward(self, x):
 		img = x['img'].cuda()
 		hand_side = x['hand_side'].cuda()
-
 		heatmap = self.pose_net(img)
+		# print ("heatmap", heatmap[-1].shape, heatmap[-1].sum())
 		pose_can = self.pose_pior(heatmap[-1], hand_side)
 		rotate_mat = self.view_point(heatmap[-1], hand_side)
+		# print(pose_can)
+		# print(rotate_mat)
 		out = torch.matmul(pose_can, rotate_mat)
-		# print(pose_can.size(), rotate_mat.size(), out.size())
+		# print (torch.matmul(pose_can[0], rotate_mat[0]))
 		return {'pose3d' : out, 
 				'heatmap': heatmap}

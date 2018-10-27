@@ -175,7 +175,9 @@ def inference(cfg, infer_loader, model):
 
             # compute output
             outputs = model(to_cuda(batch['input']))
+            outputs = to_cpu(outputs)
 
+            # debug(outputs, batch, 1)
             # measure elapsed time
             batch_time.update(time.time() - end)
             end = time.time()

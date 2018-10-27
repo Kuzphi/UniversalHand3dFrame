@@ -141,20 +141,136 @@ def imshow(img, scale = '01'):
     plt.pause(10)
 
 def draw_joint2d(canvas, joint, numclass =21, with_number = False, Edge = True):
-
     import cv2
-    print canvas.shape, joint.shape
+    # print canvas.shape, joint.shape
     for i in range(joint.shape[0]):        
-        cv2.circle(canvas, tuple(joint[i,:2]), 4, colors[i], thickness=-1)
+        cv2.circle(canvas, tuple(joint[i,:2]), 1, colors[i], thickness=-1)
         if with_number:
             cv2.putText(canvas,str(i),tuple(joint[i,:2]),cv2.FONT_HERSHEY_SIMPLEX,1,colors[i],1)
     if Edge:    
         for edge in bones:
             u,v = edge
-            cv2.line(canvas,tuple(joint[u,:2]),tuple(joint[v,:2]),colors[v],3)
+            cv2.line(canvas,tuple(joint[u,:2]),tuple(joint[v,:2]),colors[v],1)
     return canvas
 
-def draw_joint3d(coords_xyz, axis, color_fixed=None, linewidth='5'):
+def plot_hand(canvas, coords_hw, axis, color_fixed=None, linewidth='1'):
+    """ Plots a hand stick figure into a matplotlib figure. """
+    colors = np.array([[0., 0., 0.5],
+                       [0., 0., 0.73172906],
+                       [0., 0., 0.96345811],
+                       [0., 0.12745098, 1.],
+                       [0., 0.33137255, 1.],
+                       [0., 0.55098039, 1.],
+                       [0., 0.75490196, 1.],
+                       [0.06008855, 0.9745098, 0.90765338],
+                       [0.22454143, 1., 0.74320051],
+                       [0.40164453, 1., 0.56609741],
+                       [0.56609741, 1., 0.40164453],
+                       [0.74320051, 1., 0.22454143],
+                       [0.90765338, 1., 0.06008855],
+                       [1., 0.82861293, 0.],
+                       [1., 0.63979666, 0.],
+                       [1., 0.43645606, 0.],
+                       [1., 0.2476398, 0.],
+                       [0.96345811, 0.0442992, 0.],
+                       [0.73172906, 0., 0.],
+                       [0.5, 0., 0.]])
+
+    # define connections and colors of the bones
+    bones = [((0, 4), colors[0, :]),
+             ((4, 3), colors[1, :]),
+             ((3, 2), colors[2, :]),
+             ((2, 1), colors[3, :]),
+
+             ((0, 8), colors[4, :]),
+             ((8, 7), colors[5, :]),
+             ((7, 6), colors[6, :]),
+             ((6, 5), colors[7, :]),
+
+             ((0, 12), colors[8, :]),
+             ((12, 11), colors[9, :]),
+             ((11, 10), colors[10, :]),
+             ((10, 9), colors[11, :]),
+
+             ((0, 16), colors[12, :]),
+             ((16, 15), colors[13, :]),
+             ((15, 14), colors[14, :]),
+             ((14, 13), colors[15, :]),
+
+             ((0, 20), colors[16, :]),
+             ((20, 19), colors[17, :]),
+             ((19, 18), colors[18, :]),
+             ((18, 17), colors[19, :])]
+    axis.imshow(canvas)
+    for connection, color in bones:
+        coord1 = coords_hw[connection[0], :]
+        coord2 = coords_hw[connection[1], :]
+        coords = np.stack([coord1, coord2])
+        if color_fixed is None:
+            axis.plot(coords[:, 1], coords[:, 0], color=color, linewidth=linewidth)
+        else:
+            axis.plot(coords[:, 1], coords[:, 0], color_fixed, linewidth=linewidth)
+def plot_hand_3d(coords_xyz, axis, color_fixed=None, linewidth='1'):
+    """ Plots a hand stick figure into a matplotlib figure. """
+    colors = np.array([[0., 0., 0.5],
+                       [0., 0., 0.73172906],
+                       [0., 0., 0.96345811],
+                       [0., 0.12745098, 1.],
+                       [0., 0.33137255, 1.],
+                       [0., 0.55098039, 1.],
+                       [0., 0.75490196, 1.],
+                       [0.06008855, 0.9745098, 0.90765338],
+                       [0.22454143, 1., 0.74320051],
+                       [0.40164453, 1., 0.56609741],
+                       [0.56609741, 1., 0.40164453],
+                       [0.74320051, 1., 0.22454143],
+                       [0.90765338, 1., 0.06008855],
+                       [1., 0.82861293, 0.],
+                       [1., 0.63979666, 0.],
+                       [1., 0.43645606, 0.],
+                       [1., 0.2476398, 0.],
+                       [0.96345811, 0.0442992, 0.],
+                       [0.73172906, 0., 0.],
+                       [0.5, 0., 0.]])
+
+    # define connections and colors of the bones
+    bones = [((0, 4), colors[0, :]),
+             ((4, 3), colors[1, :]),
+             ((3, 2), colors[2, :]),
+             ((2, 1), colors[3, :]),
+
+             ((0, 8), colors[4, :]),
+             ((8, 7), colors[5, :]),
+             ((7, 6), colors[6, :]),
+             ((6, 5), colors[7, :]),
+
+             ((0, 12), colors[8, :]),
+             ((12, 11), colors[9, :]),
+             ((11, 10), colors[10, :]),
+             ((10, 9), colors[11, :]),
+
+             ((0, 16), colors[12, :]),
+             ((16, 15), colors[13, :]),
+             ((15, 14), colors[14, :]),
+             ((14, 13), colors[15, :]),
+
+             ((0, 20), colors[16, :]),
+             ((20, 19), colors[17, :]),
+             ((19, 18), colors[18, :]),
+             ((18, 17), colors[19, :])]
+
+    for connection, color in bones:
+        coord1 = coords_xyz[connection[0], :]
+        coord2 = coords_xyz[connection[1], :]
+        coords = np.stack([coord1, coord2])
+        if color_fixed is None:
+            axis.plot(coords[:, 0], coords[:, 1], coords[:, 2], color=color, linewidth=linewidth)
+        else:
+            axis.plot(coords[:, 0], coords[:, 1], coords[:, 2], color_fixed, linewidth=linewidth)
+
+    axis.view_init(azim=-90., elev=90.)
+
+def draw_joint3d(coords_xyz, axis, color_fixed=None, linewidth='1'):
     """ Plots a hand stick figure into a matplotlib figure. """
     for idx, connection in enumerate(bones):
         color = colors[idx ]
@@ -217,6 +333,7 @@ def sample_with_heatmap(inp, out, num_rows=2, parts_to_show=None):
 
 def batch_with_heatmap(inputs, outputs, mean=torch.Tensor([0.5, 0.5, 0.5]), num_rows=2, parts_to_show=None):
     batch_img = []
+    # print(inputs.size(), outputs.size())
     for n in range(min(inputs.size(0), 4)):
         inp = inputs[n] + mean.view(3, 1, 1).expand_as(inputs[n])
         batch_img.append(

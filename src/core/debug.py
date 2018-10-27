@@ -12,15 +12,15 @@ import torch
 import matplotlib.pyplot as plt
 from src.utils.imutils import batch_with_heatmap
 
-def debug(output, batch, loss):
+def debug(outputs, batch, loss):
     gt_win, pred_win = None, None
-    gt_batch_img = batch_with_heatmap(inputs = batch['input'], outputs = batch['heat_map'])
-    pred_batch_img = batch_with_heatmap(inputs = batch['input'], outputs = output)
+    # gt_batch_img   = batch_with_heatmap(inputs = batch['inputs']['img'], outputs = batch['heat_map'])
+    pred_batch_img = batch_with_heatmap(inputs = batch['input']['img'], outputs = outputs['heatmap'][-1])
     
-    ax1 = plt.subplot(121)
-    ax1.title.set_text('Groundtruth')
-    gt_win = plt.imshow(gt_batch_img)
-    ax2 = plt.subplot(122)
+    # ax1 = plt.subplot(121)
+    # ax1.title.set_text('Groundtruth')
+    # gt_win = plt.imshow(gt_batch_img)
+    ax2 = plt.subplot(111)
     ax2.title.set_text('Prediction')
     pred_win = plt.imshow(pred_batch_img)
-    plt.pause(10)
+    plt.show()

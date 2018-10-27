@@ -75,7 +75,9 @@ def combine(x , y):
         return [combine(a,b) for a, b in zip(x, y)]
     if isinstance(x, torch.Tensor):
         return torch.cat([x,y], 0)
-    raise Exception("Unrecognized type {}".format(type(output)))
+    if isinstance(x, np.ndarray):
+        return np.concatenate([x,y], 0)
+    raise Exception("Unrecognized type {}".format(type(x)))
 
 def get_config(fpath, type = 'train'):
     cfg = yaml.load(open(fpath))

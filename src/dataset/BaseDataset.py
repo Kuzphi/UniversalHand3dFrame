@@ -8,6 +8,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import os
 from torch.utils.data import Dataset
 
 class JointsDataset(Dataset):
@@ -40,9 +41,10 @@ class InferenceDataset(Dataset):
     def _get_db(self):
         if self.data_form == 'img_root':
             result = []
-            for img in os.lisdir(self.path):
-                result += img
-            return result
+            for img in os.listdir(self.path):
+                if img.endswith('jpg') or img.endswith('png'):
+                    result.append(os.path.join(self.path,img))
+            return sorted(result)
         elif self.data_form == 'block_file':
             if self.path.endswith('pickle'):
                 import pickle
