@@ -1,6 +1,7 @@
 *.pyc
 *.npy
 *.jpg
+*.pickle
 pretrained_weight/*
 inference result/*
 data/*
