@@ -20,12 +20,10 @@ from src import Bar
 from src.core.debug import debug
 from src.core.evaluate import eval_result
 from src.core.loss import CPMMSELoss as criterion
-from src.utils.misc import AverageMeter, to_torch, to_cuda, to_cpu, combine
+from src.utils.misc import MetricMeter, AverageMeter, to_torch, to_cuda, to_cpu, combine
 
 def train(cfg, train_loader, model, optimizer, log):
-    acc = AverageMeter()
-    dis = AverageMeter()
-    losses = AverageMeter()
+    metric = MetricMeter(cfg.METRIC_ITEM)
     data_time = AverageMeter()
     batch_time = AverageMeter()
 
@@ -58,11 +56,9 @@ def train(cfg, train_loader, model, optimizer, log):
             debug(outputs, batch, loss)
 
         # measure accuracy and record loss
-        losses.update(loss.item(), size)
-
-        avg_acc, avg_dis = eval_result(outputs[-1], batch, num_joints = cfg.DATASET.NUM_JOINTS)
-        acc.update(avg_acc[0], size)
-        dis.update(avg_dis[0], size)
+        metric_ = train_loader.dataset.eval_result(outputs, batch, cfg = cfg)
+        metric_['loss'] = loss.item() 
+        metric.update(metric_)
 
         # measure elapsed time
         batch_time.update(time.time() - end)
@@ -81,15 +77,10 @@ def train(cfg, train_loader, model, optimizer, log):
         bar.next()
     log.info(bar.suffix)
     bar.finish()
-    metric = {  'loss':losses.avg, 
-                'acc':acc.avg,
-                'dis': dis.avg}
     return metric
 
-def validate(cfg, val_loader, model, log):
-    dis = AverageMeter()
-    acc = AverageMeter()
-    losses = AverageMeter()
+def validate(cfg, val_loader, model, log = None):
+    metric = MetricMeter(cfg.METRIC_ITEM)
     data_time = AverageMeter()    
     batch_time = AverageMeter()
 
@@ -110,10 +101,14 @@ def validate(cfg, val_loader, model, log):
             data_time.update(time.time() - end)
             
             # compute output
+
             outputs = model(to_cuda(batch['input']))
 
+
             #calculate loss
-            loss = criterion(outputs, batch)
+            if cfg.IS_INFERENCE:
+                loss = criterion(outputs, batch)
+                metric['loss'] = loss
 
             #convert output from cuda tensor to cpu tensor
             outputs = to_cpu(outputs)
@@ -122,12 +117,10 @@ def validate(cfg, val_loader, model, log):
             if cfg.DEBUG:
                 debug(outputs, batch, loss)
 
-            # measure accuracy and record loss
-            losses.update(loss.item(), size)
-
-            avg_acc, avg_dis = eval_result(outputs, batch, num_joints = cfg.DATASET.NUM_JOINTS)
-            acc.update(avg_acc[0], size)
-            dis.update(avg_dis[0], size)
+            if cfg.IS_INFERENCE:
+                metric_ = val_loader.dataset.eval_result(outputs, batch, cfg = cfg)
+                metric_['loss'] = loss.item()
+                metric.update(metric_, size)
 
             # measure elapsed time
             batch_time.update(time.time() - end)
@@ -150,10 +143,14 @@ def validate(cfg, val_loader, model, log):
             bar.next()
         log.info(bar.suffix)
         bar.finish()
-    metric = {  'loss':losses.avg, 
-                'acc':acc.avg,
-                'dis': dis.avg}
-    return metric, reduce(combine, all_preds)
+        
+    if cfg.IS_INFERENCE:
+        metric = {  'loss':losses.avg, 
+                    'acc':acc.avg,
+                    'dis': dis.avg}
+        return metric, reduce(combine, all_preds)
+
+    return reduce(combine, all_preds)
 
 def inference(cfg, infer_loader, model):
     data_time = AverageMeter()    

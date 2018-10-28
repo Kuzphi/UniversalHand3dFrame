@@ -7,7 +7,7 @@ import torch
 import time
 import yaml
 import pickle
-
+import warnings
 from easydict import EasyDict as edict
 
 class AverageMeter(object):
@@ -27,6 +27,20 @@ class AverageMeter(object):
         self.count += n
         self.avg = self.sum / self.count if self.count != 0 else 0
 
+class MetricMeter(object):
+    """docstring for MetricMeter"""
+    def __init__(self, metric_item):
+        super(MetricMeter, self).__init__()
+        for name in metric_item:
+            self.metric[name] = AverageMeter()
+
+    def update(self, metric_update, size):
+        for name in self.metric_item:
+            if metric_update.has_key(name):
+                self.metric[name].update(metric_update, size)
+            else:
+                raise Exception("{} does not found in update dic".format(name))
+
 def to_numpy(tensor):
     if torch.is_tensor(tensor):
         return tensor.cpu().numpy()
@@ -34,7 +48,6 @@ def to_numpy(tensor):
         raise ValueError("Cannot convert {} to numpy array"
                          .format(type(tensor)))
     return tensor
-
 
 def to_torch(ndarray):
     if type(ndarray).__module__ == 'numpy':

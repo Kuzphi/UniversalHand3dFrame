@@ -27,7 +27,11 @@ class JointsDataset(Dataset):
         return len(self.db)
 
     def __getitem__(self, idx):
-        #return input, target, target_weight, meta
+        #return a dict which contains at least input, target, target_weight, meta
+        #input itself is a dict as well
+        raise NotImplementedError
+
+    def eval_result(self, outputs, batch, **kwargs):
         raise NotImplementedError
 
 class InferenceDataset(Dataset):
