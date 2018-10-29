@@ -13,10 +13,11 @@ import os
 import time
 import torch
 from torch.utils.data import DataLoader
+import src.core.loss as  loss
 
 from src import model
 from src import dataset
-from src.core import inference
+from src.core import validate
 from src.utils.misc import get_config, save_preds
 
 def main(args):
@@ -31,7 +32,10 @@ def main(args):
         batch_size=cfg.DATASET.BATCH_SIZE * len(cfg.GPUS),
         shuffle=cfg.DATASET.SHUFFLE,
         num_workers=cfg.WORKERS)
-    
+
+    print("Loding Loss")
+    criterion = eval('loss.' + cfg.CRITERION)
+
     print("Creating Model")
     model = eval('model.' + cfg.MODEL.NAME)(**cfg.MODEL)
     model = torch.nn.DataParallel(model, device_ids=cfg.GPUS).cuda()
@@ -41,7 +45,7 @@ def main(args):
     model.load_state_dict(weight)
 
     print("Starting Inference")
-    preds = inference(cfg, infer_loader, model)
+    preds = validate(cfg, infer_loader, model, criterion)
     save_preds(preds, cfg.CHECKPOINT)
 
     if cfg.DARW_RESULT:

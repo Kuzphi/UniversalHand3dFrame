@@ -9,5 +9,6 @@ from __future__ import division
 from __future__ import print_function
 
 
-from .Traindatset import TencentHand
+from .TencentHand import TencentHand
 from .Testdataset import *
+from .RHD import *

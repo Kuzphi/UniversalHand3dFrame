@@ -13,6 +13,7 @@ import time
 import torch
 from torch.utils.data import DataLoader
 
+import src.core.loss as  loss
 from src import model
 from src import dataset
 from src.core import train, validate, debug
@@ -38,6 +39,9 @@ def main(args):
         batch_size=cfg.VALID.DATASET.BATCH_SIZE * len(cfg.GPUS),
         num_workers=cfg.WORKERS)
     
+    print("Loding Loss")
+    criterion = eval('loss.' + cfg.CRITERION)
+
     print("Creating Model")
     model = eval('model.' + cfg.MODEL.NAME)(**cfg.MODEL)
     model = torch.nn.DataParallel(model, device_ids=cfg.GPUS).cuda()
@@ -62,10 +66,10 @@ def main(args):
         print('\nEpoch: %d | LR:' % (epoch), lr)
 
         # train for one epoch
-        train_metric = train(cfg.TRAIN, train_loader, model, optimizer, log)
+        train_metric = train(cfg.TRAIN, train_loader, model, criterion, optimizer, log)
 
         # evaluate on validation set
-        valid_metric, predictions = validate(cfg.VALID,valid_loader, model, log)
+        valid_metric, predictions = validate(cfg.VALID,valid_loader, model, criterion, log)
 
         # append logger file value should be basic type for json serialized
         epoch_result = {}

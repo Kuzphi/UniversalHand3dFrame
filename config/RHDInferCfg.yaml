@@ -1,25 +1,28 @@
 CURRENT_EPOCH: 0
-IS_INFERENCE: True #validate or just inference
+IS_VALID: True #validate or just inference
 DATASET:
   NAME: RHD
-  ROOT: data/RHD/train/cropped
+  ROOT: data/RHD/evaluation/cropped
   IS_TRAIN: True
-  BATCH_SIZE: 1
+  BATCH_SIZE: 6
+
   SHUFFLE: 0
-  DATA_JSON_PATH: data/RHD/train/cropped_anno.pickle
+  DATA_JSON_PATH: data/RHD/evaluation/cropped_anno.pickle
   NUM_JOINTS: 21
+  TRANSFORMS: False
   HEATMAP:
     TYPE: Gaussian # Gaussian or Cauchy
     SIGMA: 1 #Ground truth heatmap 
-  METRICITEMS: # the metric that you wanna track during training
-    - loss
-    - acc
-    - dis
+METRIC_ITEMS: # the metric that you wanna track during training
+  - loss
+  - dis
 GPUS:
+  - 0
   - 1
   - 2
   - 3
 LOG_DIR: ''
+CRITERION: DistanceLoss
 MODEL:
   NAME: ICCV17
   PRETRAINED_WEIGHT_PATH: 'pretrained_weight/iccv17_pretrained.torch'
@@ -27,4 +30,5 @@ MODEL:
 OUTPUT_DIR: infer_result/
 START_EPOCH: 0
 WORKERS: 1
-DARW_RESULT: True
+DARW_RESULT: False
+DEBUG: False

@@ -19,10 +19,9 @@ import torch
 from src import Bar
 from src.core.debug import debug
 from src.core.evaluate import eval_result
-from src.core.loss import CPMMSELoss as criterion
 from src.utils.misc import MetricMeter, AverageMeter, to_torch, to_cuda, to_cpu, combine
 
-def train(cfg, train_loader, model, optimizer, log):
+def train(cfg, train_loader, model, criterion, optimizer, log):
     metric = MetricMeter(cfg.METRIC_ITEM)
     data_time = AverageMeter()
     batch_time = AverageMeter()
@@ -63,24 +62,22 @@ def train(cfg, train_loader, model, optimizer, log):
         # measure elapsed time
         batch_time.update(time.time() - end)
         end = time.time()
-        bar.suffix  = '({batch}/{size}) Data:{data:.1f}s Batch:{bt:.1f}s Total:{total:} ETA:{eta:} '\
-                        'Loss:{loss:.4f} Acc:{acc: .3f} Dis:{dis:.3f}'.format(
-                        batch=i + 1,
-                        size=len(train_loader),
-                        data=data_time.val,
-                        bt=batch_time.avg,
-                        total=bar.elapsed_td,
-                        eta=bar.eta_td,
-                        loss=losses.avg,
-                        acc=acc.avg,
-                        dis=dis.avg)
+        suffix = '({batch}/{size}) Data:{data:.1f}s Batch:{bt:.1f}s Total:{total:} ETA:{eta:}'.format(
+                    batch=i + 1,
+                    size=len(val_loader),
+                    data=data_time.val,
+                    bt=batch_time.avg,
+                    total=bar.elapsed_td,
+                    eta=bar.eta_td)
+        for name in metric_:
+            suffix += '{}: {}'.format(name, metric_[name])
         bar.next()
     log.info(bar.suffix)
     bar.finish()
     return metric
 
-def validate(cfg, val_loader, model, log = None):
-    metric = MetricMeter(cfg.METRIC_ITEM)
+def validate(cfg, val_loader, model, criterion, log = None):
+    metric = MetricMeter(cfg.METRIC_ITEMS)
     data_time = AverageMeter()    
     batch_time = AverageMeter()
 
@@ -95,6 +92,9 @@ def validate(cfg, val_loader, model, log = None):
     with torch.no_grad():
         end = time.time()
         for i, batch in enumerate(val_loader):
+
+            data_time.update(time.time() - end)
+
             size = batch['weight'].size(0)
 
             # measure data loading time
@@ -106,9 +106,8 @@ def validate(cfg, val_loader, model, log = None):
 
 
             #calculate loss
-            if cfg.IS_INFERENCE:
+            if cfg.IS_VALID:
                 loss = criterion(outputs, batch)
-                metric['loss'] = loss
 
             #convert output from cuda tensor to cpu tensor
             outputs = to_cpu(outputs)
@@ -117,79 +116,36 @@ def validate(cfg, val_loader, model, log = None):
             if cfg.DEBUG:
                 debug(outputs, batch, loss)
 
-            if cfg.IS_INFERENCE:
-                metric_ = val_loader.dataset.eval_result(outputs, batch, cfg = cfg)
+            if cfg.IS_VALID:
+                metric_ = val_loader.dataset.eval_result(outputs, batch)
                 metric_['loss'] = loss.item()
                 metric.update(metric_, size)
-
-            # measure elapsed time
-            batch_time.update(time.time() - end)
-            end = time.time()
 
             preds = val_loader.dataset.get_preds(outputs)
             all_preds.append(preds)
 
-            bar.suffix  = '({batch}/{size}) Data:{data:.1f}s Batch:{bt:.1f}s Total:{total:} ETA:{eta:}' \
-                            'Loss:{loss:.4f} Acc:{acc: .4f} Dis:{dis:.3f}'.format(
-                            batch=i + 1,
-                            size=len(val_loader),
-                            data=data_time.val,
-                            bt=batch_time.avg,
-                            total=bar.elapsed_td,
-                            eta=bar.eta_td,
-                            loss=losses.avg,
-                            acc=acc.avg,
-                            dis=dis.avg)
-            bar.next()
-        log.info(bar.suffix)
-        bar.finish()
-        
-    if cfg.IS_INFERENCE:
-        metric = {  'loss':losses.avg, 
-                    'acc':acc.avg,
-                    'dis': dis.avg}
-        return metric, reduce(combine, all_preds)
-
-    return reduce(combine, all_preds)
-
-def inference(cfg, infer_loader, model):
-    data_time = AverageMeter()    
-    batch_time = AverageMeter()
-
-    # switch to evaluate mode
-    model.eval()
-
-    num_samples = len(infer_loader.dataset)
-    all_preds = []
-
-    idx = 0
-    bar = Bar('Processing', max=len(infer_loader))
-    with torch.no_grad():
-        end = time.time()
-        idx = 0
-        for i, batch in enumerate(infer_loader):
-            data_time.update(time.time() - end)
-
-            # compute output
-            outputs = model(to_cuda(batch['input']))
-            outputs = to_cpu(outputs)
-
-            # debug(outputs, batch, 1)
             # measure elapsed time
             batch_time.update(time.time() - end)
             end = time.time()
 
-            # preds = get_preds(output)
-            preds = infer_loader.dataset.get_preds(outputs)
-            all_preds.append(preds)
+            suffix = '({batch}/{size}) Data:{data:.1f}s Batch:{bt:.1f}s Total:{total:} ETA:{eta:}'.format(
+                        batch=i + 1,
+                        size=len(val_loader),
+                        data=data_time.val,
+                        bt=batch_time.avg,
+                        total=bar.elapsed_td,
+                        eta=bar.eta_td)
+            for name in metric.metric.keys():
+                suffix += ' {}: {:.4f}'.format(name, metric.metric[name].avg)
 
-            bar.suffix  = '({batch}/{size}) Data:{data:.1f}s Batch:{bt:.1f}s Total:{total:} ETA:{eta:}'.format(
-                            batch=i + 1,
-                            size=len(infer_loader),
-                            data=data_time.val,
-                            bt=batch_time.avg,
-                            total=bar.elapsed_td,
-                            eta=bar.eta_td)
+            bar.suffix  = suffix
             bar.next()
+
+        if log is not None:
+            log.info(bar.suffix)
         bar.finish()
+
+    if cfg.IS_VALID:
+        return metric, reduce(combine, all_preds)
+
     return reduce(combine, all_preds)

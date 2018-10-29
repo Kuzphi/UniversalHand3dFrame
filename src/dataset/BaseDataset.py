@@ -9,6 +9,7 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+from abc import abstractmethod
 from torch.utils.data import Dataset
 
 class JointsDataset(Dataset):
@@ -26,13 +27,16 @@ class JointsDataset(Dataset):
     def __len__(self):
         return len(self.db)
 
+    @abstractmethod
     def __getitem__(self, idx):
         #return a dict which contains at least input, target, target_weight, meta
         #input itself is a dict as well
-        raise NotImplementedError
+        pass
 
-    def eval_result(self, outputs, batch, **kwargs):
-        raise NotImplementedError
+    @abstractmethod
+    def eval_result(self, outputs, batch, cfg = None,  **kwargs):
+        #should be same as self.cfg.metric item
+        pass
 
 class InferenceDataset(Dataset):
     """docstring for InferenceDataset"""
@@ -65,8 +69,15 @@ class InferenceDataset(Dataset):
     def __len__(self,):
         return len(self.db)
 
+    @abstractmethod
     def __getitem__(self, idx):
         raise NotImplementedError
-        
+
+    @abstractmethod        
     def get_preds(outputs):
-        raise NotImplementedError
+        pass 
+
+    @abstractmethod
+    def eval_result(self, outputs, batch, cfg = None,  **kwargs):
+        #should be same as self.cfg.metric item
+        pass

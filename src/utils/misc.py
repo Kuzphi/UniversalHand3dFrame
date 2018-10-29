@@ -31,13 +31,14 @@ class MetricMeter(object):
     """docstring for MetricMeter"""
     def __init__(self, metric_item):
         super(MetricMeter, self).__init__()
+        self.metric = {}
         for name in metric_item:
             self.metric[name] = AverageMeter()
 
     def update(self, metric_update, size):
-        for name in self.metric_item:
+        for name in self.metric:
             if metric_update.has_key(name):
-                self.metric[name].update(metric_update, size)
+                self.metric[name].update(metric_update[name], size)
             else:
                 raise Exception("{} does not found in update dic".format(name))
 

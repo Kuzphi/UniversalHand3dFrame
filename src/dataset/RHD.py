@@ -29,11 +29,11 @@ from src.utils.imutils import load_image
 class RHD(JointsDataset):
     """docstring for TencentHand"""
     def __init__(self, cfg):
-        super(TencentHand, self).__init__(cfg)
+        super(RHD, self).__init__(cfg)
 
     def _get_db(self):
         self.anno = pickle.load(open(self.cfg.DATA_JSON_PATH))
-        return sorted(anno.keys())
+        return sorted(self.anno.keys())
         
     def transforms(self, cfg, img, coor):
         if self.is_train:
@@ -58,7 +58,6 @@ class RHD(JointsDataset):
 
         image_path   = os.path.join(self.cfg.ROOT, name)
         img = load_image(image_path)
-        label = json.load(open(label_path))
 
         coor = label['xyz_coor']
 
@@ -67,17 +66,21 @@ class RHD(JointsDataset):
             img, label = self.transforms(self.cfg.TRANSFORMS, img , coor)
 
         meta = edict({'name': name})
+        isleft = label['isleft']
 
-        return { 'input': {'img':img, 'isleft':label['isleft']},
-                 'coor': to_torch(coor),
-                 'weight': 1,
-                 'meta': meta
-                }
+        return {'input': {'img':img, 
+                          'hand_side': torch.tensor([isleft, 1 - isleft]).float()
+                          },
+                'coor': to_torch(coor),
+                'weight': 1,
+                'meta': meta}
 
-    def eval_result(outputs, batch):
+    def eval_result(self, outputs, batch, cfg = None):
         gt_coor = batch['coor']
         pd_coor = outputs['pose3d']
-        dis = torch.norm((gt_coor - pd_coor) ** 2, dim = -1)
-        dis = torhc.mean(dis, dim = -1)
-        #should be same as self.cfg.metric item
+        dis = torch.norm(gt_coor - pd_coor, dim = -1)
+        dis = torch.mean(dis)        
         return {"dis": dis}
+
+    def get_preds(self, outputs):
+        return outputs['pose3d']
