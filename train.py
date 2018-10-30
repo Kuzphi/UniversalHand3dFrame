@@ -64,7 +64,9 @@ def main(args):
         model.load_state_dict(checkpoint['state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer'])
 
-    best = -1
+    best = 1e99
+    sgn = -1 if cfg.MAIN_METRIC.endswith('acc') else 1
+
     for epoch in range(cfg.START_EPOCH, cfg.END_EPOCH):
         scheduler.step()
         lr = scheduler.get_lr()[0]
@@ -91,13 +93,14 @@ def main(args):
         log.append(epoch_result)
 
         # remember best acc and save checkpoint
-        is_best = valid_metric[cfg.MAIN_METRIC] > best
-        best = max(best, valid_metric[cfg.MAIN_METRIC])
+
+        is_best = sgn * valid_metric[cfg.MAIN_METRIC] < best  #if loss then < if acc then > !!!
+        best = min(best, sgn * valid_metric[cfg.MAIN_METRIC])
 
         save_checkpoint({
             'epoch': epoch,
             'state_dict': model.state_dict(),
-            'best': best,
+            'best': sgn * best,
             'optimizer' : optimizer.state_dict(),
         }, predictions, cfg, log, is_best, fpath=cfg.CHECKPOINT, snapshot = 30)
 
