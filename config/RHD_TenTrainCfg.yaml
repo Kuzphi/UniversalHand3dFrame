@@ -1,18 +1,26 @@
-CURRENT_EPOCH: 0
 TRAIN:
   DEBUG: False
   METRIC_ITEMS: # the metric that you wanna track during training
   - loss
   - dis
   DATASET:
-    NAME: RHD
-    ROOT: data/RHD/training/cropped    
-    DATA_JSON_PATH: data/RHD/training/cropped_anno.pickle
-    IS_TRAIN: True
-    TRANSFORMS:
-      RESIZE: 256
-      FLIP: True
-      COLOR_NORISE: True
+    NAME: RHD_Tencent
+    TENCENT:
+      ROOT: data/TencentHand
+      DATA_JSON_PATH: data/TencentHand/train.json
+      IS_TRAIN: True
+      TRANSFORMS:
+        RESIZE: 256
+        FLIP: True
+        COLOR_NORISE: True
+    RHD:
+      ROOT: data/RHD/training/cropped    
+      DATA_JSON_PATH: data/RHD/training/cropped_anno.pickle
+      IS_TRAIN: True
+      TRANSFORMS:
+        RESIZE: 256
+        FLIP: True
+        COLOR_NORISE: True
 
     IS_TRAIN: True
     BATCH_SIZE: 24
@@ -43,9 +51,6 @@ VALID:
       FLIP: True
       COLOR_NORISE: True
 
-
-DATA_DIR: ''
-END_EPOCH: 100
 CRITERION: DistanceLoss
 GPUS:
 - 0
@@ -76,8 +81,11 @@ LOG:
     - valid_loss
     - train_dis
     - valid_dis
+CURRENT_EPOCH: 0
 OUTPUT_DIR: output/
 START_EPOCH: 0
-WORKERS: 40
+WORKERS: 48
 RESUME_TRAIN: 0
 MAIN_METRIC: loss
+DATA_DIR: ''
+END_EPOCH: 100
