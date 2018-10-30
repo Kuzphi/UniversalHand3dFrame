@@ -136,7 +136,7 @@ def save_checkpoint(state, preds, cfg, log, is_best, fpath, filename='checkpoint
     if is_best:
         best_path = os.path.join(fpath, "best")
         if os.path.exists(best_path):
-            os.rmdir(best_path)
+            shutil.rmtree(best_path)
         shutil.copytree(latest_filepath, best_path)
 
 def save_preds(preds, checkpoint='checkpoint', filename='preds.pickle'):
