@@ -3,6 +3,6 @@
 *.jpg
 *.pickle
 pretrained_weight/*
-inference result/*
+inference_result/*
 data/*
 output/*

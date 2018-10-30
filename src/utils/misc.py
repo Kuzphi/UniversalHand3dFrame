@@ -44,7 +44,7 @@ class MetricMeter(object):
                 raise Exception("{} does not found in update dic".format(name))
     def __getitem__(self, idx):
         return self.metric[idx]
-        
+
     def names(self):
         return self.metric.keys()
 def to_numpy(tensor):
@@ -134,7 +134,10 @@ def save_checkpoint(state, preds, cfg, log, is_best, fpath, filename='checkpoint
         shutil.copytree(latest_filepath, os.path.join(fpath, str(state['epoch'])))
 
     if is_best:
-        shutil.copytree(latest_filepath, os.path.join(fpath, "best"))
+        best_path = os.path.join(fpath, "best")
+        if os.path.exists(best_path):
+            os.rmdir(best_path)
+        shutil.copytree(latest_filepath, best_path)
 
 def save_preds(preds, checkpoint='checkpoint', filename='preds.pickle'):
     if not os.path.exists(checkpoint):
