@@ -1,23 +1,6 @@
 CURRENT_EPOCH: 0
-TRAIN:
-  DEBUG: False
-  DATASET:
-    NAME: RHD
-    ROOT: data/RHD/train/cropped
-    IS_TRAIN: True
-    BATCH_SIZE: 2
-    SHUFFLE: 0
-    DATA_JSON_PATH: data/RHD/train/cropped_anno.pickle
-    TRANSFORMS: True
-    NUM_JOINTS: 21
-    HEATMAP:
-      TYPE: Gaussian # Gaussian or Cauchy
-      SIGMA: 1 #Ground truth heatmap 
-    METRICITEMS: # the metric that you wanna track during training
-      - loss
-      - acc
-      - dis
 VALID:
+  IS_INFERNCE: False #set ture if only wanna get output of the model
   DEBUG: False
   DATASET:
     NAME: RHD
@@ -27,10 +10,6 @@ VALID:
     DATA_JSON_PATH: data/RHD/evaluation/cropped_anno.pickle
     TRANSFORMS: True
     NUM_JOINTS: 21
-    DIM_JOINT: 2
-    HEATMAP:
-      TYPE: Gaussian # Gaussian or Cauchy
-      SIGMA: 1 #Ground truth heatmap 
     METRICITEMS:
       - loss
       - acc

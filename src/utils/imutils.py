@@ -52,13 +52,13 @@ def load_image(img_path):
 
 def resize(img, owidth, oheight):
     img = im_to_numpy(img)
-    print('%f %f' % (img.min(), img.max()))
+    # print('%f %f' % (img.min(), img.max()))
     img = scipy.misc.imresize(
             img,
             (oheight, owidth)
         )
     img = im_to_torch(img)
-    print('%f %f' % (img.min(), img.max()))
+    # print('%f %f' % (img.min(), img.max()))
     return img
 
 # =============================================================================

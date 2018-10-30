@@ -46,6 +46,11 @@ def main(args):
     model = eval('model.' + cfg.MODEL.NAME)(**cfg.MODEL)
     model = torch.nn.DataParallel(model, device_ids=cfg.GPUS).cuda()
 
+    if cfg.MODEL.PRETRAINED_WEIGHT_PATH:
+        print("Loading Pretrained Weight")
+        weight = torch.load(cfg.MODEL.PRETRAINED_WEIGHT_PATH)
+        model.load_state_dict(weight)
+
     print("Creating optimizer and optimizer scheduler")
     optimizer = eval('torch.optim.' + cfg.OPTIMIZER.NAME)(model.parameters(),**cfg.OPTIMIZER.PARAMETERS)
     scheduler = eval('torch.optim.lr_scheduler.' + cfg.OPTIMIZER_SCHEDULE.NAME)(optimizer, **cfg.OPTIMIZER_SCHEDULE.PARAMETERS)
@@ -59,7 +64,7 @@ def main(args):
         model.load_state_dict(checkpoint['state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer'])
 
-    best_acc = -1
+    best = -1
     for epoch in range(cfg.START_EPOCH, cfg.END_EPOCH):
         scheduler.step()
         lr = scheduler.get_lr()[0]
@@ -79,20 +84,20 @@ def main(args):
                 continue
             x, y = item.split('_')
             if x == 'train':
-                epoch_result[item] = train_metric[y]
+                epoch_result[item] = train_metric[y].avg
             if x == 'valid':
-                epoch_result[item] = valid_metric[y]
+                epoch_result[item] = valid_metric[y].avg
 
         log.append(epoch_result)
 
         # remember best acc and save checkpoint
-        is_best = valid_acc > best_acc
-        best_acc = max(valid_acc, best_acc)
+        is_best = valid_metric[cfg.MAIN_METRIC] > best
+        best = max(best, valid_metric[cfg.MAIN_METRIC])
 
         save_checkpoint({
             'epoch': epoch,
             'state_dict': model.state_dict(),
-            'best_acc': best_acc,
+            'best': best,
             'optimizer' : optimizer.state_dict(),
         }, predictions, cfg, log, is_best, fpath=cfg.CHECKPOINT, snapshot = 30)
 

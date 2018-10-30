@@ -41,7 +41,7 @@ class Log(object):
 
     def append(self, update):
         for key in self.monitor_item:
-            assert self.update.has_key(key), "{} does not found in update".format(key)
+            assert update.has_key(key), "{} does not found in update".format(key)
             self.log[key].append(update[key])
 
     def plot(self, plot_item=None):

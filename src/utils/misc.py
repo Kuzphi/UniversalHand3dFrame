@@ -22,6 +22,7 @@ class AverageMeter(object):
         self.count = 0
 
     def update(self, val, n=1):
+        val = float(val)
         self.val = val
         self.sum += val * n
         self.count += n
@@ -41,7 +42,11 @@ class MetricMeter(object):
                 self.metric[name].update(metric_update[name], size)
             else:
                 raise Exception("{} does not found in update dic".format(name))
-
+    def __getitem__(self, idx):
+        return self.metric[idx]
+        
+    def names(self):
+        return self.metric.keys()
 def to_numpy(tensor):
     if torch.is_tensor(tensor):
         return tensor.cpu().numpy()

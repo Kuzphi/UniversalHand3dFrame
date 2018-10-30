@@ -47,9 +47,10 @@ class RHD(JointsDataset):
                 # c[0] = img.size(2) - c[0]
 
             # Color
-            img[0, :, :].mul_(random.uniform(0.8, 1.2)).clamp_(-0.5, 0.5)
-            img[1, :, :].mul_(random.uniform(0.8, 1.2)).clamp_(-0.5, 0.5)
-            img[2, :, :].mul_(random.uniform(0.8, 1.2)).clamp_(-0.5, 0.5)
+            if cfg.COLOR_NORISE:
+                img[0, :, :].mul_(random.uniform(0.8, 1.2)).clamp_(-0.5, 0.5)
+                img[1, :, :].mul_(random.uniform(0.8, 1.2)).clamp_(-0.5, 0.5)
+                img[2, :, :].mul_(random.uniform(0.8, 1.2)).clamp_(-0.5, 0.5)
 
         return img, coor
     def __getitem__(self, idx):
@@ -63,7 +64,7 @@ class RHD(JointsDataset):
 
         #apply transforms into image and calculate cooresponding coor
         if self.cfg.TRANSFORMS:
-            img, label = self.transforms(self.cfg.TRANSFORMS, img , coor)
+            img, coor = self.transforms(self.cfg.TRANSFORMS, img , coor)
 
         meta = edict({'name': name})
         isleft = label['isleft']
@@ -84,3 +85,6 @@ class RHD(JointsDataset):
 
     def get_preds(self, outputs):
         return outputs['pose3d']
+
+    # def __len__(self):
+    #     return 100

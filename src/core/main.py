@@ -22,7 +22,7 @@ from src.core.evaluate import eval_result
 from src.utils.misc import MetricMeter, AverageMeter, to_torch, to_cuda, to_cpu, combine
 
 def train(cfg, train_loader, model, criterion, optimizer, log):
-    metric = MetricMeter(cfg.METRIC_ITEM)
+    metric = MetricMeter(cfg.METRIC_ITEMS)
     data_time = AverageMeter()
     batch_time = AverageMeter()
 
@@ -48,7 +48,7 @@ def train(cfg, train_loader, model, criterion, optimizer, log):
         optimizer.step()
 
         #convert output from cuda tensor to cpu tensor
-        outputs = to_cpu(outputs) #[out.detach().cpu() for out in outputs]
+        outputs = to_cpu(outputs)
 
         # debug, print intermediate result
         if cfg.DEBUG:
@@ -57,20 +57,21 @@ def train(cfg, train_loader, model, criterion, optimizer, log):
         # measure accuracy and record loss
         metric_ = train_loader.dataset.eval_result(outputs, batch, cfg = cfg)
         metric_['loss'] = loss.item() 
-        metric.update(metric_)
+        metric.update(metric_, size)
 
         # measure elapsed time
         batch_time.update(time.time() - end)
         end = time.time()
-        suffix = '({batch}/{size}) Data:{data:.1f}s Batch:{bt:.1f}s Total:{total:} ETA:{eta:}'.format(
+        suffix = '({batch}/{size}) Data:{data:.1f}s Batch:{bt:.1f}s Total:{total:} ETA:{eta:} '.format(
                     batch=i + 1,
-                    size=len(val_loader),
+                    size=len(train_loader),
                     data=data_time.val,
                     bt=batch_time.avg,
                     total=bar.elapsed_td,
                     eta=bar.eta_td)
-        for name in metric_:
-            suffix += '{}: {}'.format(name, metric_[name])
+        for name in metric.names():
+            suffix += '{}: {:.4f} '.format(name, metric[name].avg)
+        bar.suffix  = suffix
         bar.next()
     log.info(bar.suffix)
     bar.finish()
@@ -128,15 +129,15 @@ def validate(cfg, val_loader, model, criterion, log = None):
             batch_time.update(time.time() - end)
             end = time.time()
 
-            suffix = '({batch}/{size}) Data:{data:.1f}s Batch:{bt:.1f}s Total:{total:} ETA:{eta:}'.format(
+            suffix = '({batch}/{size}) Data:{data:.1f}s Batch:{bt:.1f}s Total:{total:} ETA:{eta:} '.format(
                         batch=i + 1,
                         size=len(val_loader),
                         data=data_time.val,
                         bt=batch_time.avg,
                         total=bar.elapsed_td,
                         eta=bar.eta_td)
-            for name in metric.metric.keys():
-                suffix += ' {}: {:.4f}'.format(name, metric.metric[name].avg)
+            for name in metric.names():
+                suffix += ' {}: {:.4f}'.format(name, metric[name].avg)
 
             bar.suffix  = suffix
             bar.next()
