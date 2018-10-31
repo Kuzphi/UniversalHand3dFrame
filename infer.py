@@ -53,9 +53,6 @@ def main(args):
         os.makedirs(fpath)
         infer_data.preds_demo(preds, fpath)
 
-
-        
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train keypoints network')
     parser.add_argument('--cfg',

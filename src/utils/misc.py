@@ -104,7 +104,7 @@ def get_config(fpath, type = 'train'):
 
     tag = time.asctime(time.localtime(time.time()))
     tag = tag[4:-5] #remove day of the week and year
-    cfg.TAG = tag
+    cfg.TAG = "_".join([tag, cfg.MODEL.NAME, cfg.TRAIN.DATASET.NAME])
     if type == 'train':
         cfg.LOG.PATH = os.path.join(cfg.OUTPUT_DIR,cfg.TAG,'log.json')
         cfg.CHECKPOINT = os.path.join(cfg.OUTPUT_DIR,cfg.TAG)

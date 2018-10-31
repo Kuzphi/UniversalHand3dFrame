@@ -3,14 +3,11 @@ IS_INFERENCE: True #validate or just inference
 DATASET:
   NAME: RHD
   ROOT: data/RHD/train/cropped
-  IS_TRAIN: True
+  IS_TRAIN: False
   BATCH_SIZE: 1
   SHUFFLE: 0
   DATA_JSON_PATH: data/RHD/train/cropped_anno.pickle
   NUM_JOINTS: 21
-  HEATMAP:
-    TYPE: Gaussian # Gaussian or Cauchy
-    SIGMA: 1 #Ground truth heatmap 
   METRICITEMS: # the metric that you wanna track during training
     - loss
     - acc
