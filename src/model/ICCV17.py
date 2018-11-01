@@ -213,8 +213,8 @@ class ICCV17(nn.Module):
 		self.view_point = ViewPoint()
 
 	def forward(self, x):
-		img = x['img'].cuda()
-		hand_side = x['hand_side'].cuda()
+		img = x['img']
+		hand_side = x['hand_side']
 		heatmap = self.pose_net(img)
 		# print ("heatmap", heatmap[-1].shape, heatmap[-1].sum())
 		pose_can = self.pose_pior(heatmap[-1], hand_side)

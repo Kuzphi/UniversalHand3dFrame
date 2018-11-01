@@ -93,9 +93,9 @@ def main(args):
         log.append(epoch_result)
 
         # remember best acc and save checkpoint
-
-        is_best = sgn * valid_metric[cfg.MAIN_METRIC] < best  #if loss then < if acc then > !!!
-        best = min(best, sgn * valid_metric[cfg.MAIN_METRIC])
+        new_metric = valid_metric[cfg.MAIN_METRIC].avg
+        is_best = sgn * new_metric < best  #if loss then < if acc then > !!!
+        best = min(best, sgn * new_metric)
 
         save_checkpoint({
             'epoch': epoch,

@@ -62,7 +62,7 @@ class OpenPose_CPM(nn.Module):
 		self.upsampler = nn.Upsample(scale_factor = 8, mode = 'bilinear', align_corners = True)
 
 	def forward(self, x):
-		out = self.relu(self.conv1_1(x))
+		out = self.relu(self.conv1_1(x['img']))
 		out = self.relu(self.conv1_2(out))
 		out = self.pool(out)
 
@@ -104,7 +104,8 @@ class OpenPose_CPM(nn.Module):
 		out_6 = self.stage6(out_6)
 
 		outputs = [out_1, out_2, out_3, out_4, out_5, out_6]
-		return [self.upsampler(out) for out in outputs]
+		# outputs = [self.upsampler(out) for out in outputs]
+		return {'heatmap': outputs}
 
 class OpenPose_Pose(nn.Module):
 

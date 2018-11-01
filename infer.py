@@ -13,7 +13,7 @@ import os
 import time
 import torch
 from torch.utils.data import DataLoader
-import src.core.loss as  loss
+import src.core.loss as loss
 
 from src import model
 from src import dataset
@@ -52,9 +52,6 @@ def main(args):
         fpath = os.path.join(cfg.CHECKPOINT, 'image')
         os.makedirs(fpath)
         infer_data.preds_demo(preds, fpath)
-
-
-        
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train keypoints network')

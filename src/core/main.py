@@ -105,7 +105,6 @@ def validate(cfg, val_loader, model, criterion, log = None):
 
             outputs = model(to_cuda(batch['input']))
 
-
             #calculate loss
             if cfg.IS_VALID:
                 loss = criterion(outputs, batch)
@@ -115,12 +114,7 @@ def validate(cfg, val_loader, model, criterion, log = None):
 
             # debug, print intermediate result
             if cfg.DEBUG:
-                debug(outputs, batch, loss)
-
-            if cfg.IS_VALID:
-                metric_ = val_loader.dataset.eval_result(outputs, batch)
-                metric_['loss'] = loss.item()
-                metric.update(metric_, size)
+                debug(outputs, batch)
 
             preds = val_loader.dataset.get_preds(outputs)
             all_preds.append(preds)
@@ -136,8 +130,13 @@ def validate(cfg, val_loader, model, criterion, log = None):
                         bt=batch_time.avg,
                         total=bar.elapsed_td,
                         eta=bar.eta_td)
-            for name in metric.names():
-                suffix += ' {}: {:.4f}'.format(name, metric[name].avg)
+
+            if cfg.IS_VALID:
+                metric_ = val_loader.dataset.eval_result(outputs, batch)
+                metric_['loss'] = loss.item()
+                metric.update(metric_, size)
+                for name in metric.names():
+                    suffix += ' {}: {:.4f}'.format(name, metric[name].avg)
 
             bar.suffix  = suffix
             bar.next()

@@ -19,7 +19,7 @@ def DistanceLoss(outputs, batch):
 def CPMMSELoss(outputs, batch):
     criterion = nn.MSELoss(size_average=True)
     loss = torch.zeros(1).cuda()
-    target = batch['heat_map'].cuda()
+    target = batch['heatmap'].cuda()
     for pred in outputs:
         loss += criterion(pred, target)
     return loss
