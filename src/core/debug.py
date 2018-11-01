@@ -14,6 +14,8 @@ from src.utils.imutils import batch_with_heatmap
 
 def debug(outputs, batch):
     gt_win, pred_win = None, None
+    print(outputs['pose3d'][:4])
+    print(batch['coor'][:4])
     # gt_batch_img   = batch_with_heatmap(inputs = batch['inputs']['img'], outputs = batch['heat_map'])
     pred_batch_img = batch_with_heatmap(inputs = batch['input']['img'], outputs = outputs['heatmap'][-1])
     
