@@ -104,12 +104,14 @@ def get_config(fpath, type = 'train'):
 
     tag = time.asctime(time.localtime(time.time()))
     tag = tag[4:-5] #remove day of the week and year
-    cfg.TAG = "_".join([tag, cfg.MODEL.NAME, cfg.TRAIN.DATASET.NAME])
+    
     if type == 'train':
+        cfg.TAG = "_".join([tag, type, cfg.MODEL.NAME, cfg.TRAIN.DATASET.NAME])
         cfg.LOG.PATH = os.path.join(cfg.OUTPUT_DIR,cfg.TAG,'log.json')
         cfg.CHECKPOINT = os.path.join(cfg.OUTPUT_DIR,cfg.TAG)
         cfg.START_EPOCH = cfg.CURRENT_EPOCH #fresuming training
     if type == 'infer':
+        cfg.TAG = "_".join([tag, type, cfg.MODEL.NAME, cfg.DATASET.NAME])
         cfg.CHECKPOINT = os.path.join(cfg.OUTPUT_DIR,cfg.TAG)
         cfg.IMG_RESULT = os.path.join(cfg.CHECKPOINT, 'img_result')
     return cfg

@@ -1,5 +1,5 @@
 CURRENT_EPOCH: 0
-IS_INFERENCE: True #validate or just inference
+IS_VALID: False #validate or just inference
 DATASET:
   NAME: SHP
   ROOT: data/SHP/
@@ -7,21 +7,28 @@ DATASET:
   BATCH_SIZE: 10
   SHUFFLE: 0
   DATA_JSON_PATH: data/SHP/labels
-  NUM_JOINTS: 21
+  NUM_JOINTS: 22
+  TRANSFORMS: False
   METRICITEMS: # the metric that you wanna track during training
     - loss
     - acc
     - dis
 GPUS:
+  - 0
   - 1
   - 2
-  - 3
 LOG_DIR: ''
 MODEL:
   NAME: openpose_hand
   PRETRAINED_WEIGHT_PATH: 'pretrained_weight/openpose_hand_model.torch'
-  num_joints: 21
+  num_joints: 22
+
+METRIC_ITEMS: # the metric that you wanna track during training
+  - loss
+  - acc
+CRITERION: CPMMSELoss
 OUTPUT_DIR: infer_result/
 START_EPOCH: 0
-WORKERS: 1
+WORKERS: 40
 DARW_RESULT: True
+DEBUG: True

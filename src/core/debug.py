@@ -12,7 +12,7 @@ import torch
 import matplotlib.pyplot as plt
 from src.utils.imutils import batch_with_heatmap
 
-def debug(outputs, batch, loss):
+def debug(outputs, batch):
     gt_win, pred_win = None, None
     # gt_batch_img   = batch_with_heatmap(inputs = batch['inputs']['img'], outputs = batch['heat_map'])
     pred_batch_img = batch_with_heatmap(inputs = batch['input']['img'], outputs = outputs['heatmap'][-1])

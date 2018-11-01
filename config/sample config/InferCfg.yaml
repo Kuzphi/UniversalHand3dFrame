@@ -1,5 +1,5 @@
 CURRENT_EPOCH: 0
-IS_INFERENCE: True #validate or just inference
+IS_VALID: True #validate or just inference
 DATASET:
   NAME: RHD
   ROOT: data/RHD/train/cropped
@@ -25,3 +25,4 @@ OUTPUT_DIR: infer_result/
 START_EPOCH: 0
 WORKERS: 1
 DARW_RESULT: True
+DEBUG: False

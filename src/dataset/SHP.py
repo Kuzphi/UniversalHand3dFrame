@@ -25,13 +25,13 @@ from src.dataset.BaseDataset import JointsDataset
 from src.utils.imutils import im_to_torch, draw_heatmap
 from src.utils.misc import to_torch
 from src.utils.imutils import load_image
-
+from src.core.evaluate import get_preds_from_heatmap
 
 class SHP(JointsDataset):
     """docstring for TencentHand"""
     def __init__(self, cfg):
         super(SHP, self).__init__(cfg)
-
+        self.upsampler = torch.nn.Upsample(scale_factor = 8, mode = 'bilinear', align_corners = True)
     def _get_db(self):
         self.db = []
         self.name = []
@@ -43,8 +43,7 @@ class SHP(JointsDataset):
                 self.all += 3000
                 self.name.append(name[:-4])
 
-        self.anno = pickle.load(open(self.cfg.DATA_JSON_PATH))
-        return sorted(self.anno.keys())
+        return self.db
     
     def __len__(self):
         return self.all
@@ -73,7 +72,6 @@ class SHP(JointsDataset):
         name = self.name[idx // 1500]
         coor = self.db[idx // 1500][:,:,idx % 1500]
 
-        coor = BB[:,:,i]
         coor = coor.transpose(1,0)[:,:2][:,::-1]
         coor[1:, ] = coor[1:, :].reshape(5,4,-1)[::-1,::-1,:].reshape(20, -1)
         coor /= 100.
@@ -81,9 +79,9 @@ class SHP(JointsDataset):
         name = name.split("_")
 
         if name[1] == 'BB':
-            image_path   = os.path.join(self.cfg.ROOT, name[0], "_".join([name[1], 'left', str(idx % 1500)]) + '.png')
+            image_path   = os.path.join(self.cfg.ROOT, name[0]+"_cropped", "_".join([name[1], 'left', str(idx % 1500)]) + '.png')
         elif name[1] == 'SK':
-            image_path   = os.path.join(self.cfg.ROOT, name[0], "_".join([name[1], 'color', str(idx % 1500)]) + '.png')
+            image_path   = os.path.join(self.cfg.ROOT, name[0]+"_cropped", "_".join([name[1], 'color', str(idx % 1500)]) + '.png')
         else:
             raise Exception("Unrecognized name {}".format(name))
 
@@ -95,22 +93,25 @@ class SHP(JointsDataset):
 
         meta = edict({'name': name})
         isleft = 1
+        heatmap = torch.zeros(self.cfg.NUM_JOINTS, img.size(0),img.size(1))
+
+        # for i in xrange(self.cfg.NUM_JOINTS):
+        #     heatmap[i,:,:] =  draw_heatmap(heatmap[i,:,:], coor, sigma = 1)
 
         return {'input': {'img':img, 
-                          'hand_side': torch.tensor([isleft, 1 - isleft]).float()
+                          # 'hand_side': torch.tensor([isleft, 1 - isleft]).float(),
+                          # 'heatmap': heatmap
                           },
-                'coor': to_torch(coor),
+                # 'coor': to_torch(coor),
                 'weight': 1,
                 'meta': meta}
 
     def eval_result(self, outputs, batch, cfg = None):
-        gt_coor = batch['coor']
-        pd_coor = outputs['pose3d']
-        dis = torch.norm(gt_coor - pd_coor, dim = -1)
-        dis = torch.mean(dis)        
-        return {"dis": dis}
+        pass
 
     def get_preds(self, outputs):
+        heatmap = outputs['heatmap'][-1]
+        heatmap = self.upsampler(heatmap)
         pose2d = get_preds_from_heatmap(outputs['heatmap'][-1])
         return pose2d
 
