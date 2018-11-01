@@ -8,6 +8,8 @@ DATASET:
   SHUFFLE: 0
   DATA_JSON_PATH: data/SHP/labels
   NUM_JOINTS: 21
+  TRANSFORMS:
+    RESIZE: 256
 METRIC_ITEMS: # the metric that you wanna track during training
   - loss
   - dis
@@ -19,9 +21,9 @@ MODEL:
   NAME: ICCV17
   PRETRAINED_WEIGHT_PATH: 'pretrained_weight/iccv17_pretrained.torch'
   num_joints: 21
-CRITERION: CPMMSELoss
+CRITERION: DistanceLoss #CPMMSELoss
 OUTPUT_DIR: infer_result/
 START_EPOCH: 0
 WORKERS: 1
 DARW_RESULT: True
-DEBUG: False
+DEBUG: True

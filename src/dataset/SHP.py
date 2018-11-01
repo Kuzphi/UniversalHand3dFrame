@@ -24,7 +24,7 @@ from easydict import EasyDict as edict
 from src.dataset.BaseDataset import JointsDataset
 from src.utils.imutils import im_to_torch, draw_heatmap
 from src.utils.misc import to_torch
-from src.utils.imutils import load_image
+from src.utils.imutils import load_image, resize
 from src.core.evaluate import get_preds_from_heatmap
 
 class SHP(JointsDataset):
@@ -38,10 +38,10 @@ class SHP(JointsDataset):
         self.all = 0
         for name in sorted(os.listdir(self.cfg.DATA_JSON_PATH)):
             if name[2:10] == 'Counting':
-                if (name =='B6Counting_cropped' and not self.is_train) or (name != 'B6Counting_cropped' and self.is_train):
+                if (name.startswith('B6Counting') and not self.is_train) or (not name.startswith('B6Counting') and self.is_train):
                     matPath = os.path.join(self.cfg.DATA_JSON_PATH, name)
                     self.db.append(sio.loadmat(matPath)['handPara'])
-                    self.all += 3000
+                    self.all += 1500
                     self.name.append(name[:-4])
 
         return self.db
@@ -50,6 +50,10 @@ class SHP(JointsDataset):
         return self.all
 
     def transforms(self, cfg, img, coor):
+
+        if cfg.RESIZE:
+            img = resize(img, cfg.RESIZE, cfg.RESIZE)
+
         if self.is_train:
             # s = s*torch.randn(1).mul_(sf).add_(1).clamp(1-sf, 1+sf)[0]
             # r = torch.randn(1).mul_(rf).clamp(-2*rf, 2*rf)[0] if random.random() <= 0.6 else 0
@@ -73,9 +77,10 @@ class SHP(JointsDataset):
         name = self.name[idx // 1500]
         coor = self.db[idx // 1500][:,:,idx % 1500]
 
-        coor = coor.transpose(1,0)[:,:2][:,::-1]
+        coor = coor.transpose(1,0)
         coor[1:, ] = coor[1:, :].reshape(5,4,-1)[::-1,::-1,:].reshape(20, -1)
         coor /= 100.
+        coor = np.array(coor)
 
         name = name.split("_")
 
@@ -100,10 +105,10 @@ class SHP(JointsDataset):
         #     heatmap[i,:,:] =  draw_heatmap(heatmap[i,:,:], coor, sigma = 1)
 
         return {'input': {'img':img, 
-                          # 'hand_side': torch.tensor([isleft, 1 - isleft]).float(),
+                          'hand_side': torch.tensor([isleft, 1 - isleft]).float(),
                           # 'heatmap': heatmap
                           },
-                # 'coor': to_torch(coor),
+                'coor': to_torch(coor),
                 'weight': 1,
                 'meta': meta}
 
@@ -115,10 +120,7 @@ class SHP(JointsDataset):
         return {"dis": dis}
 
     def get_preds(self, outputs):
-        heatmap = outputs['heatmap'][-1]
-        heatmap = self.upsampler(heatmap)
-        pose2d = get_preds_from_heatmap(outputs['heatmap'][-1])
-        return pose2d
+        return outputs['pose3d']
 
     def preds_demo(self, preds, fpath):
         for i in range(len(self)):
