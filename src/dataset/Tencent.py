@@ -70,7 +70,7 @@ class Tencent(JointsDataset):
         coor = torch.tensor(label['perspective']).numpy()
         coor[:,0] = (coor[:,0]) * img.shape[0]
         coor[:,1] = (1 - coor[:,1]) * img.shape[1]
-        coor[1:,:] = coor[1:,:].shape(5,4,-1)[:,::-1,:].reshape(20, -1)#iccv order !
+        coor[1:,:] = coor[1:,:].reshape(5,4,-1)[:,::-1,:].reshape(20, -1)#iccv order !
         coor = torch.from_numpy(coor)
 
         #apply transforms into image and calculate cooresponding coor
