@@ -52,7 +52,7 @@ def train(cfg, train_loader, model, criterion, optimizer, log):
 
         # debug, print intermediate result
         if cfg.DEBUG:
-            debug(outputs, batch, loss)
+            debug(outputs, batch)
 
         # measure accuracy and record loss
         metric_ = train_loader.dataset.eval_result(outputs, batch, cfg = cfg)
