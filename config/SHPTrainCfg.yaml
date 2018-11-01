@@ -2,42 +2,33 @@ CURRENT_EPOCH: 0
 TRAIN:
   DEBUG: False
   DATASET:
-    NAME: TencentHand
-    ROOT: data/TencentHand
+    NAME: SHP
+    ROOT: data/SHP
     IS_TRAIN: True
     BATCH_SIZE: 2
     SHUFFLE: 0
-    DATA_JSON_PATH: data/TencentHand/train.json
+    DATA_JSON_PATH: data/SHP/labels
     TRANSFORMS: True
     NUM_JOINTS: 21
-    HEATMAP:
-      TYPE: Gaussian # Gaussian or Cauchy
-      SIGMA: 1 #Ground truth heatmap 
 VALID:
   DEBUG: False
   DATASET:
-    NAME: TencentHand
-    ROOT: data/TencentHand
+    NAME: SHP
+    ROOT: data/SHP/
     IS_TRAIN: False
     BATCH_SIZE: 2
-    DATA_JSON_PATH: data/TencentHand/valid.json
+    DATA_JSON_PATH: data/SHP/labels
     TRANSFORMS: True
     NUM_JOINTS: 21
-    DIM_JOINT: 2
-    HEATMAP:
-      TYPE: Gaussian # Gaussian or Cauchy
-      SIGMA: 1 #Ground truth heatmap 
 DATA_DIR: ''
 END_EPOCH: 100
 GPUS:
 - 0
 - 1
-- 2
-- 3
 LOG_DIR: ''
 MODEL:
-  NAME: openpose_hand
-  PRETRAINED: 'pretrained_weight/iccv17_pose_net_pretrained.pickle'
+  NAME: ICCV17
+  PRETRAINED: 'pretrained_weight/iccv17_pose_net_pretrained.torch'
   num_joints: 21
 OPTIMIZER:
   NAME: RMSprop

@@ -37,11 +37,12 @@ class SHP(JointsDataset):
         self.name = []
         self.all = 0
         for name in sorted(os.listdir(self.cfg.DATA_JSON_PATH)):
-            if name[2:8] == 'Random':
-                matPath = os.path.join(self.cfg.DATA_JSON_PATH, name)
-                self.db.append(sio.loadmat(matPath)['handPara'])
-                self.all += 3000
-                self.name.append(name[:-4])
+            if name[2:10] == 'Counting':
+                if (name =='B6Counting_cropped' and not self.is_train) or (name != 'B6Counting_cropped' and self.is_train):
+                    matPath = os.path.join(self.cfg.DATA_JSON_PATH, name)
+                    self.db.append(sio.loadmat(matPath)['handPara'])
+                    self.all += 3000
+                    self.name.append(name[:-4])
 
         return self.db
     
@@ -107,7 +108,11 @@ class SHP(JointsDataset):
                 'meta': meta}
 
     def eval_result(self, outputs, batch, cfg = None):
-        pass
+        gt_coor = batch['coor']
+        pd_coor = outputs['pose3d']
+        dis = torch.norm(gt_coor - pd_coor, dim = -1)
+        dis = torch.mean(dis)        
+        return {"dis": dis}
 
     def get_preds(self, outputs):
         heatmap = outputs['heatmap'][-1]

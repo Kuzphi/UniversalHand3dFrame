@@ -1,26 +1,25 @@
 CURRENT_EPOCH: 0
 IS_VALID: True #validate or just inference
 DATASET:
-  NAME: RHD
-  ROOT: data/RHD/train/cropped
+  NAME: SHP
+  ROOT: data/SHP/
   IS_TRAIN: False
   BATCH_SIZE: 1
   SHUFFLE: 0
-  DATA_JSON_PATH: data/RHD/train/cropped_anno.pickle
+  DATA_JSON_PATH: data/SHP/labels
   NUM_JOINTS: 21
-  METRIC_ITEMS: # the metric that you wanna track during training
-    - loss
-    - acc
-    - dis
+METRIC_ITEMS: # the metric that you wanna track during training
+  - loss
+  - dis
 GPUS:
+  - 0
   - 1
-  - 2
-  - 3
 LOG_DIR: ''
 MODEL:
   NAME: ICCV17
   PRETRAINED_WEIGHT_PATH: 'pretrained_weight/iccv17_pretrained.torch'
   num_joints: 21
+CRITERION: CPMMSELoss
 OUTPUT_DIR: infer_result/
 START_EPOCH: 0
 WORKERS: 1
