@@ -10,6 +10,10 @@ DATASET:
   NUM_JOINTS: 21
   TRANSFORMS:
     RESIZE: 256
+  PICK:
+    - B1Random
+    - B1Counting
+    
 METRIC_ITEMS: # the metric that you wanna track during training
   - loss
   - dis

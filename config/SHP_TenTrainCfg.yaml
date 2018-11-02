@@ -24,6 +24,11 @@ TRAIN:
         - B4Counting
         - B5Counting
         - B6Counting
+        - B2Random
+        - B3Random
+        - B4Random
+        - B5Random
+        - B6Random
       IS_TRAIN: True
       TRANSFORMS:
         RESIZE: 256
@@ -45,6 +50,7 @@ VALID:
   DATASET:
     PICK:
       - B1Counting
+      - B1Random
     NAME: SHP
     ROOT: data/SHP/
     DATA_JSON_PATH: data/SHP/labels
