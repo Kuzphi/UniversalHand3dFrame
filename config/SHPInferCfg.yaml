@@ -4,7 +4,7 @@ DATASET:
   NAME: SHP
   ROOT: data/SHP/
   IS_TRAIN: False
-  BATCH_SIZE: 1
+  BATCH_SIZE: 20
   SHUFFLE: 0
   DATA_JSON_PATH: data/SHP/labels
   NUM_JOINTS: 21
@@ -13,7 +13,7 @@ DATASET:
   PICK:
     - B1Random
     - B1Counting
-    
+
 METRIC_ITEMS: # the metric that you wanna track during training
   - loss
   - dis
@@ -30,4 +30,4 @@ OUTPUT_DIR: infer_result/
 START_EPOCH: 0
 WORKERS: 1
 DARW_RESULT: False
-DEBUG: True
+DEBUG: False
