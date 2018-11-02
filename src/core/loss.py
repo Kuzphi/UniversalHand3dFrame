@@ -14,7 +14,6 @@ from src.utils.misc import to_torch
 
 def DistanceLoss(outputs, batch):
     gt_coor = batch['coor']
-    gt_coor = gt_coor - gt_coor[:,:1,:].repeat(1,21,1)
     pred_coor = outputs['pose3d'].cpu() * batch['index_bone_length'].view(-1,1,1).repeat(1,21,3)
 
     dis = torch.norm(gt_coor - pred_coor, dim = -1)

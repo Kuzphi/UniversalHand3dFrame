@@ -90,7 +90,7 @@ class RHD(JointsDataset):
         return {"dis": dis}
 
     def get_preds(self, outputs):
-        return outputs['pose3d']
+        return outputs['pose3d'] * batch['index_bone_length'].view(-1,1,1).repeat(1,21,3)
 
     # def __len__(self):
     #     return 100

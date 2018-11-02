@@ -48,10 +48,13 @@ class RHD_Tencent(JointsDataset):
 
     def eval_result(self, outputs, batch, cfg = None):
         gt_coor = batch['coor']
-        pd_coor = outputs['pose3d']
-        dis = torch.norm(gt_coor - pd_coor, dim = -1)
-        dis = torch.mean(dis)
+        # print(outputs['pose3d'].size(), batch['index_bone_length'].size())
+        pred_coor = outputs['pose3d'] * batch['index_bone_length'].view(-1,1,1).repeat(1,21,3)
+
+        dis = torch.norm(gt_coor - pred_coor, dim = -1)
+
+        dis = torch.mean(dis)        
         return {"dis": dis}
 
     def get_preds(self, outputs):
-        return outputs['pose3d']
+        return outputs['pose3d'] * batch['index_bone_length'].view(-1,1,1).repeat(1,21,3)
