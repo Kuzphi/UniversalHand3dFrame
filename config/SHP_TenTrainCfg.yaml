@@ -1,0 +1,99 @@
+TRAIN:
+  DEBUG: False
+  METRIC_ITEMS: # the metric that you wanna track during training
+  - loss
+  - dis
+  DATASET:
+    NAME: SHP_Tencent
+    TENCENT:
+      NAME: Tencent
+      ROOT: data/TencentHand
+      DATA_JSON_PATH: data/TencentHand/train.json
+      IS_TRAIN: True
+      TRANSFORMS:
+        RESIZE: 256
+        FLIP: True
+        COLOR_NORISE: True
+    SHP:
+      NAME: SHP
+      ROOT: data/SHP/
+      DATA_JSON_PATH: data/SHP/labels
+      PICK:
+        - B2Counting
+        - B3Counting
+        - B4Counting
+        - B5Counting
+        - B6Counting
+      IS_TRAIN: True
+      TRANSFORMS:
+        RESIZE: 256
+        FLIP: True
+        COLOR_NORISE: True
+
+    IS_TRAIN: True
+    BATCH_SIZE: 24
+    SHUFFLE: True
+    NUM_JOINTS: 21
+
+VALID:
+  DEBUG: False
+  IS_VALID: True
+  NUM_JOINTS: 21
+  METRIC_ITEMS:
+    - loss
+    - dis
+  DATASET:
+    PICK:
+      - B1Counting
+    NAME: SHP
+    ROOT: data/SHP/
+    DATA_JSON_PATH: data/SHP/labels
+    IS_TRAIN: False
+    TRANSFORMS:
+      RESIZE: 256
+      FLIP: False
+      COLOR_NORISE: False
+
+    IS_TRAIN: False
+    BATCH_SIZE: 2
+    TRANSFORMS:
+      RESIZE: 256
+      FLIP: True
+      COLOR_NORISE: True
+
+CRITERION: DistanceLoss
+GPUS:
+- 0
+- 1
+LOG_DIR: ''
+MODEL:
+  NAME: ICCV17
+  PRETRAINED_WEIGHT_PATH: 'pretrained_weight/iccv17-rhd-stb.torch'
+  num_joints: 21
+OPTIMIZER:
+  NAME: RMSprop
+  PARAMETERS:
+    lr: 2.5e-05
+    momentum: 0
+    weight_decay: 0
+OPTIMIZER_SCHEDULE:
+  NAME: StepLR
+  PARAMETERS:
+    gamma: 0.1
+    step_size: 30
+LOG:
+  PATH: output
+  MONITOR_ITEM:
+    - lr
+    - train_loss
+    - valid_loss
+    - train_dis
+    - valid_dis
+CURRENT_EPOCH: 0
+OUTPUT_DIR: output/
+START_EPOCH: 0
+WORKERS: 40
+RESUME_TRAIN: 0
+MAIN_METRIC: loss
+DATA_DIR: ''
+END_EPOCH: 100

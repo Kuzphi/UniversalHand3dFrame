@@ -37,13 +37,12 @@ class SHP(JointsDataset):
         self.name = []
         self.all = 0
         for name in sorted(os.listdir(self.cfg.DATA_JSON_PATH)):
-            if name[2:13] == 'Counting_BB':
-                if (name.startswith('B6Counting') and not self.is_train) or (not name.startswith('B6Counting') and self.is_train):
-                    matPath = os.path.join(self.cfg.DATA_JSON_PATH, name)
-                    self.db.append(sio.loadmat(matPath)['handPara'])
-                    self.all += 1500
-                    self.name.append(name[:-4])
-
+            if name[:-7] in self.cfg.PICK:
+                matPath = os.path.join(self.cfg.DATA_JSON_PATH, name)
+                self.db.append(sio.loadmat(matPath)['handPara'])
+                self.all += 1500
+                self.name.append(name[:-4])
+        print(self.all)
         return self.db
     
     def __len__(self):
@@ -121,8 +120,8 @@ class SHP(JointsDataset):
         dis = torch.mean(dis)        
         return {"dis": dis}
 
-    def get_preds(self, outputs):
-        return outputs['pose3d']
+    def get_preds(self, outputs, batch):
+        return outputs['pose3d'] * batch['index_bone_length'].view(-1,1,1).repeat(1,21,3)
 
     def preds_demo(self, preds, fpath):
         for i in range(len(self)):
