@@ -69,7 +69,7 @@ class RHD(JointsDataset):
         #     img, coor = self.transforms(self.cfg.TRANSFORMS, img , coor)
         # print(idx, coor.sum())
         meta = edict({'name': name})
-        isleft = label['isleft']
+        isleft = int(label['isleft'])
 
         return {'input': {'img':img, 
                           'hand_side': torch.tensor([isleft, 1 - isleft]).float(),                          
@@ -89,7 +89,7 @@ class RHD(JointsDataset):
         dis = torch.mean(dis)        
         return {"dis": dis}
 
-    def get_preds(self, outputs):
+    def get_preds(self, outputs, batch):
         return outputs['pose3d'] * batch['index_bone_length'].view(-1,1,1).repeat(1,21,3)
 
     # def __len__(self):

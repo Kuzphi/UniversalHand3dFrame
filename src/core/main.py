@@ -116,7 +116,7 @@ def validate(cfg, val_loader, model, criterion, log = None):
             if cfg.DEBUG:
                 debug(outputs, batch)
 
-            preds = val_loader.dataset.get_preds(outputs)
+            preds = val_loader.dataset.get_preds(outputs, batch)
             all_preds.append(preds)
 
             # measure elapsed time
