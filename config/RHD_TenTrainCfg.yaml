@@ -14,8 +14,8 @@ TRAIN:
         FLIP: True
         COLOR_NORISE: True
     RHD:
-      ROOT: data/RHD/training/cropped    
-      DATA_JSON_PATH: data/RHD/training/cropped_anno.pickle
+      ROOT: data/RHD/training/cropped_full    
+      DATA_JSON_PATH: data/RHD/training/cropped_anno_full.pickle
       IS_TRAIN: True
       TRANSFORMS:
         RESIZE: 256
@@ -36,8 +36,8 @@ VALID:
     - dis
   DATASET:
     NAME: RHD
-    ROOT: data/RHD/evaluation/cropped    
-    DATA_JSON_PATH: data/RHD/evaluation/cropped_anno.pickle
+    ROOT: data/RHD/evaluation/cropped_bigger   
+    DATA_JSON_PATH: data/RHD/evaluation/cropped_anno_bigger.pickle
     IS_TRAIN: False
     TRANSFORMS:
       RESIZE: 256
@@ -60,12 +60,12 @@ GPUS:
 LOG_DIR: ''
 MODEL:
   NAME: ICCV17
-  PRETRAINED_WEIGHT_PATH: 'pretrained_weight/iccv17_pretrained.torch'
+  PRETRAINED_WEIGHT_PATH: 'pretrained_weight/iccv17-rhd-stb.torch'
   num_joints: 21
 OPTIMIZER:
   NAME: RMSprop
   PARAMETERS:
-    lr: 5.e-06
+    lr: 2.5e-05
     momentum: 0
     weight_decay: 0
 OPTIMIZER_SCHEDULE:

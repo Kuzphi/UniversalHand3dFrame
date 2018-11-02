@@ -24,7 +24,7 @@ GPUS:
 LOG_DIR: ''
 MODEL:
   NAME: ICCV17
-  PRETRAINED: 'pretrained/iccv17_pose_net_pretrained.pickle'
+  PRETRAINED: 'pretrained/iccv17_pretrained-rhd-stb.torch'
   num_joints: 21
 OPTIMIZER:
   NAME: RMSprop

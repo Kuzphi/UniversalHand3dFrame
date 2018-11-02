@@ -13,8 +13,13 @@ import torch.nn as nn
 from src.utils.misc import to_torch
 
 def DistanceLoss(outputs, batch):
-    distance = torch.norm(outputs['pose3d'] - batch['coor'].cuda(), dim = -1)
-    return distance.mean()
+    gt_coor = batch['coor']
+    gt_coor = gt_coor - gt_coor[:,:1,:].repeat(1,21,1)
+    pred_coor = outputs['pose3d'].cpu() * batch['index_bone_length'].view(-1,1,1).repeat(1,21,3)
+
+    dis = torch.norm(gt_coor - pred_coor, dim = -1)
+    dis = torch.mean(dis) 
+    return dis
 
 def CPMMSELoss(outputs, batch):
     criterion = nn.MSELoss(size_average=True)

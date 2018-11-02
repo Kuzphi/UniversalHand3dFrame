@@ -19,11 +19,11 @@ GPUS:
 LOG_DIR: ''
 MODEL:
   NAME: ICCV17
-  PRETRAINED_WEIGHT_PATH: 'pretrained_weight/iccv17_pretrained.torch'
+  PRETRAINED_WEIGHT_PATH: 'pretrained_weight/iccv17-rhd-stb.torch'
   num_joints: 21
 CRITERION: DistanceLoss #CPMMSELoss
 OUTPUT_DIR: infer_result/
 START_EPOCH: 0
 WORKERS: 1
-DARW_RESULT: True
+DARW_RESULT: False
 DEBUG: True

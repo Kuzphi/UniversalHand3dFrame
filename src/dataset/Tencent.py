@@ -68,11 +68,11 @@ class Tencent(JointsDataset):
 
         #calculate ground truth coordination
         coor = torch.tensor(label['camera']).numpy()
-        # coor[:,0] = (coor[:,0]) * img.shape[0]
-        # coor[:,1] = (1 - coor[:,1]) * img.shape[1]
         coor[1:,:] = coor[1:,:].reshape(5,4,-1)[:,::-1,:].reshape(20, -1)#iccv order !
-        coor = torch.from_numpy(coor)
-
+        coor = np.array(coor)
+        coor = to_torch(coor)
+        coor = coor - coor[:1,:].repeat(21, 1)
+        index_bone_length = torch.norm(coor[12,:] - coor[11,:])
         #apply transforms into image and calculate cooresponding coor
         if self.cfg.TRANSFORMS:
             img, label = self.transforms(self.cfg.TRANSFORMS, img , coor)
@@ -90,7 +90,7 @@ class Tencent(JointsDataset):
                             'hand_side': torch.tensor([0, 1]).float()},
                  'coor': to_torch(coor),
                  # 'heat_map': to_torch(heat_map),
-
+                 'index_bone_length': index_bone_length,
                  'weight': 1,
                  'meta': meta}
 

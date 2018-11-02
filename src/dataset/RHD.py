@@ -60,26 +60,32 @@ class RHD(JointsDataset):
         image_path   = os.path.join(self.cfg.ROOT, name)
         img = load_image(image_path)
 
-        coor = label['xyz_coor']
-
+        coor = to_torch(label['xyz_coor'])
+        index_bone_length = torch.norm(coor[12,:] - coor[11,:])
+        coor[0, :] = (coor[0] + coor[12]) / 2.
+        coor = coor - coor[:1,:].repeat(21,1)
         #apply transforms into image and calculate cooresponding coor
-        if self.cfg.TRANSFORMS:
-            img, coor = self.transforms(self.cfg.TRANSFORMS, img , coor)
-
+        # if self.cfg.TRANSFORMS:
+        #     img, coor = self.transforms(self.cfg.TRANSFORMS, img , coor)
+        # print(idx, coor.sum())
         meta = edict({'name': name})
         isleft = label['isleft']
 
         return {'input': {'img':img, 
-                          'hand_side': torch.tensor([isleft, 1 - isleft]).float()
+                          'hand_side': torch.tensor([isleft, 1 - isleft]).float(),                          
                           },
+                'index_bone_length': index_bone_length,
                 'coor': to_torch(coor),
                 'weight': 1,
                 'meta': meta}
 
     def eval_result(self, outputs, batch, cfg = None):
         gt_coor = batch['coor']
-        pd_coor = outputs['pose3d']
-        dis = torch.norm(gt_coor - pd_coor, dim = -1)
+        # print(outputs['pose3d'].size(), batch['index_bone_length'].size())
+        pred_coor = outputs['pose3d'] * batch['index_bone_length'].view(-1,1,1).repeat(1,21,3)
+
+        dis = torch.norm(gt_coor - pred_coor, dim = -1)
+
         dis = torch.mean(dis)        
         return {"dis": dis}
 

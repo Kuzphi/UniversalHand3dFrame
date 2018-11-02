@@ -24,7 +24,7 @@ from easydict import EasyDict as edict
 from src.dataset.BaseDataset import JointsDataset
 from src.utils.imutils import im_to_torch, draw_heatmap
 from src.utils.misc import to_torch
-from src.utils.imutils import load_image, resize
+from src.utils.imutils import load_image, resize, im_to_numpy
 from src.core.evaluate import get_preds_from_heatmap
 
 class SHP(JointsDataset):
@@ -37,7 +37,7 @@ class SHP(JointsDataset):
         self.name = []
         self.all = 0
         for name in sorted(os.listdir(self.cfg.DATA_JSON_PATH)):
-            if name[2:10] == 'Counting':
+            if name[2:13] == 'Counting_BB':
                 if (name.startswith('B6Counting') and not self.is_train) or (not name.startswith('B6Counting') and self.is_train):
                     matPath = os.path.join(self.cfg.DATA_JSON_PATH, name)
                     self.db.append(sio.loadmat(matPath)['handPara'])
@@ -77,13 +77,15 @@ class SHP(JointsDataset):
         name = self.name[idx // 1500]
         coor = self.db[idx // 1500][:,:,idx % 1500]
 
-        coor = coor.transpose(1,0)
+        coor = coor.transpose(1,0) / 1000. #milionmeter to meter
         coor[1:, ] = coor[1:, :].reshape(5,4,-1)[::-1,::-1,:].reshape(20, -1)
-        coor /= 100.
         coor = np.array(coor)
 
-        name = name.split("_")
+        coor = to_torch(coor)
+        index_bone_length = torch.norm(coor[12,:] - coor[11,:])
+        coor = coor - coor[:1,:].repeat(21,1)
 
+        name = name.split("_")
         if name[1] == 'BB':
             image_path   = os.path.join(self.cfg.ROOT, name[0]+"_cropped", "_".join([name[1], 'left', str(idx % 1500)]) + '.png')
         elif name[1] == 'SK':
@@ -99,23 +101,23 @@ class SHP(JointsDataset):
 
         meta = edict({'name': name})
         isleft = 1
-        heatmap = torch.zeros(self.cfg.NUM_JOINTS, img.size(0),img.size(1))
-
-        # for i in xrange(self.cfg.NUM_JOINTS):
-        #     heatmap[i,:,:] =  draw_heatmap(heatmap[i,:,:], coor, sigma = 1)
 
         return {'input': {'img':img, 
                           'hand_side': torch.tensor([isleft, 1 - isleft]).float(),
                           # 'heatmap': heatmap
                           },
-                'coor': to_torch(coor),
+                "index_bone_length": index_bone_length,
+                'coor': coor, 
                 'weight': 1,
                 'meta': meta}
 
     def eval_result(self, outputs, batch, cfg = None):
         gt_coor = batch['coor']
-        pd_coor = outputs['pose3d']
-        dis = torch.norm(gt_coor - pd_coor, dim = -1)
+        # print(outputs['pose3d'].size(), batch['index_bone_length'].size())
+        pred_coor = outputs['pose3d'] * batch['index_bone_length'].view(-1,1,1).repeat(1,21,3)
+
+        dis = torch.norm(gt_coor - pred_coor, dim = -1)
+
         dis = torch.mean(dis)        
         return {"dis": dis}
 

@@ -102,7 +102,7 @@ def main(args):
             'state_dict': model.state_dict(),
             'best': sgn * best,
             'optimizer' : optimizer.state_dict(),
-        }, predictions, cfg, log, is_best, fpath=cfg.CHECKPOINT, snapshot = 30)
+        }, predictions, cfg, log, is_best, fpath=cfg.CHECKPOINT, snapshot = 5)
 
         cfg.CURRENT_EPOCH = epoch
 
