@@ -46,9 +46,12 @@ def im_to_torch(img):
         img = img / 255 - 0.5
     return img
 
-def load_image(img_path):
+def load_image(img_path, mode = 'RGB'): #matplotlib and scipy is RGB, opencv is GBR
     # H x W x C => C x H x W
-    return im_to_torch(scipy.misc.imread(img_path, mode='RGB'))
+    img = scipy.misc.imread(img_path, mode='RGB')
+    if mode == 'GBR':
+      img = np.array(img[:,:,::-1])
+    return im_to_torch(img)
 
 def resize(img, owidth, oheight):
     img = im_to_numpy(img)

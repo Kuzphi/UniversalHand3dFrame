@@ -59,12 +59,7 @@ class RHD2D(JointsDataset):
         label = self.anno[name]
 
         image_path   = os.path.join(self.cfg.ROOT, name)
-        # img = load_image(image_path) # already / 255
-        img = scipy.misc.imread(image_path)
-        img = img / 255. - 0.5
-        img = img.transpose(2,0,1).astype(np.float32)
-        img = np.array(img[::-1,:,:])
-        img = torch.from_numpy(img).float()
+        img = load_image(image_path, mode = 'GBR') # already / 255
 
         coor = label['uv_coor']
         coor[1:,:] = coor[1:,:].reshape(5,4,-1)[:,::-1,:].reshape(20, -1)

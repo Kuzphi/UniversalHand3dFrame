@@ -3,8 +3,9 @@ TRAIN:
   METRIC_ITEMS: # the metric that you wanna track during training
   - loss
   - dis
+  - PcKAcc
   DATASET:
-    NAME: RHD_Tencent
+    NAME: RHD_Tencent2D
     TENCENT:
       ROOT: data/TencentHand
       DATA_JSON_PATH: data/TencentHand/train.json
@@ -31,9 +32,6 @@ VALID:
   DEBUG: False
   IS_VALID: True
   NUM_JOINTS: 21
-  METRIC_ITEMS:
-    - loss
-    - dis
   DATASET:
     NAME: RHD
     ROOT: data/RHD/evaluation/cropped_bigger   
@@ -59,9 +57,9 @@ GPUS:
 - 3
 LOG_DIR: ''
 MODEL:
-  NAME: ICCV17
-  PRETRAINED_WEIGHT_PATH: 'pretrained_weight/iccv17-rhd-stb.torch'
-  num_joints: 21
+  NAME: openpose_hands
+  PRETRAINED_WEIGHT_PATH: 'pretrained_weight/openpose_hand.torch'
+  num_joints: 22
 OPTIMIZER:
   NAME: RMSprop
   PARAMETERS:
@@ -81,6 +79,8 @@ LOG:
     - valid_loss
     - train_dis
     - valid_dis
+    - train_PckAcc
+    - valid_PckAcc
 CURRENT_EPOCH: 0
 OUTPUT_DIR: output/
 START_EPOCH: 0

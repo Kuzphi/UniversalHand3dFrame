@@ -61,36 +61,31 @@ class Tencent(JointsDataset):
         image_path   = os.path.join(self.cfg.ROOT, w[1], w[1] + w[2], 'image', w[0] + '.png')
         label_path = os.path.join(self.cfg.ROOT, w[1], w[1] + w[2], 'label', w[0] + '.json')
 
-        img = load_image(image_path)
-
+        img = load_image(image_path, mode = 'GBR')
         
         label = json.load(open(label_path))
 
         #calculate ground truth coordination
-        coor = torch.tensor(label['camera']).numpy()
-        coor[1:,:] = coor[1:,:].reshape(5,4,-1)[:,::-1,:].reshape(20, -1)#iccv order !
-        coor = np.array(coor)
-        coor = to_torch(coor)
-        coor = coor - coor[:1,:].repeat(21, 1)
-        index_bone_length = torch.norm(coor[12,:] - coor[11,:])
+        coor = np.array(label['perspective'])
+        coor[:, 0] = coor[:, 0] * img.size(0)
+        coor[:, 1] = coor[:, 1] * img.size(1)
+        coor = coor[:, :2]
+
         #apply transforms into image and calculate cooresponding coor
         if self.cfg.TRANSFORMS:
             img, label = self.transforms(self.cfg.TRANSFORMS, img , coor)
 
-        # heat_map = np.zeros((self.cfg.NUM_JOINTS, img.shape[1], img.shape[2]))
-
-        # for i in range(self.cfg.NUM_JOINTS):
-        #     heat_map[i, :, :] = draw_heatmap(heat_map[i], coor[i], self.cfg.HEATMAP.SIGMA, type = self.cfg.HEATMAP.TYPE) 
+        heat_map = np.zeros((self.cfg.NUM_JOINTS, img.shape[1], img.shape[2]))
+        for i in range(self.cfg.NUM_JOINTS):
+            heat_map[i, :, :] = draw_heatmap(heat_map[i], coor[i], self.cfg.HEATMAP.SIGMA, type = self.cfg.HEATMAP.TYPE) 
 
 
         meta = edict({
                 'name': w[1] + ' ' + w[2] + ' ' + w[0]})
 
-        return { 'input':  {'img':img,
-                            'hand_side': torch.tensor([0, 1]).float()},
+        return { 'input':  {'img':img},
                  'coor': to_torch(coor),
-                 # 'heat_map': to_torch(heat_map),
-                 'index_bone_length': index_bone_length,
+                 'heat_map': to_torch(heat_map),
                  'weight': 1,
                  'meta': meta}
 
