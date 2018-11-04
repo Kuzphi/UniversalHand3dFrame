@@ -36,7 +36,7 @@ def train(cfg, train_loader, model, criterion, optimizer, log):
         # measure data loading time
         data_time.update(time.time() - end)
 
-        # compute output
+        # compute output        
         outputs = model(to_cuda(batch['input']))
 
         #calculate loss
@@ -102,7 +102,6 @@ def validate(cfg, val_loader, model, criterion, log = None):
             data_time.update(time.time() - end)
             
             # compute output
-
             outputs = model(to_cuda(batch['input']))
 
             #calculate loss

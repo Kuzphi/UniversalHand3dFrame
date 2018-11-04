@@ -51,7 +51,7 @@ VALID:
       FLIP: True
       COLOR_NORISE: True
 
-CRITERION: DistanceLoss
+CRITERION: CPMMSELoss
 GPUS:
 - 0
 - 1

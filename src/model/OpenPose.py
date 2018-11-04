@@ -104,7 +104,7 @@ class OpenPose_CPM(nn.Module):
 		out_6 = self.stage6(out_6)
 
 		outputs = [out_1, out_2, out_3, out_4, out_5, out_6]
-		# outputs = [self.upsampler(out) for out in outputs]
+		outputs = [self.upsampler(out) for out in outputs]
 		return {'heatmap': outputs}
 
 class OpenPose_Pose(nn.Module):

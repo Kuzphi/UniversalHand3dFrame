@@ -6,7 +6,7 @@ TRAIN:
   - dis
   - PckAcc
   DATASET:
-    NAME: RHD
+    NAME: RHD2D
     ROOT: data/RHD/training/cropped    
     DATA_JSON_PATH: data/RHD/training/cropped_anno.pickle
     IS_TRAIN: True
@@ -19,6 +19,7 @@ TRAIN:
     BATCH_SIZE: 24
     SHUFFLE: True
     NUM_JOINTS: 21
+    THR: 20
 
 VALID:
   DEBUG: False
@@ -29,7 +30,7 @@ VALID:
     - dis
     - PckAcc
   DATASET:
-    NAME: RHD
+    NAME: RHD2D
     ROOT: data/RHD/evaluation/cropped    
     DATA_JSON_PATH: data/RHD/evaluation/cropped_anno.pickle
     IS_TRAIN: False
@@ -37,7 +38,7 @@ VALID:
       RESIZE: 256
       FLIP: False
       COLOR_NORISE: False
-
+    THR: 20
     IS_TRAIN: False
     BATCH_SIZE: 2
     TRANSFORMS:
@@ -48,7 +49,7 @@ VALID:
 
 DATA_DIR: ''
 END_EPOCH: 100
-CRITERION: DistanceLoss
+CRITERION: CPMMSELoss
 GPUS:
 - 0
 - 1
@@ -56,8 +57,8 @@ GPUS:
 - 3
 LOG_DIR: ''
 MODEL:
-  NAME: ICCV17
-  PRETRAINED_WEIGHT_PATH: 'pretrained_weight/iccv17_pretrained.torch'
+  NAME: openpose_hand
+  PRETRAINED_WEIGHT_PATH: 'pretrained_weight/openpose_hand.torch'
   num_joints: 21
 OPTIMIZER:
   NAME: RMSprop

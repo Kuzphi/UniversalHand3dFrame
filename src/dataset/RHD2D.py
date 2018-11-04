@@ -11,6 +11,7 @@ from __future__ import print_function
 import copy
 import logging
 import random
+import scipy
 
 import os
 import cv2
@@ -26,10 +27,10 @@ from src.utils.misc import to_torch
 from src.utils.imutils import load_image
 from src.core.evaluate import get_preds_from_heatmap
 
-class RHD(JointsDataset):
+class RHD2D(JointsDataset):
     """docstring for TencentHand"""
     def __init__(self, cfg):
-        super(RHD, self).__init__(cfg)
+        super(RHD2D, self).__init__(cfg)
 
     def _get_db(self):
         self.anno = pickle.load(open(self.cfg.DATA_JSON_PATH))
@@ -58,34 +59,38 @@ class RHD(JointsDataset):
         label = self.anno[name]
 
         image_path   = os.path.join(self.cfg.ROOT, name)
-        img = load_image(image_path)
+        # img = load_image(image_path) # already / 255
+        img = scipy.misc.imread(image_path)
+        img = img / 255. - 0.5
+        img = img.transpose(2,0,1).astype(np.float32)
+        img = np.array(img[::-1,:,:])
+        img = torch.from_numpy(img).float()
 
-        coor = to_torch(label['uv_coor'])
+        coor = label['uv_coor']
+        coor[1:,:] = coor[1:,:].reshape(5,4,-1)[:,::-1,:].reshape(20, -1)
+        coor = np.array(coor)
+        coor = to_torch(coor)
         #apply transforms into image and calculate cooresponding coor
-        if self.cfg.TRANSFORMS:
-            img, coor = self.transforms(self.cfg.TRANSFORMS, img , coor)
-        # print(idx, coor.sum())
+        # if self.cfg.TRANSFORMS:
+        #     img, coor = self.transforms(self.cfg.TRANSFORMS, img , coor)
+        
         meta = edict({'name': name})
-        isleft = int(label['isleft'])
         heatmap = torch.zeros(22, img.size(1), img.size(2))
         for i in range(21):
-            draw_heatmap(heatmap[i], uv_coor[i])
-
-        return {'input': {'img':img, 
-                          'hand_side': torch.tensor([isleft, 1 - isleft]).float(), 
-                          'heatmap': heatmap                         
-                          },
-                'index_bone_length': index_bone_length,
-                'coor': to_torch(coor),
+            heatmap[i] = draw_heatmap(heatmap[i], coor[i])
+        
+        return {'input': {'img':img},
+                'heatmap': heatmap,
+                'coor': to_torch(coor[:,:2]),
                 'weight': 1,
                 'meta': meta}
 
     def eval_result(self, outputs, batch, cfg = None):
         preds = get_preds_from_heatmap(outputs['heatmap'][-1])
-        diff = batch['uv_coor'][:, :2] - preds
+        diff = batch['coor'] - preds
         dis = torch.norm(diff, dim = -1)
-        PcK_Acc = (dis > thr).mean()
-        return {"dis": dis.mean(), "PcK_Acc":PcK_Acc}
+        PcK_Acc = (dis > self.cfg.THR).float().mean()
+        return {"dis": dis.mean(), "PcKAcc":PcK_Acc}
 
     def get_preds(self, outputs, batch):
         return get_preds_from_heatmap(outputs['heatmap'][-1])

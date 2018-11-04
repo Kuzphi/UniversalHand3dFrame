@@ -38,7 +38,7 @@ def main(args):
 
     print("Creating Model")
     model = eval('model.' + cfg.MODEL.NAME)(**cfg.MODEL)
-    model = torch.nn.DataParallel(model, device_ids=cfg.GPUS).cuda()
+    model = torch.nn.DataParallel(model, device_ids=cfg.GPUS).cuda().eval()
 
     print("Loading Pretrained Weight")
     weight = torch.load(cfg.MODEL.PRETRAINED_WEIGHT_PATH)

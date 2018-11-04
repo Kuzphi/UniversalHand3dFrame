@@ -7,7 +7,7 @@ import torch
 
 from random import randint
 from src.utils.transforms import transform, transform_preds
-
+from src.utils.misc import to_torch
 __all__ = ['accuracy', 'AverageMeter']
 
 def get_preds_from_heatmap(scoremaps):
@@ -22,7 +22,7 @@ def get_preds_from_heatmap(scoremaps):
             v, u = np.unravel_index(np.argmax(scoremaps[idx, i, :, :]), (s[2], s[3]))
             keypoint_coords[idx, i, 0] = v
             keypoint_coords[idx, i, 1] = u
-    return keypoint_coords
+    return to_torch(keypoint_coords[:,:21,:])
 
 def calc_dists(preds, target):
     preds = preds.float()

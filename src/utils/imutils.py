@@ -76,7 +76,7 @@ def gaussian(shape=(7,7),sigma=1):
     h[ h < np.finfo(h.dtype).eps*h.max() ] = 0
     return to_torch(h).float()
 
-def draw_heatmap(img, pt, sigma, type='Gaussian'):
+def draw_heatmap(img, pt, sigma = 1, type='Gaussian'):
     # Draw a 2D gaussian 
     # Adopted from https://github.com/anewell/pose-hg-train/blob/master/src/pypose/draw.py
     img = to_numpy(img)

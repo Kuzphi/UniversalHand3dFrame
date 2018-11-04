@@ -24,7 +24,7 @@ def CPMMSELoss(outputs, batch):
     criterion = nn.MSELoss(size_average=True)
     loss = torch.zeros(1).cuda()
     target = batch['heatmap'].cuda()
-    for pred in outputs:
+    for pred in outputs['heatmap']:
         loss += criterion(pred, target)
     return loss
 
