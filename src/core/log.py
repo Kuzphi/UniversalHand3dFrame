@@ -36,8 +36,8 @@ class Log(object):
                 self.log[item] = self.ori_log[item]
         else:            
             for item in monitor_item:
-                self.log[item] = []
-
+                self.log['train_' + item] = []
+                self.log['valid_' + item] = []
 
     def append(self, update):
         for key in self.monitor_item:

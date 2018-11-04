@@ -72,10 +72,6 @@ LOG:
   PATH: output
   MONITOR_ITEM:
     - lr
-    - train_loss
-    - valid_loss
-    - train_dis
-    - valid_dis
 OUTPUT_DIR: output/
 START_EPOCH: 0
 WORKERS: 40

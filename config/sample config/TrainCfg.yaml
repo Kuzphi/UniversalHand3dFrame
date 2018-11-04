@@ -52,12 +52,8 @@ OPTIMIZER_SCHEDULE:
     step_size: 30
 LOG:
   PATH: output
-  MONITOR_ITEM:
+  MONITOR_ITEM: #all the metric item would be load in monitor item automaticlly 
     - lr
-    - train_loss
-    - valid_loss
-    - train_acc
-    - valid_acc
 OUTPUT_DIR: output/
 START_EPOCH: 0
 WORKERS: 8

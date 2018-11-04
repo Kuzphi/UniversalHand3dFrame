@@ -45,10 +45,6 @@ LOG:
   PATH: output
   MONITOR_ITEM:
     - lr
-    - train_loss
-    - valid_loss
-    - train_acc
-    - valid_acc
 OUTPUT_DIR: output/
 START_EPOCH: 0
 WORKERS: 8
