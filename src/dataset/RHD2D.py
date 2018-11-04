@@ -84,7 +84,7 @@ class RHD2D(JointsDataset):
         preds = get_preds_from_heatmap(outputs['heatmap'][-1])
         diff = batch['coor'] - preds
         dis = torch.norm(diff, dim = -1)
-        PcK_Acc = (dis > self.cfg.THR).float().mean()
+        PcK_Acc = (dis < self.cfg.THR).float().mean()
         return {"dis": dis.mean(), "PcKAcc":PcK_Acc}
 
     def get_preds(self, outputs, batch):

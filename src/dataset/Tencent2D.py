@@ -24,10 +24,10 @@ from src.utils.imutils import im_to_torch, draw_heatmap, load_image, resize
 from src.utils.misc import to_torch
 
 
-class Tencent(JointsDataset):
+class Tencent2D(JointsDataset):
     """docstring for TencentHand"""
     def __init__(self, cfg):
-        super(Tencent, self).__init__(cfg)
+        super(Tencent2D, self).__init__(cfg)
 
     def _get_db(self):
         return json.load(open(self.cfg.DATA_JSON_PATH))
@@ -75,17 +75,17 @@ class Tencent(JointsDataset):
         if self.cfg.TRANSFORMS:
             img, label = self.transforms(self.cfg.TRANSFORMS, img , coor)
 
-        heat_map = np.zeros((self.cfg.NUM_JOINTS, img.shape[1], img.shape[2]))
-        for i in range(self.cfg.NUM_JOINTS):
-            heat_map[i, :, :] = draw_heatmap(heat_map[i], coor[i], self.cfg.HEATMAP.SIGMA, type = self.cfg.HEATMAP.TYPE) 
+        #openpose require 22 channel, discard the last one
+        heatmap = np.zeros((self.cfg.NUM_JOINTS, img.shape[1], img.shape[2]))
+        for i in range(self.cfg.NUM_JOINTS - 1):
+            heatmap[i, :, :] = draw_heatmap(heatmap[i], coor[i], self.cfg.HEATMAP.SIGMA, type = self.cfg.HEATMAP.TYPE) 
 
 
-        meta = edict({
-                'name': w[1] + ' ' + w[2] + ' ' + w[0]})
+        meta = edict({'name': w[1] + ' ' + w[2] + ' ' + w[0]})
 
         return { 'input':  {'img':img},
                  'coor': to_torch(coor),
-                 'heat_map': to_torch(heat_map),
+                 'heatmap': to_torch(heatmap),
                  'weight': 1,
                  'meta': meta}
 

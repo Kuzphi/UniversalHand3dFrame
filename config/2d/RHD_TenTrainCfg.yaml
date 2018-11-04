@@ -10,54 +10,62 @@ TRAIN:
       ROOT: data/TencentHand
       DATA_JSON_PATH: data/TencentHand/train.json
       IS_TRAIN: True
+      NUM_JOINTS: 22
       TRANSFORMS:
         RESIZE: 256
         FLIP: True
         COLOR_NORISE: True
+      HEATMAP:
+        TYPE: Gaussian # Gaussian or Cauchy
+        SIGMA: 1 #Ground truth heatmap 
     RHD:
       ROOT: data/RHD/training/cropped_full    
       DATA_JSON_PATH: data/RHD/training/cropped_anno_full.pickle
       IS_TRAIN: True
+      
       TRANSFORMS:
         RESIZE: 256
         FLIP: True
         COLOR_NORISE: True
-
+      HEATMAP:
+        TYPE: Gaussian # Gaussian or Cauchy
+        SIGMA: 1 #Ground truth heatmap 
+    THR: 20
     IS_TRAIN: True
     BATCH_SIZE: 24
     SHUFFLE: True
-    NUM_JOINTS: 21
 
 VALID:
   DEBUG: False
   IS_VALID: True
+  METRIC_ITEMS: # the metric that you wanna track during valid
+    - loss
+    - dis
+    - PcKAcc
   NUM_JOINTS: 21
   DATASET:
-    NAME: RHD
+    NAME: RHD2D
     ROOT: data/RHD/evaluation/cropped_bigger   
-    DATA_JSON_PATH: data/RHD/evaluation/cropped_anno_bigger.pickle
-    IS_TRAIN: False
+    DATA_JSON_PATH: data/RHD/evaluation/cropped_anno_bigger.pickle    
     TRANSFORMS:
       RESIZE: 256
       FLIP: False
       COLOR_NORISE: False
-
+    HEATMAP:
+      TYPE: Gaussian # Gaussian or Cauchy
+      SIGMA: 1 #Ground truth heatmap 
+    THR: 20
     IS_TRAIN: False
     BATCH_SIZE: 2
-    TRANSFORMS:
-      RESIZE: 256
-      FLIP: True
-      COLOR_NORISE: True
 
 CRITERION: CPMMSELoss
 GPUS:
 - 0
 - 1
 - 2
-- 3
 LOG_DIR: ''
 MODEL:
-  NAME: openpose_hands
+  NAME: openpose_hand
   PRETRAINED_WEIGHT_PATH: 'pretrained_weight/openpose_hand.torch'
   num_joints: 22
 OPTIMIZER:

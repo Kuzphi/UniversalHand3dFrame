@@ -38,7 +38,7 @@ VALID:
       RESIZE: 256
       FLIP: False
       COLOR_NORISE: False
-    THR: 20
+    THR: 10
     IS_TRAIN: False
     BATCH_SIZE: 2
     TRANSFORMS:

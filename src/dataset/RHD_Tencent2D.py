@@ -24,9 +24,9 @@ from src.dataset.BaseDataset import JointsDataset
 from src.utils.imutils import im_to_torch, draw_heatmap
 from src.utils.misc import to_torch
 from src.utils.imutils import load_image
-
-from .RHD2D import RHD
-from .Tencent2D import Tencent
+from src.core.evaluate import get_preds_from_heatmap
+from .RHD2D import RHD2D
+from .Tencent2D import Tencent2D
 class RHD_Tencent2D(JointsDataset):
     """docstring for TencentHand"""
     def __init__(self, cfg):
@@ -50,7 +50,7 @@ class RHD_Tencent2D(JointsDataset):
         preds = get_preds_from_heatmap(outputs['heatmap'][-1])
         diff = batch['coor'] - preds
         dis = torch.norm(diff, dim = -1)
-        PcK_Acc = (dis > self.cfg.THR).float().mean()
+        PcK_Acc = (dis < self.cfg.THR).float().mean()
         return {"dis": dis.mean(), "PcKAcc":PcK_Acc}
 
 
