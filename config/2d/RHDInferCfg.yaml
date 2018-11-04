@@ -21,7 +21,6 @@ GPUS:
   - 0
   - 1
   - 2
-  - 3
 LOG_DIR: ''
 CRITERION: CPMMSELoss
 MODEL:
