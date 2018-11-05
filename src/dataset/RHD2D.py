@@ -90,5 +90,5 @@ class RHD2D(JointsDataset):
     def get_preds(self, outputs, batch):
         return get_preds_from_heatmap(outputs['heatmap'][-1])
 
-    # def __len__(self):
-    #     return 100
+    def __len__(self):
+        return 100
