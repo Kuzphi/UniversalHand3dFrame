@@ -23,7 +23,7 @@ def plot_overlap(logger, names=None):
 
 class Log(object):
     '''Save training process to log file with simple plot function.'''
-    def __init__(self, fpath, monitor_item, title = None): 
+    def __init__(self, fpath, monitor_item, metric_item, title = None): 
         self.log = dict()
         self.path = fpath
         self.title = title
@@ -36,6 +36,8 @@ class Log(object):
                 self.log[item] = self.ori_log[item]
         else:            
             for item in monitor_item:
+                self.log[item] = []
+            for item in metric_item:
                 self.log['train_' + item] = []
                 self.log['valid_' + item] = []
 

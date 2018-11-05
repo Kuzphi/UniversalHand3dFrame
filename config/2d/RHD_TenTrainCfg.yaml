@@ -1,9 +1,5 @@
 TRAIN:
   DEBUG: False
-  METRIC_ITEMS: # the metric that you wanna track during training
-  - loss
-  - dis
-  - PcKAcc
   DATASET:
     NAME: RHD_Tencent2D
     TENCENT:
@@ -38,10 +34,6 @@ TRAIN:
 VALID:
   DEBUG: False
   IS_VALID: True
-  METRIC_ITEMS: # the metric that you wanna track during valid
-    - loss
-    - dis
-    - PcKAcc
   NUM_JOINTS: 21
   DATASET:
     NAME: RHD2D
@@ -83,12 +75,10 @@ LOG:
   PATH: output
   MONITOR_ITEM:
     - lr
-    - train_loss
-    - valid_loss
-    - train_dis
-    - valid_dis
-    - train_PckAcc
-    - valid_PckAcc
+METRIC_ITEMS: # the metric that you wanna track during training
+  - loss
+  - dis
+  - PcKAcc
 CURRENT_EPOCH: 0
 OUTPUT_DIR: output/
 START_EPOCH: 0

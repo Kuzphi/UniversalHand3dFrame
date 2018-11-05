@@ -1,9 +1,6 @@
 CURRENT_EPOCH: 0
 TRAIN:
   DEBUG: False
-  METRIC_ITEMS: # the metric that you wanna track during training
-  - loss
-  - dis
   DATASET:
     NAME: RHD
     ROOT: data/RHD/training/cropped    
@@ -23,9 +20,6 @@ VALID:
   DEBUG: False
   IS_VALID: True
   NUM_JOINTS: 21
-  METRIC_ITEMS:
-    - loss
-    - dis
   DATASET:
     NAME: RHD
     ROOT: data/RHD/evaluation/cropped    
@@ -72,6 +66,9 @@ LOG:
   PATH: output
   MONITOR_ITEM:
     - lr
+METRIC_ITEMS: # the metric that you wanna track during training
+  - loss
+  - dis
 OUTPUT_DIR: output/
 START_EPOCH: 0
 WORKERS: 40

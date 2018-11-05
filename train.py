@@ -56,7 +56,7 @@ def main(args):
     scheduler = eval('torch.optim.lr_scheduler.' + cfg.OPTIMIZER_SCHEDULE.NAME)(optimizer, **cfg.OPTIMIZER_SCHEDULE.PARAMETERS)
 
     print("Creating log")
-    log = Log(cfg.LOG.PATH, monitor_item = cfg.LOG.MONITOR_ITEM, title = cfg.TAG)
+    log = Log(cfg.LOG.PATH, monitor_item = cfg.LOG.MONITOR_ITEM, metric_item = cfg.METRIC_ITEMS, title = cfg.TAG)
 
     if cfg.RESUME_TRAIN:
         print("Resuming data from checkpoint")
