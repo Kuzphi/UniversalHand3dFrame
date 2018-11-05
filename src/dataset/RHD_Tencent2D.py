@@ -35,7 +35,7 @@ class RHD_Tencent2D(JointsDataset):
         self.tencent = Tencent2D(cfg.TENCENT)
 
     def __len__(self):
-        return 100
+        # return 100
         return len(self.rhd) + len(self.tencent)
 
     def _get_db(self):
