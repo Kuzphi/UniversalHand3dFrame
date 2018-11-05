@@ -40,6 +40,9 @@ VALID:
       RESIZE: 256
       FLIP: False
       COLOR_NORISE: False
+    HEATMAP:
+      TYPE: Gaussian # Gaussian or Cauchy
+      SIGMA: 8 #Ground truth heatmap 
     THR: 10
     IS_TRAIN: False
     BATCH_SIZE: 2
