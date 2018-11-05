@@ -49,6 +49,7 @@ class RHD_Tencent2D(JointsDataset):
 
     def eval_result(self, outputs, batch, cfg = None):
         preds = get_preds_from_heatmap(outputs['heatmap'][-1])
+        # print (preds[0,:5,:], batch['coor'][0,:5,:])
         diff = batch['coor'] - preds
         dis = torch.norm(diff, dim = -1)
         PcK_Acc = (dis < self.cfg.THR).float().mean()

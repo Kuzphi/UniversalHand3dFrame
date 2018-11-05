@@ -83,7 +83,6 @@ def draw_heatmap(img, pt, sigma = 1, type='Gaussian'):
     # Draw a 2D gaussian 
     # Adopted from https://github.com/anewell/pose-hg-train/blob/master/src/pypose/draw.py
     img = to_numpy(img)
-
     # Check that any part of the gaussian is in-bounds
     ul = [int(pt[0] - 3 * sigma), int(pt[1] - 3 * sigma)]
     br = [int(pt[0] + 3 * sigma + 1), int(pt[1] + 3 * sigma + 1)]
@@ -269,7 +268,7 @@ def plot_hand_3d(coords_xyz, axis, color_fixed=None, linewidth='1'):
         if color_fixed is None:
             axis.plot(coords[:, 0], coords[:, 1], coords[:, 2], color=color, linewidth=linewidth)
         else:
-            axis.plot(coords[:, 0], coords[:, 1], coords[:, 2], color_fixed, linewidth=linewidth)
+            axis.plot(coords[:, 0], coords[:, 1], coords[:, 2], color = color_fixed, linewidth=linewidth)
 
     axis.view_init(azim=-90., elev=90.)
 

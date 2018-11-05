@@ -40,12 +40,10 @@ class RHD2D(JointsDataset):
         if self.is_train:
             # s = s*torch.randn(1).mul_(sf).add_(1).clamp(1-sf, 1+sf)[0]
             # r = torch.randn(1).mul_(rf).clamp(-2*rf, 2*rf)[0] if random.random() <= 0.6 else 0
-
-            # Flip
-            # if random.random() <= 0.5:
-                # img = torch.from_numpy(fliplr(img.numpy())).float()
-                # pts = shufflelr(pts, width=img.size(2), dataset='RHD')
-                # c[0] = img.size(2) - c[0]
+            
+            if cfg.FLIP and random.random() <= 0.5:
+                img = torch.flip(img, dims = [0])
+                coor[:, 0] = img.size(0) - coor[:, 0]
 
             # Color
             if cfg.COLOR_NORISE:
@@ -72,7 +70,7 @@ class RHD2D(JointsDataset):
         meta = edict({'name': name})
         heatmap = torch.zeros(22, img.size(1), img.size(2))
         for i in range(21):
-            heatmap[i] = draw_heatmap(heatmap[i], coor[i])
+            heatmap[i] = draw_heatmap(heatmap[i], coor[i], self.cfg.HEATMAP.SIGMA)
         
         return {'input': {'img':img},
                 'heatmap': heatmap,
@@ -82,6 +80,8 @@ class RHD2D(JointsDataset):
 
     def eval_result(self, outputs, batch, cfg = None):
         preds = get_preds_from_heatmap(outputs['heatmap'][-1])
+        # preds = get_preds_from_heatmap(batch['heatmap'])
+        # print (preds[0][:5,:], batch['coor'][0][:5])
         diff = batch['coor'] - preds
         dis = torch.norm(diff, dim = -1)
         PcK_Acc = (dis < self.cfg.THR).float().mean()

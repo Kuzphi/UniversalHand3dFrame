@@ -14,9 +14,11 @@ TRAIN:
       RESIZE: 256
       FLIP: True
       COLOR_NORISE: True
-
+    HEATMAP:
+      SIGMA: 8
+      TYPE: Gaussian
     IS_TRAIN: True
-    BATCH_SIZE: 24
+    BATCH_SIZE: 6
     SHUFFLE: True
     NUM_JOINTS: 21
     THR: 20

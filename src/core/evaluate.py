@@ -20,8 +20,8 @@ def get_preds_from_heatmap(scoremaps):
     for idx in range(s[0]):
         for i in range(s[1]):
             v, u = np.unravel_index(np.argmax(scoremaps[idx, i, :, :]), (s[2], s[3]))
-            keypoint_coords[idx, i, 0] = v
-            keypoint_coords[idx, i, 1] = u
+            keypoint_coords[idx, i, 0] = u
+            keypoint_coords[idx, i, 1] = v #do not know why but need reverse it !
     return to_torch(keypoint_coords[:,:21,:])
 
 def calc_dists(preds, target):
@@ -107,21 +107,3 @@ def final_preds(output, center, scale, res):
         preds = preds.view(1, preds.size())
 
     return preds
-
-    
-class AverageMeter(object):
-    """Computes and stores the average and current value"""
-    def __init__(self):
-        self.reset()
-
-    def reset(self):
-        self.val = 0
-        self.avg = 0
-        self.sum = 0
-        self.count = 0
-
-    def update(self, val, n=1):
-        self.val = val
-        self.sum += val * n
-        self.count += n
-        self.avg = self.sum / self.count

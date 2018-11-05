@@ -35,8 +35,8 @@ class Tencent2D(JointsDataset):
     def transforms(self, cfg, img, coor):
         # resize
         if cfg.has_key('RESIZE'):
-            coor[0] = coor[0] / img.size(0) * cfg.RESIZE
-            coor[1] = coor[1] / img.size(1) * cfg.RESIZE
+            coor[:, 0] = coor[:, 0] / img.size(1) * cfg.RESIZE
+            coor[:, 1] = coor[:, 1] / img.size(2) * cfg.RESIZE
             img = resize(img, cfg.RESIZE, cfg.RESIZE)
 
         if self.is_train:
@@ -45,8 +45,8 @@ class Tencent2D(JointsDataset):
             
             # Flip
             if cfg.FLIP and random.random() <= 0.5:
-                img = torch.flip(img, dims = [0])
-                coor[0] = img.size(0) - coor[0]
+                img = torch.flip(img, dims = [1])
+                coor[:, 0] = img.size(1) - coor[:, 0]
 
             # Color 
             if cfg.COLOR_NORISE:
@@ -61,19 +61,19 @@ class Tencent2D(JointsDataset):
         image_path   = os.path.join(self.cfg.ROOT, w[1], w[1] + w[2], 'image', w[0] + '.png')
         label_path = os.path.join(self.cfg.ROOT, w[1], w[1] + w[2], 'label', w[0] + '.json')
 
-        img = load_image(image_path, mode = 'GBR')
+        img = load_image(image_path, mode = 'GBR') # C * H * W
         
         label = json.load(open(label_path))
 
         #calculate ground truth coordination
         coor = np.array(label['perspective'])
-        coor[:, 0] = coor[:, 0] * img.size(0)
-        coor[:, 1] = coor[:, 1] * img.size(1)
+        coor[:, 0] = coor[:, 0] * img.size(1)
+        coor[:, 1] = (1 - coor[:, 1]) * img.size(2)
         coor = coor[:, :2]
 
         #apply transforms into image and calculate cooresponding coor
         if self.cfg.TRANSFORMS:
-            img, label = self.transforms(self.cfg.TRANSFORMS, img , coor)
+            img, coor = self.transforms(self.cfg.TRANSFORMS, img , coor)
 
         #openpose require 22 channel, discard the last one
         heatmap = np.zeros((self.cfg.NUM_JOINTS, img.shape[1], img.shape[2]))
@@ -83,6 +83,8 @@ class Tencent2D(JointsDataset):
 
         meta = edict({'name': w[1] + ' ' + w[2] + ' ' + w[0]})
 
+        assert coor.min() > 0, label_path
+        
         return { 'input':  {'img':img},
                  'coor': to_torch(coor),
                  'heatmap': to_torch(heatmap),

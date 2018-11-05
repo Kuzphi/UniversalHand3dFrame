@@ -5,14 +5,14 @@ DATASET:
   ROOT: data/RHD/evaluation/cropped_bigger
   IS_TRAIN: False
   BATCH_SIZE: 2
-  THR: 20
+  THR: 100
   SHUFFLE: 0
   DATA_JSON_PATH: data/RHD/evaluation/cropped_anno_bigger.pickle
   NUM_JOINTS: 22
   TRANSFORMS: False
   HEATMAP:
     TYPE: Gaussian # Gaussian or Cauchy
-    SIGMA: 1 #Ground truth heatmap 
+    SIGMA: 8 #Ground truth heatmap 
 METRIC_ITEMS: # the metric that you wanna track during training
   - loss
   - dis
@@ -20,7 +20,6 @@ METRIC_ITEMS: # the metric that you wanna track during training
 GPUS:
   - 0
   - 1
-  - 2
 LOG_DIR: ''
 CRITERION: CPMMSELoss
 MODEL:

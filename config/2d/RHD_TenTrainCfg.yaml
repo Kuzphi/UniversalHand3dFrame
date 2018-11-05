@@ -17,7 +17,7 @@ TRAIN:
         COLOR_NORISE: True
       HEATMAP:
         TYPE: Gaussian # Gaussian or Cauchy
-        SIGMA: 1 #Ground truth heatmap 
+        SIGMA: 8 #Ground truth heatmap 
     RHD:
       ROOT: data/RHD/training/cropped_full    
       DATA_JSON_PATH: data/RHD/training/cropped_anno_full.pickle
@@ -29,7 +29,7 @@ TRAIN:
         COLOR_NORISE: True
       HEATMAP:
         TYPE: Gaussian # Gaussian or Cauchy
-        SIGMA: 1 #Ground truth heatmap
+        SIGMA: 8 #Ground truth heatmap
     THR: 20
     IS_TRAIN: True
     BATCH_SIZE: 24
