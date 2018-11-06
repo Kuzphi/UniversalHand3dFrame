@@ -1,0 +1,33 @@
+CURRENT_EPOCH: 0
+IS_VALID: True #validate or just inference
+DATASET:
+  NAME: CMU2D
+  ROOT: data/CMU/hand_labels/manual_test_cropped
+  IS_TRAIN: False
+  BATCH_SIZE: 10
+  THR: 100
+  SHUFFLE: 0
+  DATA_JSON_PATH: data/CMU/hand_labels/manual_test_cropped_anno.pickle
+  NUM_JOINTS: 22
+  TRANSFORMS: False
+  HEATMAP:
+    TYPE: Gaussian # Gaussian or Cauchy
+    SIGMA: 8 #Ground truth heatmap 
+METRIC_ITEMS: # the metric that you wanna track during training
+  - loss
+  - dis
+  - PcKAcc
+GPUS:
+  - 0
+  - 1
+LOG_DIR: ''
+CRITERION: CPMMSELoss
+MODEL:
+  NAME: openpose_hand
+  PRETRAINED_WEIGHT_PATH: 'pretrained_weight/openpose_hand.torch'
+  num_joints: 22
+OUTPUT_DIR: infer_result/
+START_EPOCH: 0
+WORKERS: 1
+DARW_RESULT: False
+DEBUG: False 

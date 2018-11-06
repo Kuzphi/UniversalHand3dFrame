@@ -15,5 +15,10 @@ from .RHD import *
 from .RHD_Tencent import *
 from .SHP import *
 from .SHP_Tencent import *
+
+
 from .RHD2D import *
 from .RHD_Tencent2D import *
+from .CUM2D import *
+from .CUM_Tencent2D import *
+
