@@ -10,6 +10,7 @@ DATASET:
   DATA_JSON_PATH: data/RHD/evaluation/cropped_anno_bigger.pickle
   NUM_JOINTS: 22
   TRANSFORMS: False
+  THR: 20
   HEATMAP:
     TYPE: Gaussian # Gaussian or Cauchy
     SIGMA: 8 #Ground truth heatmap 
@@ -28,6 +29,6 @@ MODEL:
   num_joints: 22
 OUTPUT_DIR: infer_result/
 START_EPOCH: 0
-WORKERS: 1
+WORKERS: 4
 DARW_RESULT: False
 DEBUG: False 

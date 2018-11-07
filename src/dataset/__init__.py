@@ -19,6 +19,9 @@ from .SHP_Tencent import *
 
 from .RHD2D import *
 from .RHD_Tencent2D import *
-from .CUM2D import *
-from .CUM_Tencent2D import *
+from .CMU2D import *
+from .CMU_Tencent2D import *
+
+from .SHP2D import *
+from .SHP_Tencent2D import *
 

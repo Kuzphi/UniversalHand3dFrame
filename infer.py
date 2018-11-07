@@ -42,6 +42,8 @@ def main(args):
 
     print("Loading Pretrained Weight")
     weight = torch.load(cfg.MODEL.PRETRAINED_WEIGHT_PATH)
+    if weight.has_key('state_dict'):
+        weight = weight['state_dict']
     model.load_state_dict(weight)
 
     print("Starting Inference")

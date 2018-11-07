@@ -212,6 +212,7 @@ def plot_hand(canvas, coords_hw, axis, color_fixed=None, linewidth='1'):
             axis.plot(coords[:, 1], coords[:, 0], color=color, linewidth=linewidth)
         else:
             axis.plot(coords[:, 1], coords[:, 0], color_fixed, linewidth=linewidth)
+            
 def plot_hand_3d(coords_xyz, axis, color_fixed=None, linewidth='1'):
     """ Plots a hand stick figure into a matplotlib figure. """
     colors = np.array([[0., 0., 0.5],

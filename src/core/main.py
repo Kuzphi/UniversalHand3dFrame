@@ -135,7 +135,7 @@ def validate(cfg, val_loader, model, criterion, log = None):
                 metric_['loss'] = loss.item()
                 metric.update(metric_, size)
                 for name in metric.names():
-                    suffix += ' {}: {:.4f}'.format(name, metric[name].avg)
+                    suffix += '{}: {:.4f} '.format(name, metric[name].avg)
 
             bar.suffix  = suffix
             bar.next()
