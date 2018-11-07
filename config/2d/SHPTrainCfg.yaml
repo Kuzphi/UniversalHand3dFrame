@@ -1,5 +1,6 @@
 CURRENT_EPOCH: 0
 TRAIN:
+  THR: 20
   DEBUG: False
   METRIC_ITEMS: # the metric that you wanna track during training
   - loss
@@ -18,8 +19,16 @@ TRAIN:
       SIGMA: 8
       TYPE: Gaussian
     PICK:
-      - B1Random
-      - B1Counting
+      - B2Random
+      - B2Counting
+      - B3Random
+      - B3Counting
+      - B4Random
+      - B4Counting
+      - B5Random
+      - B5Counting
+      - B6Random
+      - B6Counting
     IS_TRAIN: True
     BATCH_SIZE: 6
     SHUFFLE: True
@@ -27,6 +36,7 @@ TRAIN:
     THR: 20
 
 VALID:
+  THR: 20
   DEBUG: False
   IS_VALID: True
   NUM_JOINTS: 21
@@ -46,17 +56,9 @@ VALID:
     HEATMAP:
       TYPE: Gaussian # Gaussian or Cauchy
       SIGMA: 8 #Ground truth heatmap 
-    PICK:
-      - B2Random
-      - B2Counting
-      - B3Random
-      - B3Counting
-      - B4Random
-      - B4Counting
-      - B5Random
-      - B5Counting
-      - B6Random
-      - B6Counting
+    PICK:      
+      - B1Random
+      - B1Counting
     THR: 20
     IS_TRAIN: False
     BATCH_SIZE: 2

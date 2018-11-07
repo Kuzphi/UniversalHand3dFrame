@@ -84,6 +84,7 @@ def draw_heatmap(img, pt, sigma = 1, type='Gaussian'):
     # Adopted from https://github.com/anewell/pose-hg-train/blob/master/src/pypose/draw.py
     img = to_numpy(img)
     # Check that any part of the gaussian is in-bounds
+    pt = to_numpy(pt).astype(np.int)
     ul = [int(pt[0] - 3 * sigma), int(pt[1] - 3 * sigma)]
     br = [int(pt[0] + 3 * sigma + 1), int(pt[1] + 3 * sigma + 1)]
     if (ul[0] >= img.shape[1] or ul[1] >= img.shape[0] or
@@ -109,7 +110,9 @@ def draw_heatmap(img, pt, sigma = 1, type='Gaussian'):
     # Image range
     img_x = max(0, ul[0]), min(br[0], img.shape[1])
     img_y = max(0, ul[1]), min(br[1], img.shape[0])
-
+    xshape = img[img_y[0]:img_y[1], img_x[0]:img_x[1]].shape
+    yshape = g[g_y[0]:g_y[1], g_x[0]:g_x[1]].shape
+    assert xshape == yshape, "!!!!{} {},{}".format(img.shape,pt, g.shape)
     img[img_y[0]:img_y[1], img_x[0]:img_x[1]] = g[g_y[0]:g_y[1], g_x[0]:g_x[1]]
     # cv2.imshow(img)
     return to_torch(img)
