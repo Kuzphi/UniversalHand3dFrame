@@ -31,11 +31,19 @@ TRAIN:
         TYPE: Gaussian # Gaussian or Cauchy
         SIGMA: 8 #Ground truth heatmap
       PICK:
-        - B1Random
-        - B1Counting
+        - B2Random
+        - B2Counting
+        - B3Random
+        - B3Counting
+        - B4Random
+        - B4Counting
+        - B5Random
+        - B5Counting
+        - B6Random
+        - B6Counting
     THR: 20
     IS_TRAIN: True
-    BATCH_SIZE: 24
+    BATCH_SIZE: 6
     SHUFFLE: True
 
 VALID:
@@ -55,18 +63,10 @@ VALID:
       SIGMA: 8 #Ground truth heatmap 
     THR: 20
     IS_TRAIN: False
-    BATCH_SIZE: 5
+    BATCH_SIZE: 20
     PICK:
-      - B2Random
-      - B2Counting
-      - B3Random
-      - B3Counting
-      - B4Random
-      - B4Counting
-      - B5Random
-      - B5Counting
-      - B6Random
-      - B6Counting
+      - B1Random
+      - B1Counting
   METRIC_ITEMS: # the metric that you wanna track during training
     - loss
     - dis

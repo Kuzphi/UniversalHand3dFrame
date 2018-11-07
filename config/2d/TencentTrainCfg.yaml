@@ -1,71 +1,49 @@
-CURRENT_EPOCH: 0
 TRAIN:
-  THR: 20
   DEBUG: False
   METRIC_ITEMS: # the metric that you wanna track during training
-  - loss
-  - dis
-  - PcKAcc
+    - loss
+    - dis
+    - PcKAcc
   DATASET:
-    NAME: SHP2D
-    ROOT: data/SHP/2dcrop
-    DATA_JSON_PATH: data/SHP/2dcrop/label.pickle
+    NAME: Tencent2D
+    ROOT: data/TencentHand
+    DATA_JSON_PATH: data/TencentHand/train.json
     IS_TRAIN: True
+    NUM_JOINTS: 22
     TRANSFORMS:
       RESIZE: 256
       FLIP: True
       COLOR_NORISE: True
     HEATMAP:
-      SIGMA: 8
-      TYPE: Gaussian
-    PICK:
-      - B2Random
-      - B2Counting
-      - B3Random
-      - B3Counting
-      - B4Random
-      - B4Counting
-      - B5Random
-      - B5Counting
-      - B6Random
-      - B6Counting
+      TYPE: Gaussian # Gaussian or Cauchy
+      SIGMA: 8 #Ground truth heatmap 
+    THR: 20
     IS_TRAIN: True
     BATCH_SIZE: 6
     SHUFFLE: True
-    NUM_JOINTS: 21
-    THR: 20
 
 VALID:
-  THR: 20
   DEBUG: False
   IS_VALID: True
   NUM_JOINTS: 21
-  METRIC_ITEMS:
-    - loss
-    - dis
-    - PcKAcc
   DATASET:
-    NAME: SHP2D
-    ROOT: data/SHP/2dcrop
-    DATA_JSON_PATH: data/SHP/2dcrop/label.pickle
-    IS_TRAIN: False
+    NAME: Tencent2D
+    ROOT: data/TencentHand
+    DATA_JSON_PATH: data/TencentHand/valid.json
     TRANSFORMS:
       RESIZE: 256
       FLIP: False
       COLOR_NORISE: False
     HEATMAP:
       TYPE: Gaussian # Gaussian or Cauchy
-      SIGMA: 8 #Ground truth heatmap 
-    PICK:      
-      - B1Random
-      - B1Counting
+      SIGMA: 1 #Ground truth heatmap 
     THR: 20
     IS_TRAIN: False
-    BATCH_SIZE: 2
-
-
-DATA_DIR: ''
-END_EPOCH: 100
+    BATCH_SIZE: 10
+  METRIC_ITEMS: # the metric that you wanna track during training
+    - loss
+    - dis
+    - PcKAcc
 CRITERION: CPMMSELoss
 GPUS:
 - 0
@@ -86,16 +64,19 @@ OPTIMIZER_SCHEDULE:
   PARAMETERS:
     gamma: 0.1
     step_size: 30
-METRIC_ITEMS:
-  - loss
-  - dis
-  - PcKAcc
 LOG:
   PATH: output
   MONITOR_ITEM:
     - lr
+METRIC_ITEMS: # the metric that you wanna track during training
+  - loss
+  - dis
+  - PcKAcc
+CURRENT_EPOCH: 0
 OUTPUT_DIR: output/
 START_EPOCH: 0
 WORKERS: 4
 RESUME_TRAIN: 0
 MAIN_METRIC: loss
+DATA_DIR: ''
+END_EPOCH: 100

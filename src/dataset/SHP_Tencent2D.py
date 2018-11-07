@@ -36,7 +36,9 @@ class SHP_Tencent2D(JointsDataset):
 
     def __len__(self):
         # return 100
-        return len(self.shp) + len(self.tencent)
+        return len(self.shp)
+        # return len(self.shp) * 2
+        # return len(self.shp) + len(self.tencent)
 
     def _get_db(self):
         pass
