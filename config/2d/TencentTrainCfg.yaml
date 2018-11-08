@@ -1,4 +1,5 @@
 TRAIN:
+  THR: 20
   DEBUG: False
   METRIC_ITEMS: # the metric that you wanna track during training
     - loss
@@ -7,7 +8,7 @@ TRAIN:
   DATASET:
     NAME: Tencent2D
     ROOT: data/TencentHand
-    DATA_JSON_PATH: data/TencentHand/train.json
+    DATA_JSON_PATH: data/TencentHand/_train.json
     IS_TRAIN: True
     NUM_JOINTS: 22
     TRANSFORMS:
@@ -23,13 +24,14 @@ TRAIN:
     SHUFFLE: True
 
 VALID:
+  THR: 20
   DEBUG: False
   IS_VALID: True
   NUM_JOINTS: 21
   DATASET:
     NAME: Tencent2D
     ROOT: data/TencentHand
-    DATA_JSON_PATH: data/TencentHand/valid.json
+    DATA_JSON_PATH: data/TencentHand/_valid.json
     TRANSFORMS:
       RESIZE: 256
       FLIP: False
@@ -38,6 +40,7 @@ VALID:
       TYPE: Gaussian # Gaussian or Cauchy
       SIGMA: 1 #Ground truth heatmap 
     THR: 20
+    NUM_JOINTS: 22
     IS_TRAIN: False
     BATCH_SIZE: 10
   METRIC_ITEMS: # the metric that you wanna track during training

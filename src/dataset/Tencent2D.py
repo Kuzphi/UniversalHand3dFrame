@@ -22,7 +22,7 @@ from easydict import EasyDict as edict
 from src.dataset.BaseDataset import JointsDataset
 from src.utils.imutils import im_to_torch, draw_heatmap, load_image, resize
 from src.utils.misc import to_torch
-
+from src.core.evaluate import get_preds_from_heatmap
 
 class Tencent2D(JointsDataset):
     """docstring for TencentHand"""
@@ -91,5 +91,18 @@ class Tencent2D(JointsDataset):
                  'weight': 1,
                  'meta': meta}
 
+    def eval_result(self, outputs, batch, cfg = None):
+        if cfg is None:
+            cfg = self.cfg
+        preds = get_preds_from_heatmap(outputs['heatmap'][-1])
+        # preds = get_preds_from_heatmap(batch['heatmap'])
+        # print (preds[0][:5,:], batch['coor'][0][:5])
+        diff = batch['coor'] - preds
+        dis = torch.norm(diff, dim = -1)
+        PcK_Acc = (dis < cfg.THR).float().mean()
+        return {"dis": dis.mean(), "PcKAcc":PcK_Acc}
+
+    def get_preds(self, outputs, batch):
+        return get_preds_from_heatmap(outputs['heatmap'][-1])
     # def __len__(self):
     #     return 100
