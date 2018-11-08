@@ -36,8 +36,10 @@ class Log(object):
                 self.log[item] = self.ori_log[item]
         else:            
             for item in monitor_item:
-                self.log[item] = []
+                self.log[item] = []                
             for item in metric_item:
+                self.monitor_item.append('train_' + item)
+                self.monitor_item.append('valid_' + item)
                 self.log['train_' + item] = []
                 self.log['valid_' + item] = []
 
