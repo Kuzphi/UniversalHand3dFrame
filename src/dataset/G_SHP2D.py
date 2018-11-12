@@ -24,21 +24,20 @@ from src.dataset.BaseDataset import JointsDataset
 from src.utils.imutils import im_to_torch, draw_heatmap
 from src.utils.misc import to_torch
 from src.utils.imutils import load_image
+from src.core.evaluate import get_preds_from_heatmap
 
 from .SHP2D import SHP2D
-from .Tencent2D import Tencent2D
-class SHP_Tencent2D(JointsDataset):
+from .G2D import G2D
+class G_SHP(JointsDataset):
     """docstring for TencentHand"""
     def __init__(self, cfg):
-        super(SHP_Tencent2D, self).__init__(cfg)
+        super(G_SHP, self).__init__(cfg)
         self.shp = SHP2D(cfg.SHP)
-        self.tencent = Tencent2D(cfg.TENCENT)
+        self.G = G2D(cfg.G)
 
     def __len__(self):
         # return 100
-        # return len(self.shp)
-        # return len(self.shp) * 2
-        return len(self.shp) + len(self.tencent)
+        return len(self.shp) + len(self.G)
 
     def _get_db(self):
         pass
@@ -47,10 +46,16 @@ class SHP_Tencent2D(JointsDataset):
         if idx < len(self.shp):
             return self.shp[idx]
         idx -= len(self.shp)
-        return self.tencent[idx]
+        return self.G[idx]
 
     def eval_result(self, outputs, batch, cfg = None):
-        return self.shp.eval_result(outputs, batch, self.cfg)
+        preds = get_preds_from_heatmap(outputs['heatmap'][-1])
+        # print (preds[0,:5,:], batch['coor'][0,:5,:])
+        diff = batch['coor'] - preds
+        dis = torch.norm(diff, dim = -1)
+        PcK_Acc = (dis < self.cfg.THR).float().mean()
+        return {"dis": dis.mean(), "PcKAcc":PcK_Acc}
 
-    def get_preds(self, outputs, batch):
-        return self.shp.get_preds(outputs, batch)
+
+    def get_preds(self, outputs):
+        return get_preds_from_heatmap(outputs['heatmap'][-1])

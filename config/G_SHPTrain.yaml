@@ -71,6 +71,8 @@ CRITERION: DistanceLoss
 GPUS:
 - 0
 - 1
+- 2
+- 3
 LOG_DIR: ''
 MODEL:
   NAME: ICCV17

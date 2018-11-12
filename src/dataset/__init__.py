@@ -28,3 +28,7 @@ from .SHP_Tencent2D import *
 from .noaf import *
 from .G_RHD import *
 from .G_SHP import *
+
+from .G_RHD2D import *
+from .G_SHP2D import *
+from .G_CMU2D import *
