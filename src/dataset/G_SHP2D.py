@@ -28,10 +28,10 @@ from src.core.evaluate import get_preds_from_heatmap
 
 from .SHP2D import SHP2D
 from .G2D import G2D
-class G_SHP(JointsDataset):
+class G_SHP2D(JointsDataset):
     """docstring for TencentHand"""
     def __init__(self, cfg):
-        super(G_SHP, self).__init__(cfg)
+        super(G_SHP2D, self).__init__(cfg)
         self.shp = SHP2D(cfg.SHP)
         self.G = G2D(cfg.G)
 

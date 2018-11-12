@@ -26,13 +26,13 @@ from src.utils.misc import to_torch
 from src.utils.imutils import load_image
 from src.core.evaluate import get_preds_from_heatmap
 
-from .RHD2D import RHD
-from .G2D import G
-class G_RHD(JointsDataset):
+from .RHD2D import RHD2D
+from .G2D import G2D
+class G_RHD2D(JointsDataset):
     def __init__(self, cfg):
-        super(G_RHD, self).__init__(cfg)
-        self.rhd = RHD(cfg.RHD)
-        self.G = G(cfg.G)
+        super(G_RHD2D, self).__init__(cfg)
+        self.rhd = RHD2D(cfg.RHD)
+        self.G = G2D(cfg.G)
 
     def __len__(self):
         return len(self.rhd) + len(self.G)

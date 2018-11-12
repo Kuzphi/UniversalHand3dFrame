@@ -61,6 +61,8 @@ CRITERION: CPMMSELoss
 GPUS:
 - 0
 - 1
+- 2
+- 3
 LOG_DIR: ''
 MODEL:
   NAME: openpose_hand

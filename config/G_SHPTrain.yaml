@@ -13,7 +13,7 @@ TRAIN:
         FLIP: True
         COLOR_NORISE: True
     SHP:
-      NAME: SHP
+      NAME: SHP2D
       ROOT: data/SHP/
       DATA_JSON_PATH: data/SHP/labels
       PICK:
