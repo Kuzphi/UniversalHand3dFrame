@@ -107,3 +107,29 @@ def final_preds(output, center, scale, res):
         preds = preds.view(1, preds.size())
 
     return preds
+
+def AUC(dist):
+    x = np.array(sorted(list(dist)))
+    y = np.array([1. * (i + 1)/ len(x)  for i in range(len(x))])
+    return (x, y)
+
+def calc_auc(dist, limx = -1, limy = 1e99):
+    """ Given x and y values it calculates the approx. integral and normalizes it: area under curve"""
+    x, y = AUC(dist)
+    x = x * 1000 #meter to million meter
+    print (x[:100])
+    l, r = 0, len(x) - 1
+    for i in range(len(x)):
+        if limx >= x[i]:
+            l = i
+        if limy <= x[i]:
+            r = i
+    l = max(l - 1, 0)
+    print(l, r)
+    tx = x[l:r + 1]
+    ty = y[l:r + 1]
+    print(len(tx))
+    integral = np.trapz(ty, tx)
+    norm = np.trapz(np.ones_like(ty), tx)
+    print(integral, norm)
+    return integral / norm

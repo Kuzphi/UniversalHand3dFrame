@@ -47,6 +47,9 @@ class MetricMeter(object):
 
     def names(self):
         return self.metric.keys()
+
+    def to_dict(self):
+        return {name: self.metric[name].avg for name in self.metric}
 def to_numpy(tensor):
     if torch.is_tensor(tensor):
         return tensor.cpu().numpy()
@@ -141,8 +144,11 @@ def save_checkpoint(state, preds, cfg, log, is_best, fpath, filename='checkpoint
             shutil.rmtree(best_path)
         shutil.copytree(latest_filepath, best_path)
 
-def save_preds(preds, checkpoint='checkpoint', filename='preds.pickle'):
+def save_infer_result(result, metric = None, checkpoint='checkpoint', filename='preds.pickle'):
     if not os.path.exists(checkpoint):
         os.makedirs(checkpoint)
+    if metric is not None:
+        pickle.dump(metric.to_dict(), open(os.path.join(checkpoint, 'metric.json'),"w"))
     filepath = os.path.join(checkpoint, filename)
-    pickle.dump(preds, open(filepath,"w"))
+    pickle.dump(result, open(filepath,"w"))
+

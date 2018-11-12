@@ -16,11 +16,11 @@ DATASET:
 METRIC_ITEMS: # the metric that you wanna track during training
   - loss
   - dis
+  # - AUC
+  # - median
 GPUS:
   - 0
   - 1
-  - 2
-  - 3
 LOG_DIR: ''
 CRITERION: DistanceLoss
 MODEL:
@@ -32,3 +32,4 @@ START_EPOCH: 0
 WORKERS: 1
 DARW_RESULT: False
 DEBUG: False
+POST_INFER: True

@@ -18,7 +18,7 @@ import src.core.loss as loss
 from src import model
 from src import dataset
 from src.core import validate
-from src.utils.misc import get_config, save_preds
+from src.utils.misc import get_config, save_infer_result
 
 def main(args):
     print("Reading configuration file")
@@ -47,13 +47,15 @@ def main(args):
     model.load_state_dict(weight)
 
     print("Starting Inference")
-    preds = validate(cfg, infer_loader, model, criterion)
-    save_preds(preds, cfg.CHECKPOINT)
+    if cfg.IS_VALID:
+        metric, preds = validate(cfg, infer_loader, model, criterion)
+        save_infer_result(preds, metric, cfg.CHECKPOINT)
+    else:
+        preds = validate(cfg, infer_loader, model, criterion)
+        save_infer_result(preds, None, cfg.CHECKPOINT)
 
-    if cfg.DARW_RESULT:
-        fpath = os.path.join(cfg.CHECKPOINT, 'image')
-        os.makedirs(fpath)
-        infer_data.preds_demo(preds, fpath)
+    if cfg.POST_INFER:
+        infer_data.post_infer(cfg, preds)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train keypoints network')

@@ -1,0 +1,90 @@
+TRAIN:
+  DEBUG: False
+  METRIC_ITEMS: # the metric that you wanna track during training
+  - loss
+  - dis
+  DATASET:
+    NAME: G_RHD
+    G:
+      ROOT: /data/yufan/for_liangjian/
+      DATA_JSON_PATH: data/TencentHand/train.json
+      IS_TRAIN: True
+      TRANSFORMS:
+        RESIZE: 256
+        FLIP: True
+        COLOR_NORISE: True
+    RHD:
+      ROOT: data/RHD/training/cropped_full    
+      DATA_JSON_PATH: data/RHD/training/cropped_anno_full.pickle
+      IS_TRAIN: True
+      TRANSFORMS:
+        RESIZE: 256
+        FLIP: True
+        COLOR_NORISE: True
+
+    IS_TRAIN: True
+    BATCH_SIZE: 6
+    SHUFFLE: True
+    NUM_JOINTS: 21
+
+VALID:
+  DEBUG: False
+  IS_VALID: True
+  NUM_JOINTS: 21
+  METRIC_ITEMS:
+    - loss
+    - dis
+  DATASET:
+    NAME: RHD
+    ROOT: data/RHD/evaluation/cropped_bigger   
+    DATA_JSON_PATH: data/RHD/evaluation/cropped_anno_bigger.pickle
+    IS_TRAIN: False
+    TRANSFORMS:
+      RESIZE: 256
+      FLIP: False
+      COLOR_NORISE: False
+
+    IS_TRAIN: False
+    BATCH_SIZE: 2
+    TRANSFORMS:
+      RESIZE: 256
+      FLIP: True
+      COLOR_NORISE: True
+METRIC_ITEMS: # the metric that you wanna track during training
+  - loss
+  - dis
+CRITERION: DistanceLoss
+GPUS:
+- 0
+- 1
+- 2
+- 3
+LOG_DIR: ''
+MODEL:
+  NAME: ICCV17
+  PRETRAINED_WEIGHT_PATH: 'pretrained_weight/iccv17-rhd-stb.torch'
+  num_joints: 21
+OPTIMIZER:
+  NAME: RMSprop
+  PARAMETERS:
+    lr: 2.5e-05
+    momentum: 0
+    weight_decay: 0
+OPTIMIZER_SCHEDULE:
+  NAME: StepLR
+  PARAMETERS:
+    gamma: 0.1
+    step_size: 30
+LOG:
+  PATH: output
+  MONITOR_ITEM:
+    - lr
+    
+CURRENT_EPOCH: 0
+OUTPUT_DIR: output/
+START_EPOCH: 0
+WORKERS: 40
+RESUME_TRAIN: 0
+MAIN_METRIC: loss
+DATA_DIR: ''
+END_EPOCH: 100
