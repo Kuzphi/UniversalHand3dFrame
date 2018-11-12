@@ -35,8 +35,6 @@ class Tencent(JointsDataset):
     def transforms(self, cfg, img, coor):
         # resize
         if cfg.has_key('RESIZE'):
-            coor[0] = coor[0] / img.size(0) * cfg.RESIZE
-            coor[1] = coor[1] / img.size(1) * cfg.RESIZE
             img = resize(img, cfg.RESIZE, cfg.RESIZE)
 
         if self.is_train:
