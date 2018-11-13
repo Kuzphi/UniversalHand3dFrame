@@ -59,13 +59,7 @@ VALID:
       RESIZE: 256
       FLIP: False
       COLOR_NORISE: False
-
-    IS_TRAIN: False
     BATCH_SIZE: 6
-    TRANSFORMS:
-      RESIZE: 256
-      FLIP: True
-      COLOR_NORISE: True
 METRIC_ITEMS:
   - loss
   - dis

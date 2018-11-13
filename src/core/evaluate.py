@@ -117,7 +117,7 @@ def calc_auc(dist, limx = -1, limy = 1e99):
     """ Given x and y values it calculates the approx. integral and normalizes it: area under curve"""
     x, y = AUC(dist)
     x = x * 1000 #meter to million meter
-    print (x.min(), x.max())
+    # print (x.min(), x.max())
     l, r = 0, len(x) - 1
     for i in range(len(x)):
         if limx >= x[i]:
@@ -125,11 +125,13 @@ def calc_auc(dist, limx = -1, limy = 1e99):
         if limy >= x[i]:
             r = i
     l = max(l - 1, 0)
-    print(l, r)
     tx = x[l:r + 1]
     ty = y[l:r + 1]
-    print(len(tx))
     integral = np.trapz(ty, tx)
     norm = np.trapz(np.ones_like(ty), tx)
-    print(integral, norm)
+    if limy < 1e98 and limy > x[-1]:
+        add = limy - x[-1]
+        integral += add
+        norm += add
+    print(integral , norm)
     return integral / norm

@@ -1,25 +1,56 @@
 CURRENT_EPOCH: 0
+IS_VALID: True
 TRAIN:
   DEBUG: False
+  METRIC_ITEMS: # the metric that you wanna track during training
+    - loss
+    - dis
   DATASET:
     NAME: SHP
     ROOT: data/SHP
-    IS_TRAIN: True
-    BATCH_SIZE: 2
-    SHUFFLE: 0
     DATA_JSON_PATH: data/SHP/labels
-    TRANSFORMS: True
+    PICK:
+      - B2Counting
+      - B3Counting
+      - B4Counting
+      - B5Counting
+      - B6Counting
+      - B2Random
+      - B3Random
+      - B4Random
+      - B5Random
+      - B6Random
+    IS_TRAIN: True
+    TRANSFORMS:
+      RESIZE: 256
+      FLIP: True
+      COLOR_NORISE: True
+    IS_TRAIN: True
+    BATCH_SIZE: 6
+    SHUFFLE: True
     NUM_JOINTS: 21
 VALID:
+  METRIC_ITEMS: # the metric that you wanna track during training
+    - loss
+    - dis
   DEBUG: False
   DATASET:
+    PICK:
+      - B1Counting
+      - B1Random
     NAME: SHP
     ROOT: data/SHP/
-    IS_TRAIN: False
-    BATCH_SIZE: 2
     DATA_JSON_PATH: data/SHP/labels
-    TRANSFORMS: True
-    NUM_JOINTS: 21
+    TRANSFORMS:
+      RESIZE: 256
+      FLIP: False
+      COLOR_NORISE: False
+
+    IS_TRAIN: False
+    BATCH_SIZE: 6
+METRIC_ITEMS: # the metric that you wanna track during training
+  - loss
+  - dis
 DATA_DIR: ''
 END_EPOCH: 100
 GPUS:
@@ -28,7 +59,7 @@ GPUS:
 LOG_DIR: ''
 MODEL:
   NAME: ICCV17
-  PRETRAINED: 'pretrained_weight/iccv17_pose_net_pretrained.torch'
+  PRETRAINED_WEIGHT_PATH: 'pretrained_weight/iccv17-rhd-stb.torch'
   num_joints: 21
 OPTIMIZER:
   NAME: RMSprop
@@ -49,3 +80,5 @@ OUTPUT_DIR: output/
 START_EPOCH: 0
 WORKERS: 8
 RESUME_TRAIN: 0
+CRITERION: DistanceLoss
+MAIN_METRIC: loss

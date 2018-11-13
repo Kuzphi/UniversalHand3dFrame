@@ -20,10 +20,12 @@ METRIC_ITEMS: # the metric that you wanna track during training
 GPUS:
   - 0
   - 1
+  - 2
+  - 3
 LOG_DIR: ''
 MODEL:
   NAME: ICCV17
-  PRETRAINED_WEIGHT_PATH: 'output/Nov 12 17:14:43_train_ICCV17_G_SHP/best/checkpoint.pth.tar'
+  PRETRAINED_WEIGHT_PATH: 'output/Nov  1 21:27:42_train_ICCV17_RHD_Tencent/best/checkpoint.pth.tar'
   # PRETRAINED_WEIGHT_PATH: 'pretrained_weight/iccv17-rhd-stb.torch'
   num_joints: 21
 CRITERION: DistanceLoss #CPMMSELoss
