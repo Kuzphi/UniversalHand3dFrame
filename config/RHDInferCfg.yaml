@@ -25,7 +25,8 @@ LOG_DIR: ''
 CRITERION: DistanceLoss
 MODEL:
   NAME: ICCV17
-  PRETRAINED_WEIGHT_PATH: 'pretrained_weight/iccv17-rhd-stb.torch'
+  # PRETRAINED_WEIGHT_PATH: 'pretrained_weight/iccv17-rhd-stb.torch'
+  PRETRAINED_WEIGHT_PATH: 'output/Nov  1 21:27:42_train_ICCV17_RHD_Tencent/best/checkpoint.pth.tar'
   num_joints: 21
 OUTPUT_DIR: infer_result/
 START_EPOCH: 0

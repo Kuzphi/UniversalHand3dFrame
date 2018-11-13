@@ -23,7 +23,8 @@ GPUS:
 LOG_DIR: ''
 MODEL:
   NAME: ICCV17
-  PRETRAINED_WEIGHT_PATH: 'pretrained_weight/iccv17-rhd-stb.torch'
+  PRETRAINED_WEIGHT_PATH: 'output/Nov 12 17:14:43_train_ICCV17_G_SHP/best/checkpoint.pth.tar'
+  # PRETRAINED_WEIGHT_PATH: 'pretrained_weight/iccv17-rhd-stb.torch'
   num_joints: 21
 CRITERION: DistanceLoss #CPMMSELoss
 OUTPUT_DIR: infer_result/

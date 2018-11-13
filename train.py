@@ -27,7 +27,8 @@ def main(args):
     print("Loading Training Data")
     train_data = eval('dataset.' + cfg.TRAIN.DATASET.NAME)(cfg.TRAIN.DATASET)
     valid_data = eval('dataset.' + cfg.VALID.DATASET.NAME)(cfg.VALID.DATASET)
-
+    print ("Train Data Size: ", len(train_data))
+    print ("Valid Data Size: ", len(valid_data))
     train_loader = DataLoader(
         train_data,
         batch_size=cfg.TRAIN.DATASET.BATCH_SIZE * len(cfg.GPUS),

@@ -32,7 +32,7 @@ TRAIN:
         SIGMA: 8 #Ground truth heatmap
     THR: 20
     IS_TRAIN: True
-    BATCH_SIZE: 24
+    BATCH_SIZE: 6
     SHUFFLE: True
 
 VALID:
@@ -61,6 +61,8 @@ CRITERION: CPMMSELoss
 GPUS:
 - 0
 - 1
+- 2
+- 3
 LOG_DIR: ''
 MODEL:
   NAME: openpose_hand

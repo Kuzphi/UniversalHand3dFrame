@@ -117,12 +117,12 @@ def calc_auc(dist, limx = -1, limy = 1e99):
     """ Given x and y values it calculates the approx. integral and normalizes it: area under curve"""
     x, y = AUC(dist)
     x = x * 1000 #meter to million meter
-    print (x[:100])
+    print (x.min(), x.max())
     l, r = 0, len(x) - 1
     for i in range(len(x)):
         if limx >= x[i]:
             l = i
-        if limy <= x[i]:
+        if limy >= x[i]:
             r = i
     l = max(l - 1, 0)
     print(l, r)

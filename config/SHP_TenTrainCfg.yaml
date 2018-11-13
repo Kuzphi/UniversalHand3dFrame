@@ -36,7 +36,7 @@ TRAIN:
         COLOR_NORISE: True
 
     IS_TRAIN: True
-    BATCH_SIZE: 24
+    BATCH_SIZE: 6
     SHUFFLE: True
     NUM_JOINTS: 21
 
@@ -61,16 +61,20 @@ VALID:
       COLOR_NORISE: False
 
     IS_TRAIN: False
-    BATCH_SIZE: 2
+    BATCH_SIZE: 6
     TRANSFORMS:
       RESIZE: 256
       FLIP: True
       COLOR_NORISE: True
-
+METRIC_ITEMS:
+  - loss
+  - dis
 CRITERION: DistanceLoss
 GPUS:
 - 0
 - 1
+- 2
+- 3
 LOG_DIR: ''
 MODEL:
   NAME: ICCV17
@@ -94,7 +98,7 @@ LOG:
 CURRENT_EPOCH: 0
 OUTPUT_DIR: output/
 START_EPOCH: 0
-WORKERS: 40
+WORKERS: 4
 RESUME_TRAIN: 0
 MAIN_METRIC: loss
 DATA_DIR: ''

@@ -92,5 +92,5 @@ class Tencent(JointsDataset):
                  'weight': 1,
                  'meta': meta}
 
-    # def __len__(self):
-    #     return 100
+    def __len__(self):
+        return 20000
