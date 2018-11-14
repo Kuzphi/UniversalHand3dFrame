@@ -40,19 +40,21 @@ VALID:
   IS_VALID: True
   NUM_JOINTS: 21
   DATASET:
-    NAME: RHD2D
-    ROOT: data/RHD/evaluation/cropped_bigger   
-    DATA_JSON_PATH: data/RHD/evaluation/cropped_anno_bigger.pickle    
-    TRANSFORMS:
-      RESIZE: 256
-      FLIP: False
-      COLOR_NORISE: False
+    NAME: CMU2D
+    # ROOT: data/CMU/hand_labels/manual_train_cropped
+    # DATA_JSON_PATH: data/CMU/hand_labels/manual_train_cropped_anno.pickle
+    ROOT: data/CMU/hand_labels/manual_test_cropped
+    DATA_JSON_PATH: data/CMU/hand_labels/manual_test_cropped_anno.pickle
+    IS_TRAIN: False
+    BATCH_SIZE: 12
+    THR: 100
+    SHUFFLE: 0
+
+    NUM_JOINTS: 22
+    TRANSFORMS: False
     HEATMAP:
       TYPE: Gaussian # Gaussian or Cauchy
-      SIGMA: 1 #Ground truth heatmap 
-    THR: 20
-    IS_TRAIN: False
-    BATCH_SIZE: 2
+      SIGMA: 8 #Ground truth heatmap 
   METRIC_ITEMS: # the metric that you wanna track during training
     - loss
     - dis

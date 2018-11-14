@@ -85,6 +85,7 @@ class G2D(JointsDataset):
         img = load_image(path)
 
         #calculate ground truth coordination
+        coor = torch.tensor(coor)
         coor[:, 0] = coor[:, 0] * img.size(1)
         coor[:, 1] = (1 - coor[:, 1]) * img.size(2)
         coor = coor[:, :2]

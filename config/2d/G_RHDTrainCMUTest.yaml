@@ -5,7 +5,7 @@ TRAIN:
     - dis
     - PcKAcc
   DATASET:
-    NAME: G_SHP2D
+    NAME: G_RHD2D
     G:
       ROOT: data/TencentHand
       DATA_JSON_PATH: data/TencentHand/train.json
@@ -17,10 +17,10 @@ TRAIN:
         COLOR_NORISE: True
       HEATMAP:
         TYPE: Gaussian # Gaussian or Cauchy
-        SIGMA: 8 #Ground truth heatmap
-    SHP:
-      ROOT: data/SHP/2dcrop
-      DATA_JSON_PATH: data/SHP/2dcrop/label.pickle
+        SIGMA: 8 #Ground truth heatmap 
+    RHD:
+      ROOT: data/RHD/training/cropped_full    
+      DATA_JSON_PATH: data/RHD/training/cropped_anno_full.pickle
       IS_TRAIN: True
       
       TRANSFORMS:
@@ -30,17 +30,6 @@ TRAIN:
       HEATMAP:
         TYPE: Gaussian # Gaussian or Cauchy
         SIGMA: 8 #Ground truth heatmap
-      PICK:
-        - B2Random
-        - B2Counting
-        - B3Random
-        - B3Counting
-        - B4Random
-        - B4Counting
-        - B5Random
-        - B5Counting
-        - B6Random
-        - B6Counting
     THR: 20
     IS_TRAIN: True
     BATCH_SIZE: 6
@@ -51,22 +40,20 @@ VALID:
   IS_VALID: True
   NUM_JOINTS: 21
   DATASET:
-    NAME: SHP2D
-    ROOT: data/SHP/2dcrop
-    DATA_JSON_PATH: data/SHP/2dcrop/label.pickle
-    TRANSFORMS:
-      RESIZE: 256
-      FLIP: False
-      COLOR_NORISE: False
+    NAME: CMU2D
+    # ROOT: data/CMU/hand_labels/manual_train_cropped
+    # DATA_JSON_PATH: data/CMU/hand_labels/manual_train_cropped_anno.pickle
+    ROOT: data/CMU/hand_labels/manual_test_cropped
+    DATA_JSON_PATH: data/CMU/hand_labels/manual_test_cropped_anno.pickle
+    IS_TRAIN: False
+    BATCH_SIZE: 10
+    THR: 100
+    SHUFFLE: 0
+    NUM_JOINTS: 22
+    TRANSFORMS: False
     HEATMAP:
       TYPE: Gaussian # Gaussian or Cauchy
       SIGMA: 8 #Ground truth heatmap 
-    THR: 20
-    IS_TRAIN: False
-    BATCH_SIZE: 20
-    PICK:
-      - B1Random
-      - B1Counting
   METRIC_ITEMS: # the metric that you wanna track during training
     - loss
     - dis
