@@ -25,7 +25,7 @@ from src.dataset.BaseDataset import JointsDataset
 from src.utils.imutils import im_to_torch, draw_heatmap
 from src.utils.misc import to_torch
 from src.utils.imutils import load_image, resize, im_to_numpy
-from src.core.evaluate import get_preds_from_heatmap
+from src.core.evaluate import get_preds_from_heatmap, AUC, calc_auc
 
 class SHP2D(JointsDataset):
     """docstring for TencentHand"""

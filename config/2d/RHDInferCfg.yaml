@@ -25,10 +25,13 @@ LOG_DIR: ''
 CRITERION: CPMMSELoss
 MODEL:
   NAME: openpose_hand
-  PRETRAINED_WEIGHT_PATH: 'pretrained_weight/openpose_hand.torch'
+  # PRETRAINED_WEIGHT_PATH: output/Nov 13 17:01:52_train_openpose_hand_RHD_Tencent2D/best/checkpoint.pth.tar
+  PRETRAINED_WEIGHT_PATH: output/Nov 13 16:57:18_train_openpose_hand_RHD2D/best/checkpoint.pth.tar
+  # PRETRAINED_WEIGHT_PATH: 'pretrained_weight/openpose_hand.torch'
   num_joints: 22
 OUTPUT_DIR: infer_result/
 START_EPOCH: 0
 WORKERS: 4
 DARW_RESULT: False
 DEBUG: False 
+POST_INFER: True
