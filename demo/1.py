@@ -37,10 +37,20 @@ pose2 = pose2['pose3d'][0].detach().cpu().numpy()
 gt = np.array(gt)
 
 fig = plt.figure(1)
-ax0 = fig.add_subplot(221)
-ax1 = fig.add_subplot(222, projection = '3d')
-ax2 = fig.add_subplot(223, projection = '3d')
-ax3 = fig.add_subplot(224, projection = '3d')
+axs = []
+for i in range(10):
+	ax = fig.add_subplot(1,10,i, projection = '3d')
+	axs.append(ax)
+	label_path = '/data/liangjianData/TencentHand/Model1/%s/label/%s'%(name[i][0], name[i][1] + '.json')
+	label = json.load(label_path)
+	
+
+
+# ax0 = fig.add_subplot(1,10,1)
+# ax1 = fig.add_subplot(222, projection = '3d')
+# ax2 = fig.add_subplot(223, projection = '3d')
+# ax3 = fig.add_subplot(224, projection = '3d')
+
 # img = im_to_numpy(img[0])
 # img = (img + 0.5) * 255
 ax0.imshow(OriImg)

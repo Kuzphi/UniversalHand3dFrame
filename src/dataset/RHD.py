@@ -102,9 +102,11 @@ class RHD(JointsDataset):
         x, y = AUC(dist)
         auc = calc_auc(dist)
         auc00_50 = calc_auc(dist,  0, 50)
+        auc20_50 = calc_auc(dist, 20, 50)
         auc30_50 = calc_auc(dist, 30, 50)
         print('AUC: ', auc)
         print('AUC  0 - 50: ', auc00_50)
+        print('AUC 20 - 50: ', auc20_50)
         print('AUC 30 - 50: ', auc30_50)
         print('median:', median)
         import matplotlib.pyplot as plt

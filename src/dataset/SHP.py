@@ -136,6 +136,7 @@ class SHP(JointsDataset):
         print('AUC: ', auc)
         print('AUC  0 - 50: ', auc00_50)
         print('AUC 30 - 50: ', auc30_50)
+        print('AUC 20 - 50: ', auc20_50)
         print('median:', median)
         import matplotlib.pyplot as plt
         fig = plt.figure('AUC')
@@ -147,6 +148,7 @@ class SHP(JointsDataset):
             'AUC':auc,
             'AUC00_50': auc00_50,
             'AUC30_50': auc30_50,
+            'AUC20_50': auc20_50
         }
         pickle.dump(res, open(os.path.join(cfg.CHECKPOINT,'dist.pickle'),'w'))
 

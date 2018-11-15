@@ -1,5 +1,4 @@
 CURRENT_EPOCH: 0
-IS_VALID: True
 TRAIN:
   DEBUG: False
   METRIC_ITEMS: # the metric that you wanna track during training
@@ -30,6 +29,7 @@ TRAIN:
     SHUFFLE: True
     NUM_JOINTS: 21
 VALID:
+  IS_VALID: True
   METRIC_ITEMS: # the metric that you wanna track during training
     - loss
     - dis
