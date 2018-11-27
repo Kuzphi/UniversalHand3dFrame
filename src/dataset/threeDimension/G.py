@@ -26,10 +26,10 @@ from src.utils.misc import to_torch
 from src.utils.imutils import load_image, resize
 from src.core.evaluate import calc_auc, AUC, calc_auc
 
-class G2D(JointsDataset):
+class G3D(JointsDataset):
     """docstring for TencentHand"""
     def __init__(self, cfg):
-        super(G2D, self).__init__(cfg)
+        super(G3D, self).__init__(cfg)
 
     def _get_db(self):
         self.names = ['Model1Tap','Model1Fist', 'Model1ArmRotate', 'Model1WristRotate']
@@ -47,7 +47,7 @@ class G2D(JointsDataset):
                     self.db[name].append(os.path.join(ipath, file))
                     idx = file[:7]
                     label = json.load(open(os.path.join(lpath, idx + '.json'),"r"))
-                    self.anno[name].append(label['perspective'])
+                    self.anno[name].append(label['camera'])
 
         # self.anno = pickle.load(open(self.cfg.DATA_JSON_PATH))
         # return sorted(self.anno.keys())
@@ -56,8 +56,6 @@ class G2D(JointsDataset):
     def transforms(self, cfg, img, coor):
         # resize
         if cfg.has_key('RESIZE'):
-            coor[:, 0] = coor[:, 0] / img.size(1) * cfg.RESIZE
-            coor[:, 1] = coor[:, 1] / img.size(2) * cfg.RESIZE
             img = resize(img, cfg.RESIZE, cfg.RESIZE)
 
         if self.is_train:
@@ -66,8 +64,8 @@ class G2D(JointsDataset):
             
             # Flip
             if cfg.FLIP and random.random() <= 0.5:
-                img = torch.flip(img, dims = [1])
-                coor[:, 0] = img.size(1) - coor[:, 0]
+                img = torch.flip(img, dims = [0])
+                coor[0] = img.size(0) - coor[0]
 
             # Color 
             if cfg.COLOR_NORISE:
@@ -85,31 +83,32 @@ class G2D(JointsDataset):
         img = load_image(path)
 
         #calculate ground truth coordination
-        coor = torch.tensor(coor)
-        coor[:, 0] = coor[:, 0] * img.size(1)
-        coor[:, 1] = (1 - coor[:, 1]) * img.size(2)
-        coor = coor[:, :2]
-
+        coor = torch.tensor(coor).numpy()
+        coor[1:,:] = coor[1:,:].reshape(5,4,-1)[:,::-1,:].reshape(20, -1)#iccv order !
+        coor = np.array(coor)
+        coor = to_torch(coor)
+        coor = coor - coor[:1,:].repeat(21, 1)
+        index_bone_length = torch.norm(coor[12,:] - coor[11,:])
         #apply transforms into image and calculate cooresponding coor
         if self.cfg.TRANSFORMS:
-            img, coor = self.transforms(self.cfg.TRANSFORMS, img , coor)
+            img, label = self.transforms(self.cfg.TRANSFORMS, img , coor)
 
-        #openpose require 22 channel, discard the last one
-        heatmap = np.zeros((self.cfg.NUM_JOINTS, img.shape[1], img.shape[2]))
-        for i in range(self.cfg.NUM_JOINTS - 1):
-            heatmap[i, :, :] = draw_heatmap(heatmap[i], coor[i], self.cfg.HEATMAP.SIGMA, type = self.cfg.HEATMAP.TYPE) 
+        # heat_map = np.zeros((self.cfg.NUM_JOINTS, img.shape[1], img.shape[2]))
+
+        # for i in range(self.cfg.NUM_JOINTS):
+        #     heat_map[i, :, :] = draw_heatmap(heat_map[i], coor[i], self.cfg.HEATMAP.SIGMA, type = self.cfg.HEATMAP.TYPE) 
 
 
-        meta = edict({'name': path})
+        meta = edict({
+                'name': path})
 
-        assert coor.min() > 0, path
-        
-        return { 'input':  {'img':img},
+        return { 'input':  {'img':img,
+                            'hand_side': torch.tensor([0, 1]).float()},
                  'coor': to_torch(coor),
-                 'heatmap': to_torch(heatmap),
+                 # 'heat_map': to_torch(heat_map),
+                 'index_bone_length': index_bone_length,
                  'weight': 1,
                  'meta': meta}
-
 
     def eval_result(self, outputs, batch, cfg = None):
         gt_coor = batch['coor']

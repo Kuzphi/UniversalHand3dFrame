@@ -24,10 +24,10 @@ from src.utils.imutils import im_to_torch, draw_heatmap, load_image, resize
 from src.utils.misc import to_torch
 
 
-class Tencent(JointsDataset):
+class Tencent3D(JointsDataset):
     """docstring for TencentHand"""
     def __init__(self, cfg):
-        super(Tencent, self).__init__(cfg)
+        super(Tencent3D, self).__init__(cfg)
 
     def _get_db(self):
         return json.load(open(self.cfg.DATA_JSON_PATH))
@@ -93,4 +93,4 @@ class Tencent(JointsDataset):
                  'meta': meta}
 
     def __len__(self):
-        return 20000
+        return len(self.db)

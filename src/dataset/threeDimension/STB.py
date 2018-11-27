@@ -26,19 +26,28 @@ from src.utils.imutils import im_to_torch, draw_heatmap
 from src.utils.misc import to_torch
 from src.utils.imutils import load_image, resize, im_to_numpy
 from src.core.evaluate import get_preds_from_heatmap
+from src.core.evaluate import calc_auc, AUC, calc_auc
 
-class NoAf(JointsDataset):
+class STB3D(JointsDataset):
     """docstring for TencentHand"""
     def __init__(self, cfg):
-        super(NoAf, self).__init__(cfg)
-
+        super(STB3D, self).__init__(cfg)
+        self.upsampler = torch.nn.Upsample(scale_factor = 8, mode = 'bilinear', align_corners = True)
     def _get_db(self):
-        self.dic = pickle.load(open(self.DATA_JSON_PATH,"r"))
-        self.db = self.dic.keys()
+        self.db = []
+        self.name = []
+        self.all = 0
+        for name in sorted(os.listdir(self.cfg.DATA_JSON_PATH)):
+            if name[:-7] in self.cfg.PICK:
+                matPath = os.path.join(self.cfg.DATA_JSON_PATH, name)
+                self.db.append(sio.loadmat(matPath)['handPara'])
+                self.all += 1500
+                self.name.append(name[:-4])
+        print(self.all)
         return self.db
     
     def __len__(self):
-        return len(self.db)
+        return self.all
 
     def transforms(self, cfg, img, coor):
 
@@ -64,17 +73,26 @@ class NoAf(JointsDataset):
         return img, coor
 
     def __getitem__(self, idx):
-        name = self.db[idx]
-        coor = self.dic[name]
 
-        coor = torch.tensor(coor).numpy()
-        coor[1:,:] = coor[1:,:].reshape(5,4,-1)[:,::-1,:].reshape(20, -1)#iccv order !
+        name = self.name[idx // 1500]
+        coor = self.db[idx // 1500][:,:,idx % 1500]
+
+        coor = coor.transpose(1,0) / 1000. #milionmeter to meter
+        coor[1:, ] = coor[1:, :].reshape(5,4,-1)[::-1,::-1,:].reshape(20, -1)
         coor = np.array(coor)
-        coor = to_torch(coor)
-        coor = coor - coor[:1,:].repeat(21, 1)
-        index_bone_length = torch.norm(coor[12,:] - coor[11,:])
 
-        image_path = os.path.join(self.cfg.ROOT, name)
+        coor = to_torch(coor)
+        index_bone_length = torch.norm(coor[12,:] - coor[11,:])
+        coor = coor - coor[:1,:].repeat(21,1)
+
+        name = name.split("_")
+        if name[1] == 'BB':
+            image_path   = os.path.join(self.cfg.ROOT, name[0]+"_cropped", "_".join([name[1], 'left', str(idx % 1500)]) + '.png')
+        elif name[1] == 'SK':
+            image_path   = os.path.join(self.cfg.ROOT, name[0]+"_cropped", "_".join([name[1], 'color', str(idx % 1500)]) + '.png')
+        else:
+            raise Exception("Unrecognized name {}".format(name))
+
         img = load_image(image_path)
 
         #apply transforms into image and calculate cooresponding coor
@@ -106,15 +124,33 @@ class NoAf(JointsDataset):
     def get_preds(self, outputs, batch):
         return outputs['pose3d'] * batch['index_bone_length'].view(-1,1,1).repeat(1,21,3)
 
-    def preds_demo(self, preds, fpath):
-        for i in range(len(self)):
-            img = self[i]['input']['img']
-            img = im_to_numpy(img)
-            canvas = (img + .5) * 255
-            plt.figure(self[i]['meta']['name'])
-            ax = plt.add_subplot(111)
-            plot_hand_2d(canvas, preds[i], ax)
-            plt.show()
+    def post_infer(self, cfg, pred):
+        # print (self[0]['coor'] - pred[0])
+        dist = np.array([torch.norm(self[i]['coor'] - pred[i], dim = -1).mean() for i in range(len(self))])
+        print (dist.mean())
+        median = np.median(dist)
+        x, y = AUC(dist)
+        auc = calc_auc(dist)
+        auc00_50 = calc_auc(dist,  0, 50)
+        auc30_50 = calc_auc(dist, 30, 50)
+        print('AUC: ', auc)
+        print('AUC  0 - 50: ', auc00_50)
+        print('AUC 30 - 50: ', auc30_50)
+        print('AUC 20 - 50: ', auc20_50)
+        print('median:', median)
+        import matplotlib.pyplot as plt
+        fig = plt.figure('AUC')
+        plt.plot(x, y)
+        fig.savefig(os.path.join(cfg.CHECKPOINT,'AUC.png'))
+        res = {
+            'x':x,
+            'y':y,
+            'AUC':auc,
+            'AUC00_50': auc00_50,
+            'AUC30_50': auc30_50,
+            'AUC20_50': auc20_50
+        }
+        pickle.dump(res, open(os.path.join(cfg.CHECKPOINT,'dist.pickle'),'w'))
 
     # def __len__(self):
     #     return 100

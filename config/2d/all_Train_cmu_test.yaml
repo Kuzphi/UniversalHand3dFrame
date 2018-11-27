@@ -1,0 +1,121 @@
+TRAIN:
+  DEBUG: False
+  METRIC_ITEMS: # the metric that you wanna track during training
+    - loss
+    - dis
+    - PcKAcc
+  DATASET:
+    NAME: Combine2D
+    CONTAINS:
+      G:
+        ROOT: data/TencentHand
+        DATA_JSON_PATH: data/TencentHand/train.json
+                
+      STB:
+        ROOT: data/SHP/2dcrop
+        DATA_JSON_PATH: data/SHP/2dcrop/label.pickle        
+        PICK:
+          - B2Random
+          - B2Counting
+          - B3Random
+          - B3Counting
+          - B4Random
+          - B4Counting
+          - B5Random
+          - B5Counting
+          - B6Random
+          - B6Counting
+      RHD:
+        ROOT: data/RHD/training/cropped_full 
+        DATA_JSON_PATH: data/RHD/training/cropped_anno_full.pickle
+      
+      Tencent:
+        ROOT: data/TencentHand
+        DATA_JSON_PATH: data/TencentHand/_train.json
+
+    TRANSFORMS:
+      RESIZE: 256
+      FLIP: True
+      COLOR_NORISE: True
+    HEATMAP:
+      TYPE: Gaussian # Gaussian or Cauchy
+      SIGMA: 8 #Ground truth heatmap
+    NUM_JOINTS: 22
+    THR: 20
+    IS_TRAIN: True
+    BATCH_SIZE: 12
+    SHUFFLE: True
+
+VALID:
+  DEBUG: False
+  IS_VALID: True
+  DATASET:
+    NAME: Combine2D
+    CONTAINS:
+      CMU:
+        ROOT: data/CMU/hand_labels/manual_test_cropped
+        DATA_JSON_PATH: data/CMU/hand_labels/manual_test_cropped_anno.pickle
+        
+      STB:
+        ROOT: data/SHP/2dcrop
+        DATA_JSON_PATH: data/SHP/2dcrop/label.pickle
+        PICK:      
+          - B1Random
+          - B1Counting
+
+    IS_TRAIN: False
+    BATCH_SIZE: 12
+    THR: 20
+    SHUFFLE: 0
+    NUM_JOINTS: 22
+    TRANSFORMS: False
+    HEATMAP:
+      TYPE: Gaussian # Gaussian or Cauchy
+      SIGMA: 8 #Ground truth heatmap
+  METRIC_ITEMS: # the metric that you wanna track during training
+    - loss
+    - dis
+    - PcKAcc
+
+CRITERION: CPMMSELoss
+GPUS:
+- 0
+- 1
+- 2
+- 3
+- 4
+- 5
+- 6
+- 7
+LOG_DIR: ''
+MODEL:
+  NAME: openpose_hand
+  PRETRAINED_WEIGHT_PATH: 'pretrained_weight/openpose_hand.torch'
+  num_joints: 22
+OPTIMIZER:
+  NAME: RMSprop
+  PARAMETERS:
+    lr: 2.5e-05
+    momentum: 0
+    weight_decay: 0
+OPTIMIZER_SCHEDULE:
+  NAME: StepLR
+  PARAMETERS:
+    gamma: 0.1
+    step_size: 30
+LOG:
+  PATH: output
+  MONITOR_ITEM:
+    - lr
+METRIC_ITEMS: # the metric that you wanna track during training
+  - loss
+  - dis
+  - PcKAcc
+CURRENT_EPOCH: 0
+OUTPUT_DIR: output/
+START_EPOCH: 0
+WORKERS: 40
+RESUME_TRAIN: 0
+MAIN_METRIC: PcKAcc
+DATA_DIR: ''
+END_EPOCH: 100

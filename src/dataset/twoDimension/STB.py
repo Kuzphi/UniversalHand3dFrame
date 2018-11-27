@@ -27,10 +27,10 @@ from src.utils.misc import to_torch
 from src.utils.imutils import load_image, resize, im_to_numpy
 from src.core.evaluate import get_preds_from_heatmap, AUC, calc_auc
 
-class SHP2D(JointsDataset):
+class STB2D(JointsDataset):
     """docstring for TencentHand"""
     def __init__(self, cfg):
-        super(SHP2D, self).__init__(cfg)
+        super(STB2D, self).__init__(cfg)
     def _get_db(self):
         self.db = []
         self.name = []

@@ -8,11 +8,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from .twoDimension import *
-from .threeDimension import *
-
-from .Combine2D import Combine2D
-from .Combine3D import Combine3D
-
-from .Testdataset import Test
-from .BaseDataset import JointsDataset
+from .G import G3D
+from .STB import STB3D
+from .RHD import RHD3D
+from .Tencent import Tencent3D
