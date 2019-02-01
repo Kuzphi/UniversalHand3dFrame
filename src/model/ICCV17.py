@@ -68,7 +68,7 @@ class PoseNet(nn.Module):
 
 class PosePior(nn.Module):
 	"""docstring for PosePior"""
-	def __init__(self, num_joints):
+	def __init__(self, num_joints = 21):
 		super(PosePior, self).__init__()
 		self.num_joints = num_joints
 		self.relu  = nn.functional.leaky_relu
@@ -86,7 +86,6 @@ class PosePior(nn.Module):
 	def _flip_right_hand(self, coords_xyz_canonical, hand_side):
 		""" Flips the given canonical coordinates, when cond_right is true. Returns coords unchanged otherwise.
 			The returned coordinates represent those of a left hand.
-
 			Inputs:
 				coords_xyz_canonical: Nx3 matrix, containing the coordinates for each of the N keypoints
 		"""
@@ -223,5 +222,4 @@ class ICCV17(nn.Module):
 		# print(rotate_mat)
 		out = torch.matmul(pose_can, rotate_mat)
 		# print (torch.matmul(pose_can[0], rotate_mat[0]))
-		return {'pose3d' : out, 
-				'heatmap': heatmap}
+		return {'pose3d' : out, 'heatmap': heatmap}

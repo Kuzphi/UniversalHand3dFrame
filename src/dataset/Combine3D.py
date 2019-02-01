@@ -33,12 +33,15 @@ class Combine3D(JointsDataset):
     def __init__(self, cfg):
         super(Combine3D, self).__init__(cfg)
         self.datasets = []
+        self.len = 0
         for key in cfg.CONTAINS:
-            cfg.CONTAINS[key].HEATMAP = cfg.HEATMAP
+            print(key)
             cfg.CONTAINS[key].IS_TRAIN = cfg.IS_TRAIN
             cfg.CONTAINS[key].TRANSFORMS = cfg.TRANSFORMS
-            self.datasets.append( eval('%{}2D(cfg.%{})'.format(key, key) ))
+            cfg.CONTAINS[key].NUM_JOINTS = cfg.NUM_JOINTS
+            self.datasets.append( eval(key)(cfg.CONTAINS[key]))
             self.len += len(self.datasets[-1])
+
     def __len__(self):
         return self.len
 

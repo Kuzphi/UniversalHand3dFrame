@@ -36,76 +36,38 @@ import io
 class Test(InferenceDataset):
     def __init__(self, cfg):
         super(Test, self).__init__(cfg)
+        self.db = self._get_db()
 
     def __getitem__(self, idx):
-        # isleft = 1 if idx < len(self.db['left_hand']) else 0
+        img_path = self.db[idx]
+        img = load_image(img_path, mode = 'GBR') # already / 255
+        meta = {'idx': idx}
 
-        # if isleft:
-        #     img = self.db['left_hand'][idx]
-        # else:
-        #     img = self.db['right_hand'][idx - len(self.db['left_hand'])]
-        isleft = 0
-        img = self.db['right_hand'][idx]
-
-        img = Image.open(io.BytesIO(img))
-        img = np.array(img)
-        cv2.imwrite("origin_image/" +  str(idx).zfill(5) + '.jpg', img[:,:,::-1])
-        img = cv2.resize(img,(256,256))
-        # print (type(img), img.shape)
-
-        # import matplotlib.pyplot as plt
-        # fig = plt.figure(1)
-        # ax1 = fig.add_subplot(111)
-        # ax1.imshow(img)
-        # plt.show()
-
-        img = img / 255. - .5
-        img = im_to_torch(img)
-        meta = {'isleft': isleft,
-                'idx': idx}
-
-        return { 'input': { "img": img,
-                            "hand_side": torch.tensor([isleft, 1 - isleft]).float()},
+        return { 'input': { "img": img},
+                'weight': 1,
                  'meta': meta}
 
     def __len__(self):
         # return len(self.db['left_hand']) + len(self.db['right_hand'])
-        return len(self.db['right_hand'])
+        return 100
+        return len(self.db)
     
-    def get_preds(self, outputs):
-        pose3d = outputs['pose3d']
-        heatmap = outputs['heatmap'][-1]
-        from torch.nn.functional import upsample
-        heatmap = upsample(heatmap, size = (256,256), mode = 'bilinear', align_corners = True)
-        pose2d = get_preds_from_heatmap(heatmap.numpy()) 
-        return {'pose3d': pose3d,
-                'pose2d': torch.from_numpy(pose2d)}
+    def get_preds(self, outputs, batch):
+        return get_preds_from_heatmap(outputs['heatmap'][-1])
 
-    def preds_demo(self, preds, fpath):
-        # print (len(self), len(preds['pose2d']), len(preds['pose3d']))
-        for idx, (pose2d, pose3d) in enumerate(zip(preds['pose2d'], preds['pose3d'])):            
-            batch = self[idx]
-            canvas = (batch['input']['img'] + 0.5) * 255
-            canvas = im_to_numpy(canvas).astype(np.uint8).copy()
+    def post_infer(self, cfg, preds):
+        os.mkdir(os.path.join(cfg.CHECKPOINT,'images'))
+        for idx, pose2d in enumerate(preds):
+            print(idx)
             fig = plt.figure(1)
-            ax1 = fig.add_subplot(121)
-            ax2 = fig.add_subplot(122, projection='3d')
-            print (pose2d)
-            print (pose3d)
-            #draw 2d joint
-            plot_hand(canvas, pose2d.numpy().astype(np.uint8), ax1)
-            # ax1.imshow(canvas)
-            # ax1.axis('off')
-
-            #draw 3d joint
-            plot_hand_3d(pose3d, ax2)
-            ax2.view_init(azim=-90.0, elev=-90.0)  # aligns the 3d coord with the camera view
-            ax2.set_xlim([-3, 3])
-            ax2.set_ylim([-3, 1])
-            ax2.set_zlim([-3, 3])
-            #show and save
-            plt.show()
-            # plt.savefig(fpath + str(idx))
+            ax = fig.add_subplot(111)
+            canvas = self[idx]['input']['img'] + .5
+            canvas = im_to_numpy(canvas)[:,:,::-1]
+            pose2d = pose2d.numpy().astype(np.uint8)
+            pose2d[1:,:] = pose2d[1:,:].reshape(5,4,-1)[:,::-1,:].reshape(20, -1)
+            plot_hand(canvas, pose2d, ax)
+            plt.savefig(os.path.join(cfg.CHECKPOINT,'images',str(idx) + '.png'))
+            plt.close()
 
 class OriginImage(Test):
     """docstring for origin_image"""

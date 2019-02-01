@@ -66,7 +66,7 @@ def main(args):
         optimizer.load_state_dict(checkpoint['optimizer'])
 
     best = 1e99
-    sgn = -1 if cfg.MAIN_METRIC.endswith('acc') else 1
+    sgn = -1 if cfg.MAIN_METRIC.endswith('Acc') else 1
 
     for epoch in range(cfg.START_EPOCH, cfg.END_EPOCH):
         scheduler.step()

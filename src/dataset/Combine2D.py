@@ -40,9 +40,10 @@ class Combine2D(JointsDataset):
             cfg.CONTAINS[key].IS_TRAIN = cfg.IS_TRAIN
             cfg.CONTAINS[key].TRANSFORMS = cfg.TRANSFORMS
             cfg.CONTAINS[key].NUM_JOINTS = cfg.NUM_JOINTS
-            self.datasets.append( eval(key + '2D')(cfg.CONTAINS[key]))
+            self.datasets.append( eval(key)(cfg.CONTAINS[key]))
             self.len += len(self.datasets[-1])
     def __len__(self):
+        # return 100
         return self.len
 
     def _get_db(self):

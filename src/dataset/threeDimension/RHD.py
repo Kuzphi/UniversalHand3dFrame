@@ -23,7 +23,7 @@ from easydict import EasyDict as edict
 from src.dataset.BaseDataset import JointsDataset
 from src.utils.imutils import im_to_torch, draw_heatmap
 from src.utils.misc import to_torch
-from src.utils.imutils import load_image
+from src.utils.imutils import load_image, resize
 from src.core.evaluate import calc_auc, AUC, calc_auc
 
 class RHD3D(JointsDataset):
@@ -36,17 +36,20 @@ class RHD3D(JointsDataset):
         return sorted(self.anno.keys())
         
     def transforms(self, cfg, img, coor):
+        # resize
+        if cfg.has_key('RESIZE'):
+            img = resize(img, cfg.RESIZE, cfg.RESIZE)
+
         if self.is_train:
             # s = s*torch.randn(1).mul_(sf).add_(1).clamp(1-sf, 1+sf)[0]
             # r = torch.randn(1).mul_(rf).clamp(-2*rf, 2*rf)[0] if random.random() <= 0.6 else 0
-
+            
             # Flip
-            # if random.random() <= 0.5:
-                # img = torch.from_numpy(fliplr(img.numpy())).float()
-                # pts = shufflelr(pts, width=img.size(2), dataset='RHD')
-                # c[0] = img.size(2) - c[0]
+            if cfg.FLIP and random.random() <= 0.5:
+                img = torch.flip(img, dims = [0])
+                coor[:, 0] = img.size(0) - coor[:, 0]
 
-            # Color
+            # Color 
             if cfg.COLOR_NORISE:
                 img[0, :, :].mul_(random.uniform(0.8, 1.2)).clamp_(-0.5, 0.5)
                 img[1, :, :].mul_(random.uniform(0.8, 1.2)).clamp_(-0.5, 0.5)
@@ -57,10 +60,13 @@ class RHD3D(JointsDataset):
         name = self.db[idx]
         label = self.anno[name]
 
-        image_path   = os.path.join(self.cfg.ROOT, name)
+        image_path   = os.path.join(self.cfg.ROOT, 'color', name + '.png')
         img = load_image(image_path)
+        coor = to_torch(label['xyz'])
 
-        coor = to_torch(label['xyz_coor'])
+        if self.cfg.TRANSFORMS:
+            img, coor = self.transforms(self.cfg.TRANSFORMS, img , coor)
+
         index_bone_length = torch.norm(coor[12,:] - coor[11,:])
         coor[0, :] = (coor[0] + coor[12]) / 2.
         coor = coor - coor[:1,:].repeat(21,1)
@@ -69,9 +75,10 @@ class RHD3D(JointsDataset):
         #     img, coor = self.transforms(self.cfg.TRANSFORMS, img , coor)
         # print(idx, coor.sum())
         meta = edict({'name': name})
-        isleft = int(label['isleft'])
+        isleft = name[-1] == 'L'
+        # isleft = int(label['isleft'])
 
-        return {'input': {'img':img, 
+        return {'input': {'img':img,
                           'hand_side': torch.tensor([isleft, 1 - isleft]).float(),                          
                           },
                 'index_bone_length': index_bone_length,

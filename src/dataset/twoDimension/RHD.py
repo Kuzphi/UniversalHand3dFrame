@@ -24,7 +24,7 @@ from easydict import EasyDict as edict
 from src.dataset.BaseDataset import JointsDataset
 from src.utils.imutils import im_to_torch, draw_heatmap
 from src.utils.misc import to_torch
-from src.utils.imutils import load_image
+from src.utils.imutils import load_image, resize
 from src.core.evaluate import get_preds_from_heatmap, AUC, calc_auc
 
 class RHD2D(JointsDataset):
@@ -37,15 +37,22 @@ class RHD2D(JointsDataset):
         return sorted(self.anno.keys())
         
     def transforms(self, cfg, img, coor):
+        # resize
+        if cfg.has_key('RESIZE'):
+            coor[:, 0] = coor[:, 0] / img.size(1) * cfg.RESIZE
+            coor[:, 1] = coor[:, 1] / img.size(2) * cfg.RESIZE
+            img = resize(img, cfg.RESIZE, cfg.RESIZE)
+
         if self.is_train:
             # s = s*torch.randn(1).mul_(sf).add_(1).clamp(1-sf, 1+sf)[0]
             # r = torch.randn(1).mul_(rf).clamp(-2*rf, 2*rf)[0] if random.random() <= 0.6 else 0
             
+            # Flip
             if cfg.FLIP and random.random() <= 0.5:
-                img = torch.flip(img, dims = [0])
-                coor[:, 0] = img.size(0) - coor[:, 0]
+                img = torch.flip(img, dims = [1])
+                coor[:, 1] = img.size(1) - coor[:, 1]
 
-            # Color
+            # Color 
             if cfg.COLOR_NORISE:
                 img[0, :, :].mul_(random.uniform(0.8, 1.2)).clamp_(-0.5, 0.5)
                 img[1, :, :].mul_(random.uniform(0.8, 1.2)).clamp_(-0.5, 0.5)
@@ -56,16 +63,16 @@ class RHD2D(JointsDataset):
         name = self.db[idx]
         label = self.anno[name]
 
-        image_path   = os.path.join(self.cfg.ROOT, name)
-        img = load_image(image_path, mode = 'GBR') # already / 255
+        image_path   = os.path.join(self.cfg.ROOT, name + '.png')
+        img = load_image(image_path) # already / 255
 
-        coor = label['uv_coor']
+        coor = label['project']
         coor[1:,:] = coor[1:,:].reshape(5,4,-1)[:,::-1,:].reshape(20, -1)
         coor = np.array(coor)
         coor = to_torch(coor)
         #apply transforms into image and calculate cooresponding coor
-        # if self.cfg.TRANSFORMS:
-        #     img, coor = self.transforms(self.cfg.TRANSFORMS, img , coor)
+        if self.cfg.TRANSFORMS:
+            img, coor = self.transforms(self.cfg.TRANSFORMS, img , coor)
         
         meta = edict({'name': name})
         heatmap = torch.zeros(22, img.size(1), img.size(2))

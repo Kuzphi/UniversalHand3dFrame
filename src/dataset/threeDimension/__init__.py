@@ -12,3 +12,4 @@ from .G import G3D
 from .STB import STB3D
 from .RHD import RHD3D
 from .Tencent import Tencent3D
+from .FakeHandRealBG import FakeHandRealBG3D

@@ -2,7 +2,7 @@ CURRENT_EPOCH: 0
 IS_VALID: True #validate or just inference
 DATASET:
   NAME: SHP
-  ROOT: data/SHP/
+  ROOT: '/data/liangjianData/test'
   IS_TRAIN: False
   BATCH_SIZE: 20
   SHUFFLE: 0

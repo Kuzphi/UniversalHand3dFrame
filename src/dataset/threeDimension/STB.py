@@ -87,9 +87,9 @@ class STB3D(JointsDataset):
 
         name = name.split("_")
         if name[1] == 'BB':
-            image_path   = os.path.join(self.cfg.ROOT, name[0]+"_cropped", "_".join([name[1], 'left', str(idx % 1500)]) + '.png')
+            image_path   = os.path.join(self.cfg.ROOT, name[0], "_".join(['left', str(idx % 1500)]) + '.png')
         elif name[1] == 'SK':
-            image_path   = os.path.join(self.cfg.ROOT, name[0]+"_cropped", "_".join([name[1], 'color', str(idx % 1500)]) + '.png')
+            image_path   = os.path.join(self.cfg.ROOT, name[0], "_".join(['SK', str(idx % 1500)]) + '.png')
         else:
             raise Exception("Unrecognized name {}".format(name))
 
