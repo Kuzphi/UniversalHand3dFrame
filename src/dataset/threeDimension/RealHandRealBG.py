@@ -40,8 +40,8 @@ class RealHandRealBG3D(JointsDataset):
             self.anno[name] = []
         
         for name in self.names:
-            ipath = './data/RealHandRealBG/'%name
-            lpath = '/data/liangjianData/TencentHand/Model1/%s/label/'%name
+            ipath = 'data/TencentHand/RealHandRealBG/%s/edge2hand_newD_newG_pix2pix_newfake_20k/test_latest/images'%name
+            lpath = 'data/TencentHand/Model1/%s/label/'%name
             for file in os.listdir(ipath):
                 if file.endswith('fake_B.png'):
                     self.db[name].append(os.path.join(ipath, file))

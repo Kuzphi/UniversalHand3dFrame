@@ -16,7 +16,7 @@ TRAIN:
       FLIP: True 
       COLOR_NORISE: True
     IS_TRAIN: True
-    BATCH_SIZE: 1
+    BATCH_SIZE: 6
     SHUFFLE: True
     NUM_JOINTS: 21
 
