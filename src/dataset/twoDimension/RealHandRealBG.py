@@ -41,7 +41,7 @@ class RealHandRealBG2D(JointsDataset):
             self.anno[name] = []
         
         for name in self.names:
-            ipath = 'data/TencentHand/RealHandRealBG2D/%s/edge2hand_newD_newG_pix2pix_newfake_20k/test_latest/images'%name
+            ipath = 'data/TencentHand/RealHandRealBG/%s/edge2hand_newD_newG_pix2pix_newfake_20k/test_latest/images'%name
             lpath = 'data/TencentHand/Model1/%s/label/'%name
             for file in os.listdir(ipath):
                 if file.endswith('fake_B.png'):
