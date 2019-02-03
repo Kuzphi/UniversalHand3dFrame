@@ -38,13 +38,6 @@ class Tencent3D(JointsDataset):
             img = resize(img, cfg.RESIZE, cfg.RESIZE)
 
         if self.is_train:
-            # s = s*torch.randn(1).mul_(sf).add_(1).clamp(1-sf, 1+sf)[0]
-            # r = torch.randn(1).mul_(rf).clamp(-2*rf, 2*rf)[0] if random.random() <= 0.6 else 0
-            
-            # Flip
-            if cfg.FLIP and random.random() <= 0.5:
-                img = torch.flip(img, dims = [0])
-                coor[0] = img.size(0) - coor[0]
 
             # Color 
             if cfg.COLOR_NORISE:
@@ -71,15 +64,10 @@ class Tencent3D(JointsDataset):
         coor = to_torch(coor)
         coor = coor - coor[:1,:].repeat(21, 1)
         index_bone_length = torch.norm(coor[12,:] - coor[11,:])
+        
         #apply transforms into image and calculate cooresponding coor
         if self.cfg.TRANSFORMS:
             img, label = self.transforms(self.cfg.TRANSFORMS, img , coor)
-
-        # heat_map = np.zeros((self.cfg.NUM_JOINTS, img.shape[1], img.shape[2]))
-
-        # for i in range(self.cfg.NUM_JOINTS):
-        #     heat_map[i, :, :] = draw_heatmap(heat_map[i], coor[i], self.cfg.HEATMAP.SIGMA, type = self.cfg.HEATMAP.TYPE) 
-
 
         meta = edict({
                 'name': w[1] + ' ' + w[2] + ' ' + w[0]})

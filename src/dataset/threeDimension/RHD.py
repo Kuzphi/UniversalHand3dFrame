@@ -41,14 +41,6 @@ class RHD3D(JointsDataset):
             img = resize(img, cfg.RESIZE, cfg.RESIZE)
 
         if self.is_train:
-            # s = s*torch.randn(1).mul_(sf).add_(1).clamp(1-sf, 1+sf)[0]
-            # r = torch.randn(1).mul_(rf).clamp(-2*rf, 2*rf)[0] if random.random() <= 0.6 else 0
-            
-            # Flip
-            if cfg.FLIP and random.random() <= 0.5:
-                img = torch.flip(img, dims = [0])
-                coor[:, 0] = img.size(0) - coor[:, 0]
-
             # Color 
             if cfg.COLOR_NORISE:
                 img[0, :, :].mul_(random.uniform(0.8, 1.2)).clamp_(-0.5, 0.5)
@@ -70,13 +62,13 @@ class RHD3D(JointsDataset):
         index_bone_length = torch.norm(coor[12,:] - coor[11,:])
         coor[0, :] = (coor[0] + coor[12]) / 2.
         coor = coor - coor[:1,:].repeat(21,1)
+
         #apply transforms into image and calculate cooresponding coor
-        # if self.cfg.TRANSFORMS:
-        #     img, coor = self.transforms(self.cfg.TRANSFORMS, img , coor)
-        # print(idx, coor.sum())
+        if self.cfg.TRANSFORMS:
+            img, coor = self.transforms(self.cfg.TRANSFORMS, img , coor)
+            
         meta = edict({'name': name})
         isleft = name[-1] == 'L'
-        # isleft = int(label['isleft'])
 
         return {'input': {'img':img,
                           'hand_side': torch.tensor([isleft, 1 - isleft]).float(),                          

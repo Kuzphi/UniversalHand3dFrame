@@ -4,65 +4,70 @@ TRAIN:
     - loss
     - dis
     - PcKAcc
+
   DATASET:
-    NAME: RHD_Tencent2D
-    TENCENT:
-      ROOT: data/TencentHand
-      DATA_JSON_PATH: data/TencentHand/train.json
-      IS_TRAIN: True
-      NUM_JOINTS: 22
-      TRANSFORMS:
-        RESIZE: 256
-        FLIP: True
-        COLOR_NORISE: True
-      HEATMAP:
-        TYPE: Gaussian # Gaussian or Cauchy
-        SIGMA: 8 #Ground truth heatmap 
-    RHD:
-      ROOT: data/RHD/training/cropped_full    
-      DATA_JSON_PATH: data/RHD/training/cropped_anno_full.pickle
-      IS_TRAIN: True
-      
-      TRANSFORMS:
-        RESIZE: 256
-        FLIP: True
-        COLOR_NORISE: True
-      HEATMAP:
-        TYPE: Gaussian # Gaussian or Cauchy
-        SIGMA: 8 #Ground truth heatmap
+    NAME: Combine2D
+    CONTAINS:
+      RealHandRealBG2D:
+        ROOT: 'data/TencentHand/RealHandRealBG'
+      STB2D:
+        ROOT: data/STB/2dcrop
+        DATA_JSON_PATH: data/STB/2dcrop/label.pickle
+        PICK:
+          - B2Counting
+          - B3Counting
+          - B4Counting
+          - B5Counting
+          - B6Counting
+          - B2Random
+          - B3Random
+          - B4Random
+          - B5Random
+          - B6Random
+
+    TRANSFORMS:
+      RESIZE: 256
+      FLIP: True
+      COLOR_NORISE: True
+    HEATMAP:
+      TYPE: Gaussian # Gaussian or Cauchy
+      SIGMA: 8 #Ground truth heatmap
+    NUM_JOINTS: 22
     THR: 20
     IS_TRAIN: True
-    BATCH_SIZE: 6
+    BATCH_SIZE: 12
     SHUFFLE: True
 
 VALID:
   DEBUG: False
   IS_VALID: True
-  NUM_JOINTS: 21
   DATASET:
-    NAME: RHD2D
-    ROOT: data/RHD/evaluation/cropped_bigger   
-    DATA_JSON_PATH: data/RHD/evaluation/cropped_anno_bigger.pickle    
+    NAME: STB2D
+    ROOT: data/STB/2dcrop
+    DATA_JSON_PATH: data/STB/2dcrop/label.pickle
+    PICK:
+      - B1Counting
+      - B1Random
+    THR: 20
+    IS_TRAIN: False
+    BATCH_SIZE: 6
     TRANSFORMS:
       RESIZE: 256
       FLIP: False
       COLOR_NORISE: False
     HEATMAP:
       TYPE: Gaussian # Gaussian or Cauchy
-      SIGMA: 1 #Ground truth heatmap 
-    THR: 20
-    IS_TRAIN: False
-    BATCH_SIZE: 2
+      SIGMA: 8 #Ground truth heatmap
+      
   METRIC_ITEMS: # the metric that you wanna track during training
     - loss
     - dis
     - PcKAcc
+
 CRITERION: CPMMSELoss
 GPUS:
 - 0
 - 1
-- 2
-- 3
 LOG_DIR: ''
 MODEL:
   NAME: openpose_hand
@@ -90,8 +95,8 @@ METRIC_ITEMS: # the metric that you wanna track during training
 CURRENT_EPOCH: 0
 OUTPUT_DIR: output/
 START_EPOCH: 0
-WORKERS: 40
+WORKERS: 12
 RESUME_TRAIN: 0
-MAIN_METRIC: loss
+MAIN_METRIC: PcKAcc
 DATA_DIR: ''
 END_EPOCH: 100

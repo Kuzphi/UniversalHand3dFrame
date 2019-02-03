@@ -18,18 +18,19 @@ import json
 import pickle
 import torch
 import numpy as np
+import  matplotlib.pyplot as plt
 from easydict import EasyDict as edict
 
 from src.dataset.BaseDataset import JointsDataset
-from src.utils.imutils import im_to_torch, draw_heatmap
+from src.utils.imutils import im_to_torch, im_to_numpy, draw_heatmap
 from src.utils.misc import to_torch
-from src.utils.imutils import load_image, resize
+from src.utils.imutils import load_image, resize, plot_hand
 from src.core.evaluate import calc_auc, AUC, calc_auc
 
-class G3D(JointsDataset):
+class RealHandRealBG2D(JointsDataset):
     """docstring for TencentHand"""
     def __init__(self, cfg):
-        super(G3D, self).__init__(cfg)
+        super(RealHandRealBG2D, self).__init__(cfg)
 
     def _get_db(self):
         self.names = ['Model1Tap','Model1Fist', 'Model1ArmRotate', 'Model1WristRotate']
@@ -40,14 +41,14 @@ class G3D(JointsDataset):
             self.anno[name] = []
         
         for name in self.names:
-            ipath = '/data/yufan/for_liangjian/%s/edge2hand_newD_newG_pix2pix_newfake_20k/test_latest/images/'%name
-            lpath = '/data/liangjianData/TencentHand/Model1/%s/label/'%name
+            ipath = 'data/TencentHand/RealHandRealBG2D/%s/edge2hand_newD_newG_pix2pix_newfake_20k/test_latest/images'%name
+            lpath = 'data/TencentHand/Model1/%s/label/'%name
             for file in os.listdir(ipath):
                 if file.endswith('fake_B.png'):
                     self.db[name].append(os.path.join(ipath, file))
                     idx = file[:7]
                     label = json.load(open(os.path.join(lpath, idx + '.json'),"r"))
-                    self.anno[name].append(label['camera'])
+                    self.anno[name].append(label['perspective'])
 
         # self.anno = pickle.load(open(self.cfg.DATA_JSON_PATH))
         # return sorted(self.anno.keys())
@@ -56,6 +57,8 @@ class G3D(JointsDataset):
     def transforms(self, cfg, img, coor):
         # resize
         if cfg.has_key('RESIZE'):
+            coor[:, 0] = coor[:, 0] / img.size(1) * cfg.RESIZE
+            coor[:, 1] = coor[:, 1] / img.size(2) * cfg.RESIZE
             img = resize(img, cfg.RESIZE, cfg.RESIZE)
 
         if self.is_train:
@@ -64,8 +67,8 @@ class G3D(JointsDataset):
             
             # Flip
             if cfg.FLIP and random.random() <= 0.5:
-                img = torch.flip(img, dims = [0])
-                coor[0] = img.size(0) - coor[0]
+                img = torch.flip(img, dims = [1])
+                coor[:, 1] = img.size(1) - coor[:, 1]
 
             # Color 
             if cfg.COLOR_NORISE:
@@ -83,30 +86,33 @@ class G3D(JointsDataset):
         img = load_image(path)
 
         #calculate ground truth coordination
-        coor = torch.tensor(coor).numpy()
-        coor[1:,:] = coor[1:,:].reshape(5,4,-1)[:,::-1,:].reshape(20, -1)#iccv order !
-        coor = np.array(coor)
-        coor = to_torch(coor)
-        coor = coor - coor[:1,:].repeat(21, 1)
-        index_bone_length = torch.norm(coor[12,:] - coor[11,:])
+        coor = torch.tensor(coor)
+        coor[:, 0] = coor[:, 0] * img.size(1)
+        coor[:, 1] = (1 - coor[:, 1]) * img.size(2)
+        coor = coor[:, :2]
+
         #apply transforms into image and calculate cooresponding coor
         if self.cfg.TRANSFORMS:
-            img, label = self.transforms(self.cfg.TRANSFORMS, img , coor)
+            img, coor = self.transforms(self.cfg.TRANSFORMS, img , coor)
 
-        # heat_map = np.zeros((self.cfg.NUM_JOINTS, img.shape[1], img.shape[2]))
+        #openpose require 22 channel, discard the last one
+        heatmap = np.zeros((self.cfg.NUM_JOINTS, img.shape[1], img.shape[2]))
+        for i in range(self.cfg.NUM_JOINTS - 1):
+            heatmap[i, :, :] = draw_heatmap(heatmap[i], coor[i], self.cfg.HEATMAP.SIGMA, type = self.cfg.HEATMAP.TYPE) 
 
-        # for i in range(self.cfg.NUM_JOINTS):
-        #     heat_map[i, :, :] = draw_heatmap(heat_map[i], coor[i], self.cfg.HEATMAP.SIGMA, type = self.cfg.HEATMAP.TYPE) 
+        # print (name, coor)
+        # fig = plt.figure(1)
+        # ax = fig.add_subplot(111)
+        # plot_hand(im_to_numpy(img), coor, ax)
+        # plt.show()
 
+        meta = edict({'name': path})
 
-        meta = edict({
-                'name': path})
-
-        return { 'input':  {'img':img,
-                            'hand_side': torch.tensor([0, 1]).float()},
+        assert coor.min() > 0, path
+        
+        return { 'input':  {'img':img},
                  'coor': to_torch(coor),
-                 # 'heat_map': to_torch(heat_map),
-                 'index_bone_length': index_bone_length,
+                 'heatmap': to_torch(heatmap),
                  'weight': 1,
                  'meta': meta}
 
@@ -121,26 +127,6 @@ class G3D(JointsDataset):
         # median = torch.median(dis)
         return {"dis": dis}
         # return {"dis": dis, 'median':median, 'AUC':AUC }
-
-    def get_preds(self, outputs, batch):
-        return outputs['pose3d'] * batch['index_bone_length'].view(-1,1,1).repeat(1,21,3)
-
-    def post_infer(self, cfg, pred):
-        # print (self[0]['coor'] - pred[0])
-        dist = np.array([torch.norm(self[i]['coor'] - pred[i], dim = -1).mean() for i in range(len(self))])
-        median = np.median(dist)
-        x, y = AUC(dist)
-        auc = calc_auc(dist)
-        auc00_30 = calc_auc(dist,  0, 50)
-        auc30_50 = calc_auc(dist, 30, 50)
-        print('AUC: ', auc)
-        print('AUC  0 - 30: ', auc)
-        print('AUC 30 - 50: ', auc)
-        print('median:', median)
-        import matplotlib.pyplot as plt
-        fig = plt.figure('AUC')
-        plt.plot(x, y)
-        fig.savefig(os.path.join(cfg.CHECKPOINT,'AUC.png'))
-
+        
     def __len__(self):
         return 5220 * 4

@@ -1,5 +1,5 @@
 TRAIN:
-  DEBUG: True
+  DEBUG: False
   METRIC_ITEMS: # the metric that you wanna track during training
     - loss
     - dis
@@ -51,6 +51,7 @@ VALID:
     THR: 20
     IS_TRAIN: False
     BATCH_SIZE: 6
+    NUM_JOINTS: 22
     TRANSFORMS:
       RESIZE: 256
       FLIP: False
