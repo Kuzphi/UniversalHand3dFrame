@@ -18,12 +18,13 @@ import json
 import pickle
 import torch
 import numpy as np
+import  matplotlib.pyplot as plt
 from easydict import EasyDict as edict
 
 from src.dataset.BaseDataset import JointsDataset
-from src.utils.imutils import im_to_torch, draw_heatmap
+from src.utils.imutils import im_to_torch, im_to_numpy, draw_heatmap
 from src.utils.misc import to_torch
-from src.utils.imutils import load_image, resize
+from src.utils.imutils import load_image, resize, plot_hand
 from src.core.evaluate import calc_auc, AUC, calc_auc
 
 class FakeHandRealBG2D(JointsDataset):
@@ -43,6 +44,8 @@ class FakeHandRealBG2D(JointsDataset):
             ipath = 'data/TencentHand/simulated_v0.2/%s/'%name
             lpath = 'data/TencentHand/Model1/%s/label/'%name
             for file in os.listdir(ipath):
+                if file.startswith('._'):
+                    continue
                 self.db[name].append(os.path.join(ipath, file))
                 idx = file[:7]
                 label = json.load(open(os.path.join(lpath, idx + '.json'),"r"))
@@ -98,6 +101,11 @@ class FakeHandRealBG2D(JointsDataset):
         for i in range(self.cfg.NUM_JOINTS - 1):
             heatmap[i, :, :] = draw_heatmap(heatmap[i], coor[i], self.cfg.HEATMAP.SIGMA, type = self.cfg.HEATMAP.TYPE) 
 
+        # print (name, coor)
+        # fig = plt.figure(1)
+        # ax = fig.add_subplot(111)
+        # plot_hand(im_to_numpy(img), coor, ax)
+        # plt.show()
 
         meta = edict({'name': path})
 

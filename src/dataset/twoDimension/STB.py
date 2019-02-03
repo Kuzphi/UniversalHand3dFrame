@@ -19,12 +19,13 @@ import pickle
 import torch
 import numpy as np
 import scipy.io as sio
+import  matplotlib.pyplot as plt
 from easydict import EasyDict as edict
 
 from src.dataset.BaseDataset import JointsDataset
 from src.utils.imutils import im_to_torch, draw_heatmap
 from src.utils.misc import to_torch
-from src.utils.imutils import load_image, resize, im_to_numpy
+from src.utils.imutils import load_image, resize, im_to_numpy, plot_hand
 from src.core.evaluate import get_preds_from_heatmap, AUC, calc_auc
 
 class STB2D(JointsDataset):
@@ -38,7 +39,6 @@ class STB2D(JointsDataset):
         dic = pickle.load(open(self.cfg.DATA_JSON_PATH))
         for name in dic:
             if name in self.cfg.PICK:
-                matPath = os.path.join(self.cfg.DATA_JSON_PATH, name)
                 self.db.append(dic[name]['l'])
                 self.all += 1500
                 self.name.append(name + "_left")
@@ -58,13 +58,10 @@ class STB2D(JointsDataset):
             img = resize(img, cfg.RESIZE, cfg.RESIZE)
 
         if self.is_train:
-            # s = s*torch.randn(1).mul_(sf).add_(1).clamp(1-sf, 1+sf)[0]
-            # r = torch.randn(1).mul_(rf).clamp(-2*rf, 2*rf)[0] if random.random() <= 0.6 else 0
-            
             # Flip
-            # if cfg.FLIP and random.random() <= 0.5:
-            #     img = torch.flip(img, dims = [1])
-            #     coor[:, 0] = img.size(1) - coor[:, 0]
+            if cfg.FLIP and random.random() <= 0.5:
+                img = torch.flip(img, dims = [1])
+                coor[:, 1] = img.size(1) - coor[:, 1]
 
             # Color 
             if cfg.COLOR_NORISE:
@@ -82,15 +79,21 @@ class STB2D(JointsDataset):
 
         name = name.split("_")
         image_path   = os.path.join(self.cfg.ROOT, name[0], name[1] + '_' + str(idx % 1500) + '.png')
-        img = load_image(image_path, mode = 'GBR')
+        img = load_image(image_path, mode = 'RGB')
 
         #apply transforms into image and calculate cooresponding coor
         if self.cfg.TRANSFORMS:
             img, coor = self.transforms(self.cfg.TRANSFORMS, img , coor)
+            
+        # print (name, idx % 1500, coor)
+        # fig = plt.figure(1)
+        # ax = fig.add_subplot(111)
+        # plot_hand(im_to_numpy(img), coor, ax)
+        # plt.show()
 
         meta = edict({'name': name})
-        heatmap = torch.zeros(22, img.size(1), img.size(2))
-        for i in range(21):
+        heatmap = torch.zeros(self.cfg.NUM_JOINTS, img.size(1), img.size(2))
+        for i in range(self.cfg.NUM_JOINTS - 1):
             heatmap[i] = draw_heatmap(heatmap[i], coor[i], self.cfg.HEATMAP.SIGMA)
 
         return {'input': {'img':img},

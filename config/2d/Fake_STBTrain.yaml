@@ -1,5 +1,5 @@
 TRAIN:
-  DEBUG: False
+  DEBUG: True
   METRIC_ITEMS: # the metric that you wanna track during training
     - loss
     - dis
@@ -10,9 +10,20 @@ TRAIN:
     CONTAINS:
       FakeHandRealBG2D:
         ROOT: 'data/TencentHand/simulated_v0.2'
-      RHD2D:
-        ROOT: data/RHD/cropped/training/color/ 
-        DATA_JSON_PATH: data/RHD/cropped/training/cropped_anno.pickle
+      STB2D:
+        ROOT: data/STB/2dcrop
+        DATA_JSON_PATH: data/STB/2dcrop/label.pickle
+        PICK:
+          - B2Counting
+          - B3Counting
+          - B4Counting
+          - B5Counting
+          - B6Counting
+          - B2Random
+          - B3Random
+          - B4Random
+          - B5Random
+          - B6Random
 
     TRANSFORMS:
       RESIZE: 256
@@ -31,24 +42,23 @@ VALID:
   DEBUG: False
   IS_VALID: True
   DATASET:
-    NAME: RHD2D
-    ROOT: data/RHD/cropped/evaluation/color/
-    DATA_JSON_PATH: data/RHD/cropped/evaluation/cropped_anno.pickle
-    BATCH_SIZE: 2
-
+    NAME: STB2D
+    ROOT: data/STB/2dcrop
+    DATA_JSON_PATH: data/STB/2dcrop/label.pickle
+    PICK:
+      - B1Counting
+      - B1Random
+    THR: 20
+    IS_TRAIN: False
+    BATCH_SIZE: 6
     TRANSFORMS:
       RESIZE: 256
       FLIP: False
       COLOR_NORISE: False
-    IS_TRAIN: False
-    BATCH_SIZE: 12
-    THR: 20
-    SHUFFLE: 0
-    NUM_JOINTS: 22
-
     HEATMAP:
       TYPE: Gaussian # Gaussian or Cauchy
       SIGMA: 8 #Ground truth heatmap
+      
   METRIC_ITEMS: # the metric that you wanna track during training
     - loss
     - dis

@@ -1,5 +1,5 @@
 TRAIN:
-  DEBUG: False
+  DEBUG: True
   METRIC_ITEMS: # the metric that you wanna track during training
   - loss
   - dis
@@ -16,7 +16,7 @@ TRAIN:
       FLIP: True 
       COLOR_NORISE: True
     IS_TRAIN: True
-    BATCH_SIZE: 6
+    BATCH_SIZE: 1
     SHUFFLE: True
     NUM_JOINTS: 21
 

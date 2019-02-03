@@ -44,8 +44,6 @@ class RHD2D(JointsDataset):
             img = resize(img, cfg.RESIZE, cfg.RESIZE)
 
         if self.is_train:
-            # s = s*torch.randn(1).mul_(sf).add_(1).clamp(1-sf, 1+sf)[0]
-            # r = torch.randn(1).mul_(rf).clamp(-2*rf, 2*rf)[0] if random.random() <= 0.6 else 0
             
             # Flip
             if cfg.FLIP and random.random() <= 0.5:

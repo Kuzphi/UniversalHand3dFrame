@@ -40,13 +40,11 @@ class Tencent2D(JointsDataset):
             img = resize(img, cfg.RESIZE, cfg.RESIZE)
 
         if self.is_train:
-            # s = s*torch.randn(1).mul_(sf).add_(1).clamp(1-sf, 1+sf)[0]
-            # r = torch.randn(1).mul_(rf).clamp(-2*rf, 2*rf)[0] if random.random() <= 0.6 else 0
-            
+
             # Flip
             if cfg.FLIP and random.random() <= 0.5:
                 img = torch.flip(img, dims = [1])
-                coor[:, 0] = img.size(1) - coor[:, 0]
+                coor[:, 1] = img.size(1) - coor[:, 1]
 
             # Color 
             if cfg.COLOR_NORISE:

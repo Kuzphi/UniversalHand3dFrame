@@ -101,6 +101,12 @@ def combine(x , y):
         return np.concatenate([x,y], 0)
     raise Exception("Unrecognized type {}".format(type(x)))
 
+def get_dataset_name(cfg):
+    dataset_name = cfg.NAME
+    if dataset_name.startswith("Combine"):
+        dataset_name += '(' + ','.join(cfg.CONTAINS.keys())+ ')'
+    return dataset_name
+
 def get_config(fpath, type = 'train'):
     cfg = yaml.load(open(fpath))
     cfg = edict(cfg)
@@ -109,12 +115,15 @@ def get_config(fpath, type = 'train'):
     tag = tag[4:-5] #remove day of the week and year
     
     if type == 'train':
-        cfg.TAG = "_".join([tag, type, cfg.MODEL.NAME, cfg.TRAIN.DATASET.NAME])
+        train_dataset_name = get_dataset_name(cfg.TRAIN.DATASET)
+        valid_dataset_name = get_dataset_name(cfg.VALID.DATASET)
+        cfg.TAG = "_".join([tag, type, cfg.MODEL.NAME, train_dataset_name, 'valid', valid_dataset_name])
         cfg.LOG.PATH = os.path.join(cfg.OUTPUT_DIR,cfg.TAG,'log.json')
         cfg.CHECKPOINT = os.path.join(cfg.OUTPUT_DIR,cfg.TAG)
         cfg.START_EPOCH = cfg.CURRENT_EPOCH #fresuming training
     if type == 'infer':
-        cfg.TAG = "_".join([tag, type, cfg.MODEL.NAME, cfg.DATASET.NAME])
+        valid_dataset_name = get_dataset_name(cfg.VALID.DATASET)
+        cfg.TAG = "_".join([tag, type, cfg.MODEL.NAME, valid_dataset_name])
         cfg.CHECKPOINT = os.path.join(cfg.OUTPUT_DIR,cfg.TAG)
         cfg.IMG_RESULT = os.path.join(cfg.CHECKPOINT, 'img_result')
     return cfg
