@@ -1,5 +1,5 @@
 TRAIN:
-  DEBUG: True
+  DEBUG: False
   METRIC_ITEMS: # the metric that you wanna track during training
   - loss
   - dis

@@ -31,11 +31,9 @@ VALID:
   DEBUG: False
   IS_VALID: True
   DATASET:
-    NAME: RHD2D
-    ROOT: data/RHD/cropped/evaluation/color/
-    DATA_JSON_PATH: data/RHD/cropped/evaluation/cropped_anno.pickle
-    BATCH_SIZE: 2
-
+    NAME: CMU2D
+    ROOT: data/CMU/hand_labels/manual_train_cropped
+    DATA_JSON_PATH: data/CMU/hand_labels/manual_train_cropped_anno.pickle
     TRANSFORMS:
       RESIZE: 256
       FLIP: False
@@ -43,7 +41,6 @@ VALID:
     IS_TRAIN: False
     BATCH_SIZE: 12
     THR: 20
-    SHUFFLE: 0
     NUM_JOINTS: 22
 
     HEATMAP:

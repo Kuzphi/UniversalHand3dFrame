@@ -43,7 +43,7 @@ class Combine2D(JointsDataset):
             self.datasets.append( eval(key)(cfg.CONTAINS[key]))
             self.len += len(self.datasets[-1])
     def __len__(self):
-        # return 100
+        # return 10
         return self.len
 
     def _get_db(self):

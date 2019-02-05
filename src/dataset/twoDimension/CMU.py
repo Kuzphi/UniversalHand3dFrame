@@ -57,10 +57,10 @@ class CMU2D(JointsDataset):
         label = self.anno[name]
 
         image_path   = os.path.join(self.cfg.ROOT, name + '.png')
-        img = load_image(image_path, mode = 'GBR') # already / 255
+        img = load_image(image_path, mode = 'RGB') # already / 255
 
         coor = label['uv_coor']
-        coor[1:,:] = coor[1:,:].reshape(5,4,-1)[:,::-1,:].reshape(20, -1)
+        # coor[1:,:] = coor[1:,:].reshape(5,4,-1)[:,::-1,:].reshape(20, -1)
         coor = np.array(coor)
         coor = to_torch(coor)
         #apply transforms into image and calculate cooresponding coor
