@@ -42,6 +42,8 @@ class Combine2D(JointsDataset):
             cfg.CONTAINS[key].NUM_JOINTS = cfg.NUM_JOINTS
             self.datasets.append( eval(key)(cfg.CONTAINS[key]))
             self.len += len(self.datasets[-1])
+        self.use_softmax = cfg.SOFTMAX
+
     def __len__(self):
         # return 10
         return self.len
@@ -56,9 +58,8 @@ class Combine2D(JointsDataset):
             idx -= len(dataset)
 
     def eval_result(self, outputs, batch, cfg = None):
-        preds = get_preds_from_heatmap(outputs['heatmap'][-1])
-        # preds = get_preds_from_heatmap(batch['heatmap'])
-        # print (preds[0][:5,:], batch['coor'][0][:5])
+        preds = get_preds_from_heatmap(outputs['heatmap'][-1], softmax = self.use_softmax)
+        # preds = get_preds_from_heatmap(batch[s'heatmap'], softmax = self.use_softmax)
         diff = batch['coor'] - preds
         dis = torch.norm(diff, dim = -1)
         PcK_Acc = (dis < self.cfg.THR).float().mean()

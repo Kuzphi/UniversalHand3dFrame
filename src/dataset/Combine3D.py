@@ -26,7 +26,7 @@ from src.utils.imutils import im_to_torch, draw_heatmap
 from src.utils.misc import to_torch
 from src.utils.imutils import load_image
 from src.core.evaluate import get_preds_from_heatmap
-
+from src.core.evaluate import calc_auc, AUC
 
 class Combine3D(JointsDataset):
     """docstring for TencentHand"""
@@ -71,18 +71,21 @@ class Combine3D(JointsDataset):
 
     def post_infer(self, cfg, pred):
         # print (self[0]['coor'] - pred[0])
+        # print (self[0]['coor'].shape)
         dist = np.array([torch.norm(self[i]['coor'] - pred[i], dim = -1).mean() for i in range(len(self))])
+        dist = dist * 1000
         median = np.median(dist)
-        x, y = AUC(dist)
         auc = calc_auc(dist)
-        auc00_30 = calc_auc(dist,  0, 50)
+        auc00_50 = calc_auc(dist,  0, 50)
         auc30_50 = calc_auc(dist, 30, 50)
         print('AUC: ', auc)
-        print('AUC  0 - 30: ', auc)
-        print('AUC 30 - 50: ', auc)
+        print('AUC  0 - 50: ', auc00_50)
+        print('AUC 30 - 50: ', auc30_50)
         print('median:', median)
-        import matplotlib.pyplot as plt
-        fig = plt.figure('AUC')
-        plt.plot(x, y)
-        fig.savefig(os.path.join(cfg.CHECKPOINT,'AUC.png'))
+        # x,y = AUC(dist)
+        # import matplotlib.pyplot as plt
+        # fig = plt.figure('AUC')
+        # plt.plot(x, y)
+        # fig.show();
+        # fig.savefig(os.path.join('~/Frame','AUC.png'))
         

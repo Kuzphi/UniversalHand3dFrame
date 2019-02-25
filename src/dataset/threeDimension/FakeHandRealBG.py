@@ -43,6 +43,8 @@ class FakeHandRealBG3D(JointsDataset):
             ipath = 'data/TencentHand/simulated_v0.2/%s/'%name
             lpath = 'data/TencentHand/Model1/%s/label/'%name
             for file in os.listdir(ipath):
+                if file.startswith('.'):
+                    continue
                 self.db[name].append(os.path.join(ipath, file))
                 idx = file[:7]
                 label = json.load(open(os.path.join(lpath, idx + '.json'),"r"))

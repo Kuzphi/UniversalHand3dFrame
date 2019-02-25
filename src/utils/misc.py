@@ -122,7 +122,7 @@ def get_config(fpath, type = 'train'):
         cfg.CHECKPOINT = os.path.join(cfg.OUTPUT_DIR,cfg.TAG)
         cfg.START_EPOCH = cfg.CURRENT_EPOCH #fresuming training
     if type == 'infer':
-        valid_dataset_name = get_dataset_name(cfg.VALID.DATASET)
+        valid_dataset_name = get_dataset_name(cfg.DATASET)
         cfg.TAG = "_".join([tag, type, cfg.MODEL.NAME, valid_dataset_name])
         cfg.CHECKPOINT = os.path.join(cfg.OUTPUT_DIR,cfg.TAG)
         cfg.IMG_RESULT = os.path.join(cfg.CHECKPOINT, 'img_result')

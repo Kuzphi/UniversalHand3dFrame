@@ -10,18 +10,33 @@ from src.utils.transforms import transform, transform_preds
 from src.utils.misc import to_torch
 __all__ = ['accuracy', 'AverageMeter']
 
-def get_preds_from_heatmap(scoremaps):
+def get_preds_from_heatmap(scoremaps, softmax = False):
     """ Performs detection per scoremap for the hands keypoints. """
     s = scoremaps.shape
     assert len(s) == 4, "This function was only designed for 4D Scoremaps(B * C * H * W)."
     # assert (s[2] < s[1]) and (s[2] < s[0]), "Probably the input is not correct, because [H, W, C] is expected."
 
-    keypoint_coords = np.zeros((s[0], s[1], 2))
-    for idx in range(s[0]):
-        for i in range(s[1]):
-            v, u = np.unravel_index(np.argmax(scoremaps[idx, i, :, :]), (s[2], s[3]))
-            keypoint_coords[idx, i, 0] = u
-            keypoint_coords[idx, i, 1] = v #do not know why but need reverse it !
+    keypoint_coords = torch.zeros((s[0], s[1], 2))
+
+    if softmax:
+        x = scoremaps.sum(dim = 3)
+        weight = torch.arange(s[2]).view(1,1,-1).expand_as(x).float()
+        keypoint_coords[:,:,1] = torch.sum(x * weight, dim = 2) / x.sum(dim = 2)
+
+        y = scoremaps.sum(dim = 2)
+        weight = torch.arange(s[3]).view(1,1,-1).expand_as(y).float()
+        keypoint_coords[:,:,0] = torch.sum(y * weight, dim = 2) / y.sum(dim = 2)
+
+    else:
+
+        for idx in range(s[0]):
+            for i in range(s[1]):
+                v, u = np.unravel_index(np.argmax(scoremaps[idx, i, :, :]), (s[2], s[3]))
+                keypoint_coords[idx, i, 0] = u
+                keypoint_coords[idx, i, 1] = v #do not know why but need reverse it !
+    
+    
+
     return to_torch(keypoint_coords[:,:21,:])
 
 def calc_dists(preds, target):
@@ -118,20 +133,21 @@ def calc_auc(dist, limx = -1, limy = 1e99):
     x, y = AUC(dist)
     # x = x * 1000 #meter to million meter
     # print (x.min(), x.max())
-    l, r = 0, len(x) - 1
+    l, r = 0, 0
     for i in range(len(x)):
-        if limx >= x[i]:
-            l = i
-        if limy >= x[i]:
-            r = i
-    l = max(l - 1, 0)
-    tx = x[l:r + 1]
-    ty = y[l:r + 1]
+        if limx > x[i]:
+            l = i + 1
+        if limy > x[i]:
+            r = i + 1
+    print("l: ",l, x[l], "r: ", r, x[r - 1])
+    tx = x[l:r]
+    ty = y[l:r]    
     integral = np.trapz(ty, tx)
     norm = np.trapz(np.ones_like(ty), tx)
-    if limy < 1e98 and limy > x[-1]:
-        add = limy - x[-1]
-        integral += add
-        norm += add
-    print(integral , norm)
+    # norm = x[-1] - x[]
+    # if limy < 1e98 and limy > x[-1]:
+    #     add = limy - x[-1]
+    #     integral += add
+    #     norm += add
+    # print(integral , norm)
     return integral / norm
