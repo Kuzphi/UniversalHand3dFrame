@@ -4,6 +4,8 @@
 *.pickle
 *.json
 *.png
+.*
+!.gitignore
 pretrained_weight/*
 inference_result/*
 data/*
