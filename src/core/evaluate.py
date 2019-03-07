@@ -7,10 +7,10 @@ import torch
 
 from random import randint
 from src.utils.transforms import transform, transform_preds
-from src.utils.misc import to_torch
+from src.utils.misc import to_torch, to_numpy
 __all__ = ['accuracy', 'AverageMeter']
 
-def get_preds_from_heatmap(scoremaps, softmax = False):
+def get_preds_from_heatmap(scoremaps, softmax = False, return_type = 'torch'):
     """ Performs detection per scoremap for the hands keypoints. """
     s = scoremaps.shape
     assert len(s) == 4, "This function was only designed for 4D Scoremaps(B * C * H * W)."
@@ -35,9 +35,28 @@ def get_preds_from_heatmap(scoremaps, softmax = False):
                 keypoint_coords[idx, i, 0] = u
                 keypoint_coords[idx, i, 1] = v #do not know why but need reverse it !
     
-    
+    if return_type == 'numpy':
+        return to_numpy(keypoint_coords[:,:21,:])
 
-    return to_torch(keypoint_coords[:,:21,:])
+    return keypoint_coords[:,:21,:]
+
+def get_preds(heatmap, depthmap, matrix, return_type = 'torch'):
+    preds_2d = get_preds_from_heatmap(heatmap)
+    preds_3d = torch.zeros((preds_2d.shape[0], preds_2d.shape[1], 3))
+    for i in range(preds_2d.shape[0]):
+        for j in range(preds_2d.shape[1]):
+            pt = preds_2d[i, j]
+            preds_3d[i, j,  2] = depthmap[i, j, int(pt[1]), int(pt[0])].clone()
+            preds_3d[i, j, :2] = preds_2d[i, j].clone()
+            
+    preds_3d[:,:,:2] *=preds_3d[:,:,2:]
+    for i in range(preds_3d.shape[0]):
+        preds_3d[i, :, :] = torch.matmul(preds_3d[i, :, :], matrix[i].transpose(0, 1))
+
+    if return_type == 'numpy':
+        return to_numpy(preds_2d), to_numpy(preds_3d)
+
+    return preds_2d, preds_3d
 
 def calc_dists(preds, target):
     preds = preds.float()

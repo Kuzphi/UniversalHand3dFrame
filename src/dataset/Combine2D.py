@@ -25,7 +25,7 @@ from src.dataset.BaseDataset import JointsDataset
 from src.utils.imutils import im_to_torch, draw_heatmap
 from src.utils.misc import to_torch
 from src.utils.imutils import load_image
-from src.core.evaluate import get_preds_from_heatmap
+from src.core.evaluate import get_preds_from_heatmap, AUC
 
 
 class Combine2D(JointsDataset):
@@ -42,7 +42,10 @@ class Combine2D(JointsDataset):
             cfg.CONTAINS[key].NUM_JOINTS = cfg.NUM_JOINTS
             self.datasets.append( eval(key)(cfg.CONTAINS[key]))
             self.len += len(self.datasets[-1])
-        self.use_softmax = cfg.SOFTMAX
+            
+        self.use_softmax = False
+        if cfg.has_key('SOFTMAX'):
+            self.use_softmax = cfg.SOFTMAX
 
     def __len__(self):
         # return 10
@@ -57,42 +60,53 @@ class Combine2D(JointsDataset):
                 return dataset[idx]
             idx -= len(dataset)
 
-    def eval_result(self, outputs, batch, cfg = None):
-        preds = get_preds_from_heatmap(outputs['heatmap'][-1], softmax = self.use_softmax)
-        # preds = get_preds_from_heatmap(batch[s'heatmap'], softmax = self.use_softmax)
-        diff = batch['coor'] - preds
-        dis = torch.norm(diff, dim = -1)
-        PcK_Acc = (dis < self.cfg.THR).float().mean()
-        return {"dis": dis.mean(), "PcKAcc":PcK_Acc}
+    # def eval_result(self, outputs, batch, cfg = None):
+    #     preds = get_preds_from_heatmap(outputs['heatmap'][-1], softmax = self.use_softmax)
+    #     # preds = get_preds_from_heatmap(batch[s'heatmap'], softmax = self.use_softmax)
+    #     diff = batch['coor'] - preds
+    #     dis = torch.norm(diff, dim = -1)
+    #     PcK_Acc = (dis < self.cfg.THR).float().mean()
+    #     return {"dis": dis.mean(), "PcKAcc":PcK_Acc}
 
-    def get_preds(self, outputs, batch):
-        return get_preds_from_heatmap(outputs['heatmap'][-1])
+    # def get_preds(self, outputs, batch):
+    #     return get_preds_from_heatmap(outputs['heatmap'][-1])
         
     def post_infer(self, cfg, pred):
         # print (self[0]['coor'] - pred[0])
+        # print(self[0]['coor'].shape)
+        # print(pred[0].shape)
         dist = np.array([torch.norm(self[i]['coor'] - pred[i], dim = -1).mean() for i in range(len(self))])
+
         print (dist.mean())
-        median = np.median(dist)
+        # median = np.median(dist)
         x, y = AUC(dist)
-        auc = calc_auc(dist)
-        auc00_50 = calc_auc(dist,  0, 50)
-        auc20_50 = calc_auc(dist, 20, 50)
-        auc30_50 = calc_auc(dist, 30, 50)
-        print('AUC: ', auc)
-        print('AUC  0 - 50: ', auc00_50)
-        print('AUC 20 - 50: ', auc20_50)
-        print('AUC 30 - 50: ', auc30_50)
-        print('median:', median)
-        import matplotlib.pyplot as plt
-        fig = plt.figure('AUC')
-        plt.plot(x, y)
-        fig.savefig(os.path.join(cfg.CHECKPOINT,'AUC.png'))
-        res = {
-            'x':x,
-            'y':y,
-            'AUC':auc,
-            'AUC00_50': auc00_50,
-            'AUC30_50': auc30_50,
-        }
-        pickle.dump(res, open(os.path.join(cfg.CHECKPOINT,'dist.pickle'),'w'))
+        p = 0
+        ans = []
+        for i in [20,25,30,35,40,45,50]:
+            while p + 1 < len(x) and x[p] < i:
+                p += 1
+            print (p, y[p])
+            ans.append(y[p])
+        print (ans)
+        # auc = calc_auc(dist)
+        # auc00_50 = calc_auc(dist,  0, 50)
+        # auc20_50 = calc_auc(dist, 20, 50)
+        # auc30_50 = calc_auc(dist, 30, 50)
+        # print('AUC: ', auc)
+        # print('AUC  0 - 50: ', auc00_50)
+        # print('AUC 20 - 50: ', auc20_50)
+        # print('AUC 30 - 50: ', auc30_50)
+        # print('median:', median)
+        # import matplotlib.pyplot as plt
+        # fig = plt.figure('AUC')
+        # plt.plot(x, y)
+        # fig.savefig(os.path.join(cfg.CHECKPOINT,'AUC.png'))
+        # res = {
+        #     'x':x,
+        #     'y':y,
+        #     'AUC':auc,
+        #     'AUC00_50': auc00_50,
+        #     'AUC30_50': auc30_50,
+        # }
+        # pickle.dump(res, open(os.path.join(cfg.CHECKPOINT,'dist.pickle'),'w'))
         

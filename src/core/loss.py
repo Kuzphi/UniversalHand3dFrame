@@ -14,16 +14,16 @@ from src.utils.misc import to_torch
 
 
 
-def DistanceLoss(outputs, batch):
-	gt_coor = batch['coor']
-	pred_coor = outputs['pose3d'].cpu() * batch['index_bone_length'].view(-1,1,1).repeat(1,21,3)
+# def DistanceLoss(outputs, batch):
+# 	gt_coor = batch['coor3d']
+# 	pred_coor = outputs['pose3d'].cpu() * batch['index_bone_length'].view(-1,1,1).repeat(1,21,3)
 
-	dis = torch.norm(gt_coor - pred_coor, dim = -1)
-	dis = torch.mean(dis) 
-	return dis
+# 	dis = torch.norm(gt_coor - pred_coor, dim = -1)
+# 	dis = torch.mean(dis) 
+# 	return dis
 
 def CPMMSELoss(outputs, batch):
-	criterion = nn.MSELoss(size_average=True)
+	criterion = nn.MSELoss()
 	loss = torch.zeros(1).cuda()
 	target = batch['heatmap'].cuda()
 	for pred in outputs['heatmap']:
@@ -47,11 +47,11 @@ def get_preds_from_heatmap(scoremaps, softmax = False):
     keypoint_coords[:,:,0] = torch.sum(y * weight, dim = 2) / y.sum(dim = 2)
     return keypoint_coords[:,:21,:]
 
-def DistanceLoss2D(outputs, batch):
-	preds = get_preds_from_heatmap(outputs['heatmap'][-1], softmax = True)
-	diff = batch['coor'].cuda() - preds
-	dis = torch.norm(diff, dim = -1).mean()
-	return dis
+# def DistanceLoss2D(outputs, batch):
+# 	preds = get_preds_from_heatmap(outputs['heatmap'][-1], softmax = True)
+# 	diff = batch['coor'].cuda() - preds
+# 	dis = torch.norm(diff, dim = -1).mean()
+# 	return dis
 
 # class JointsMSELoss(nn.Module):
 #     def __init__(self, use_target_weight):

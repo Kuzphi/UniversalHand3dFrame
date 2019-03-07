@@ -25,7 +25,7 @@ from src.dataset.BaseDataset import JointsDataset
 from src.utils.imutils import im_to_torch, draw_heatmap
 from src.utils.misc import to_torch
 from src.utils.imutils import load_image, resize
-from src.core.evaluate import get_preds_from_heatmap, AUC, calc_auc
+from src.core.evaluate import get_preds, get_preds_from_heatmap, AUC, calc_auc
 
 class RHD2D(JointsDataset):
     """docstring for TencentHand"""
@@ -36,50 +36,83 @@ class RHD2D(JointsDataset):
         self.anno = pickle.load(open(self.cfg.DATA_JSON_PATH))
         return sorted(self.anno.keys())
         
-    def transforms(self, cfg, img, coor):
+    def transforms(self, cfg, img, coor2d, matrix):
         # resize
         if cfg.has_key('RESIZE'):
-            coor[:, 0] = coor[:, 0] / img.size(1) * cfg.RESIZE
-            coor[:, 1] = coor[:, 1] / img.size(2) * cfg.RESIZE
+            xscale, yscale = 1. * cfg.RESIZE / img.size(1), 1. * cfg.RESIZE / img.size(2) 
+            coor2d[:, 0] *= xscale
+            coor2d[:, 1] *= yscale
+            scale =[[xscale,    0,  0],
+                    [0,    yscale,  0],
+                    [0,         0,  1]]
+            matrix = np.matmul(scale, matrix)
+
             img = resize(img, cfg.RESIZE, cfg.RESIZE)
 
-        if self.is_train:
             
-            # Flip
-            if cfg.FLIP and random.random() <= 0.5:
-                img = torch.flip(img, dims = [1])
-                coor[:, 1] = img.size(1) - coor[:, 1]
-
+        if self.is_train:
             # Color 
             if cfg.COLOR_NORISE:
                 img[0, :, :].mul_(random.uniform(0.8, 1.2)).clamp_(-0.5, 0.5)
                 img[1, :, :].mul_(random.uniform(0.8, 1.2)).clamp_(-0.5, 0.5)
                 img[2, :, :].mul_(random.uniform(0.8, 1.2)).clamp_(-0.5, 0.5)
 
-        return img, coor
+        assert coor2d[:, :2].min() >= 0 and coor2d[:, :2].max() < 256
+        return img, coor2d, matrix
+
     def __getitem__(self, idx):
         name = self.db[idx]
         label = self.anno[name]
 
-        image_path   = os.path.join(self.cfg.ROOT, name + '.png')
-        img = load_image(image_path) # already / 255
+        image_path   = os.path.join(self.cfg.ROOT, 'color', name + '.png')
+        img = load_image(image_path)# already / 255 with C * W * H
+        
 
-        coor = label['project']
-        coor[1:,:] = coor[1:,:].reshape(5,4,-1)[:,::-1,:].reshape(20, -1)
-        coor = np.array(coor)
-        coor = to_torch(coor)
-        #apply transforms into image and calculate cooresponding coor
+
+        coor2d = label['project']
+        assert coor2d[:, :2].min() >= 0 and coor2d[:, :2].max() < 320
+        matrix = label['K']
+        #apply transforms into image and calculate cooresponding coor and camera instrict matrix
         if self.cfg.TRANSFORMS:
-            img, coor = self.transforms(self.cfg.TRANSFORMS, img , coor)
-        
+            img, coor2d, matrix = self.transforms(self.cfg.TRANSFORMS, img, coor2d, matrix)
+
         meta = edict({'name': name})
-        heatmap = torch.zeros(22, img.size(1), img.size(2))
-        for i in range(21):
-            heatmap[i] = draw_heatmap(heatmap[i], coor[i], self.cfg.HEATMAP.SIGMA)
+        isleft = name[-1] == 'L'
+
+        coor2d[1:,:] = coor2d[1:,:].reshape(5,4,-1)[:,::-1,:].reshape(20, -1)
+        coor2d = to_torch(np.array(coor2d))
+        coor2d[:,:2] = coor2d[:,:2].long().float() 
         
-        return {'input': {'img':img},
+        matrix = np.linalg.inv(matrix) #take the inversion of matrix
+
+        #corresponding depth position in depth map
+        index = torch.tensor([i * img.size(1) * img.size(2) + coor2d[i,0].long() * img.size(1) + coor2d[i,1].long() for i in range(21)])
+
+        assert index.max() < img.size(1) * img.size(2) * 21, 'Wrong Position'
+        heatmap = torch.zeros(self.cfg.NUM_JOINTS, img.size(1), img.size(2))
+        depth   = torch.zeros(self.cfg.NUM_JOINTS, img.size(1), img.size(2))
+
+        coor3d = coor2d.clone()
+        coor3d[:,:2] *= coor3d[:, 2:]
+        coor3d = torch.matmul(coor3d, to_torch(matrix).transpose(0, 1))                
+
+        for i in range(21):
+            heatmap[i] = draw_heatmap(heatmap[i], coor2d[i], self.cfg.HEATMAP.SIGMA)
+            depth[i]   = heatmap[i] * coor2d[i, 2]
+        # pred2d, pred3d = get_preds(heatmap.unsqueeze(0), depth.unsqueeze(0), to_torch(matrix).unsqueeze(0))
+
+        # print(pred3d[0] - coor3d)
+        return {'input': {'img':img,
+                          'hand_side': torch.tensor([isleft, 1 - isleft]).float(),                          
+                          },
+                'index': index, 
+                'matrix': to_torch(matrix),
+                # 'index_bone_length': index_bone_length,
                 'heatmap': heatmap,
-                'coor': to_torch(coor[:,:2]),
+                'depth' :  depth,
+                # 'gt_depth': gt_depth.float(),
+                'coor3d': to_torch(coor3d),
+                'coor2d': to_torch(coor2d),
                 'weight': 1,
                 'meta': meta}
 

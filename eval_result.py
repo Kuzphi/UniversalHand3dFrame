@@ -28,7 +28,7 @@ def main(args):
     print("Loading Training Data")
     infer_data = eval('dataset.' + cfg.DATASET.NAME)(cfg.DATASET)
 
-    preds_path = 'output/Jan 30 13:55:50_train_ICCV17_Combine3D/best/preds.npy'
+    preds_path = 'output/Feb 24 22:15:00_train_openpose_hand_Combine2D(STB2D)_valid_STB2D/0/preds.npy'
     preds = np.load(preds_path)
     print (preds.shape)
     infer_data.post_infer(cfg, torch.tensor(preds))

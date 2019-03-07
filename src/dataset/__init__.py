@@ -11,7 +11,6 @@ from __future__ import print_function
 from .twoDimension import *
 from .threeDimension import *
 
-from .threeDimension.RHD import RHD3D
 from .Combine2D import Combine2D
 from .Combine3D import Combine3D
 

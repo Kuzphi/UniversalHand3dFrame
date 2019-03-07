@@ -39,6 +39,8 @@ class Combine3D(JointsDataset):
             cfg.CONTAINS[key].IS_TRAIN = cfg.IS_TRAIN
             cfg.CONTAINS[key].TRANSFORMS = cfg.TRANSFORMS
             cfg.CONTAINS[key].NUM_JOINTS = cfg.NUM_JOINTS
+            if cfg.has_key('HEATMAP'):
+                cfg.CONTAINS[key].HEATMAP = cfg.HEATMAP
             self.datasets.append( eval(key)(cfg.CONTAINS[key]))
             self.len += len(self.datasets[-1])
 

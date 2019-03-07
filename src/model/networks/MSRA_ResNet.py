@@ -110,7 +110,9 @@ class PoseResNet(nn.Module):
         self.heads = heads
 
         super(PoseResNet, self).__init__()
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
+        # self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
+        #                        bias=False)
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=1, padding=3,
                                bias=False)
         self.bn1 = nn.BatchNorm2d(64, momentum=BN_MOMENTUM)
         self.relu = nn.ReLU(inplace=True)
@@ -129,17 +131,16 @@ class PoseResNet(nn.Module):
         # self.final_layer = []
 
         for head in sorted(self.heads):
-          num_output = self.heads[head]
-          self.__setattr__(head, nn.Conv2d(
-              in_channels=256,
-              out_channels=num_output,
-              kernel_size=1,
-              stride=1,
-              padding=0
-          ))
+			num_output = self.heads[head]
+			self.__setattr__(head, nn.Conv2d(
+				in_channels=256,
+				out_channels=num_output,
+				kernel_size=1,
+				stride=1,
+				padding=0
+			))
 
         # self.final_layer = nn.ModuleList(self.final_layer)
-
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
@@ -198,10 +199,11 @@ class PoseResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
+        x = x['img']
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
-        x = self.maxpool(x)
+        # x = self.maxpool(x)
 
         x = self.layer1(x)
         x = self.layer2(x)
@@ -209,10 +211,11 @@ class PoseResNet(nn.Module):
         x = self.layer4(x)
 
         x = self.deconv_layers(x)
-        ret = {}
-        for head in self.heads:
-            ret[head] = self.__getattr__(head)(x)
-        return [ret]
+        ret = { 'heatmap' : [self.heatmap(x)],
+                'depthmap': self.depthmap(x)}
+        # for head in self.heads:
+        #     ret[head] = [self.__getattr__(head)(x)]
+        return ret
 
     def init_weights(self, num_layers, pretrained=True):
         if pretrained:
@@ -240,26 +243,25 @@ class PoseResNet(nn.Module):
                       nn.init.normal_(m.weight, std=0.001)
                       nn.init.constant_(m.bias, 0)
             #pretrained_state_dict = torch.load(pretrained)
-            url = model_urls['resnet{}'.format(num_layers)]
-            pretrained_state_dict = model_zoo.load_url(url)
-            print('=> loading pretrained model {}'.format(url))
-            self.load_state_dict(pretrained_state_dict, strict=False)
+            # url = model_urls['resnet{}'.format(num_layers)]
+            # pretrained_state_dict = model_zoo.load_url(url)
+            # print('=> loading pretrained model {}'.format(url))
+            # self.load_state_dict(pretrained_state_dict, strict=False)
         else:
             print('=> imagenet pretrained model dose not exist')
             print('=> please download it first')
             raise ValueError('imagenet pretrained model does not exist')
 
 
-resnet_spec = {18: (BasicBlock, [2, 2, 2, 2]),
-               34: (BasicBlock, [3, 4, 6, 3]),
-               50: (Bottleneck, [3, 4, 6, 3]),
+resnet_spec = {18:  (BasicBlock, [2, 2,  2, 2]),
+               34:  (BasicBlock, [3, 4,  6, 3]),
+               50:  (Bottleneck, [3, 4,  6, 3]),
                101: (Bottleneck, [3, 4, 23, 3]),
                152: (Bottleneck, [3, 8, 36, 3])}
 
 
-def get_pose_net(num_layers, heads):
-  block_class, layers = resnet_spec[num_layers]
-
-  model = PoseResNet(block_class, layers, heads)
-  model.init_weights(num_layers, pretrained=True)
-  return model
+def resnet(num_joints = 21, num_layers = 50, **kargs):
+	block_class, layers = resnet_spec[num_layers]
+	model = PoseResNet(block_class, layers, {'heatmap': num_joints, 'depthmap':num_joints})
+	model.init_weights(num_layers, pretrained=True)
+	return model

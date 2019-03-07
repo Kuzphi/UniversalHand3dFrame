@@ -134,7 +134,7 @@ def save_config(cfg, fpath):
     yaml.dump(cfg, open(configpath,"w"))
 
 def save_checkpoint(state, preds, cfg, log, is_best, fpath, filename='checkpoint.pth.tar', snapshot=None):
-    preds = to_numpy(preds)
+    # preds = to_numpy(preds)
     latest_filepath = os.path.join(fpath, 'latest')
 
     if not os.path.exists(latest_filepath):
@@ -143,7 +143,8 @@ def save_checkpoint(state, preds, cfg, log, is_best, fpath, filename='checkpoint
     log.save(latest_filepath)
     save_config(cfg, latest_filepath)
     torch.save(state, os.path.join(latest_filepath, filename))
-    preds.dump(os.path.join(latest_filepath, 'preds.npy'))
+    pickle.dump(preds, open(os.path.join(latest_filepath, 'preds.pickle'), 'w'))
+
     if snapshot and state['epoch'] % snapshot == 0:
         shutil.copytree(latest_filepath, os.path.join(fpath, str(state['epoch'])))
 

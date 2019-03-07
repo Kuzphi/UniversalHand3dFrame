@@ -20,7 +20,7 @@ DATASET:
 METRIC_ITEMS: # the metric that you wanna track during training
   - loss
   - dis
-  # - acc #For 2D only
+  - acc #For 2D only
 GPUS:
   - 0
   - 1

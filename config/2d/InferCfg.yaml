@@ -1,0 +1,47 @@
+CURRENT_EPOCH: 0
+IS_VALID: True #validate or just inference
+DATASET:
+  NAME: Combine2D
+  CONTAINS:
+    # FakeHandRealBG3D:
+    #   ROOT: 'data/TencentHand/simulated_v0.2'
+    STB2D:
+      ROOT: data/STB/2dcrop
+      DATA_JSON_PATH: data/STB/2dcrop/label.pickle
+      PICK:
+        - B1Counting
+        - B1Random
+  TRANSFORMS:
+    RESIZE: 256
+    FLIP: False 
+    COLOR_NORISE: False
+  HEATMAP:
+    TYPE: Gaussian # Gaussian or Cauchy
+    SIGMA: 8 #Ground truth heatmap
+  IS_TRAIN: True
+  BATCH_SIZE: 6
+  SHUFFLE: True
+  NUM_JOINTS: 21
+  SOFTMAX: False
+
+METRIC_ITEMS: # the metric that you wanna track during training
+  - loss
+  - dis
+  - acc #For 2D only
+GPUS:
+  - 0
+  - 1
+  - 2
+  - 3
+LOG_DIR: ''
+MODEL:
+  NAME: ICCV17
+  PRETRAINED_WEIGHT_PATH: 'output/Jan 30 13:55:50_train_ICCV17_Combine3D/best/checkpoint.pth.tar'
+  num_joints: 21
+OUTPUT_DIR: infer_result/
+START_EPOCH: 0
+WORKERS: 1
+DARW_RESULT: True
+DEBUG: False
+CRITERION: DistanceLoss
+POST_INFER: True

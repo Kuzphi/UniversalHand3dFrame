@@ -35,11 +35,20 @@ class RHD3D(JointsDataset):
         self.anno = pickle.load(open(self.cfg.DATA_JSON_PATH))
         return sorted(self.anno.keys())
         
-    def transforms(self, cfg, img, coor):
+    def transforms(self, cfg, img, coor, project_coor, matrix):
         # resize
         if cfg.has_key('RESIZE'):
-            img = resize(img, cfg.RESIZE, cfg.RESIZE)
 
+            project_coor[:, 0] = project_coor[:, 0] * cfg.RESIZE / img.size(1) 
+            project_coor[:, 1] = project_coor[:, 1] * cfg.RESIZE / img.size(2) 
+
+            img = resize(img, cfg.RESIZE, cfg.RESIZE)
+            scale =[[1. * cfg.RESIZE / img.shape[0], 0,  0],
+                    [0,    1. * cfg.RESIZE / img.shape[1],  0],
+                    [0,         0,  1]]
+            matrix = np.matmul(scale, matrix)
+
+            
         if self.is_train:
             # Color 
             if cfg.COLOR_NORISE:
@@ -47,51 +56,56 @@ class RHD3D(JointsDataset):
                 img[1, :, :].mul_(random.uniform(0.8, 1.2)).clamp_(-0.5, 0.5)
                 img[2, :, :].mul_(random.uniform(0.8, 1.2)).clamp_(-0.5, 0.5)
 
-        return img, coor
+        return img, coor, project_coor, matrix
     def __getitem__(self, idx):
         name = self.db[idx]
         label = self.anno[name]
 
         image_path   = os.path.join(self.cfg.ROOT, 'color', name + '.png')
-        img = load_image(image_path)
+        img = load_image(image_path) #C * W * H
         coor = to_torch(label['xyz'])
+        project_coor = label['project']
 
+        # print(project_coor[:, 0].min(), project_coor[:, 1].max())
+        assert project_coor[:, :2].min() >= 0 and project_coor[:, :2].max() < 320
+
+        matrix = label['K']
+        # norm the pose
+        # index_bone_length = torch.norm(coor[12,:] - coor[11,:])
+        # coor[0, :] = (coor[0] + coor[12]) / 2.
+        # coor = coor - coor[:1,:].repeat(21,1)
+
+        #apply transforms into image and calculate cooresponding coor and camera instrict matrix
         if self.cfg.TRANSFORMS:
-            img, coor = self.transforms(self.cfg.TRANSFORMS, img , coor)
+            img, coor, project_coor, matrix = self.transforms(self.cfg.TRANSFORMS, img , coor, project_coor, matrix)
 
-        index_bone_length = torch.norm(coor[12,:] - coor[11,:])
-        coor[0, :] = (coor[0] + coor[12]) / 2.
-        coor = coor - coor[:1,:].repeat(21,1)
-
-        #apply transforms into image and calculate cooresponding coor
-        if self.cfg.TRANSFORMS:
-            img, coor = self.transforms(self.cfg.TRANSFORMS, img , coor)
-            
+        # print(project_coor[:, 0].max())
+        assert project_coor[:, :2].min() >= 0 and project_coor[:, :2].max() < 256
+        
+        matrix = np.linalg.inv(matrix) #take the inversion of matrix
         meta = edict({'name': name})
         isleft = name[-1] == 'L'
+        #corresponding depth position in depth map
+        project_coor = torch.tensor(project_coor).long()
+        index = torch.tensor([i * img.size(1) * img.size(2) + project_coor[i,0] * img.size(1) + project_coor[i,1] for i in range(21)])
+
+        assert index.max() < img.size(1) * img.size(2) * 21, 'Wrong Position'
+        heatmap = torch.zeros(self.cfg.NUM_JOINTS, img.size(1), img.size(2))
+
+        for i in range(21):
+            heatmap[i] = draw_heatmap(heatmap[i], project_coor[i], self.cfg.HEATMAP.SIGMA)
 
         return {'input': {'img':img,
                           'hand_side': torch.tensor([isleft, 1 - isleft]).float(),                          
                           },
-                'index_bone_length': index_bone_length,
+                'index': index, 
+                'matrix': to_torch(matrix),
+                # 'index_bone_length': index_bone_length,
+                'heatmap': heatmap,
                 'coor': to_torch(coor),
+                'project': to_torch(project_coor),
                 'weight': 1,
                 'meta': meta}
-
-    def eval_result(self, outputs, batch, cfg = None):
-        gt_coor = batch['coor']
-        # print(outputs['pose3d'].size(), batch['index_bone_length'].size())
-        pred_coor = outputs['pose3d'] * batch['index_bone_length'].view(-1,1,1).repeat(1,21,3)
-        dis = torch.norm(gt_coor - pred_coor, dim = -1)
-        
-        dis = torch.mean(dis)
-        # AUC = calc_auc(dis, 0, 50)
-        # median = torch.median(dis)
-        return {"dis": dis}
-        # return {"dis": dis, 'median':median, 'AUC':AUC }
-
-    def get_preds(self, outputs, batch):
-        return outputs['pose3d'] * batch['index_bone_length'].view(-1,1,1).repeat(1,21,3)
 
     def post_infer(self, cfg, pred):
         # print (self[0]['coor'] - pred[0])
@@ -120,5 +134,6 @@ class RHD3D(JointsDataset):
             'AUC30_50': auc30_50,
         }
         pickle.dump(res, open(os.path.join(cfg.CHECKPOINT,'dist.pickle'),'w'))
+
     # def __len__(self):
-    #     return 100
+    #     return 10

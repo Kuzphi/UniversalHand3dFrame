@@ -19,7 +19,7 @@ TRAIN:
     HEATMAP:
       TYPE: Gaussian # Gaussian or Cauchy
       SIGMA: 8 #Ground truth heatmap
-    SOFTMAX: True
+    SOFTMAX: False
     NUM_JOINTS: 22
     THR: 20
     IS_TRAIN: True
@@ -43,7 +43,7 @@ VALID:
     HEATMAP:
       TYPE: Gaussian # Gaussian or Cauchy
       SIGMA: 8 #Ground truth heatmap
-    SOFTMAX: True
+    SOFTMAX: False
     NUM_JOINTS: 22
     THR: 20
     IS_TRAIN: True
@@ -55,7 +55,7 @@ VALID:
     - dis
     - PcKAcc
 
-CRITERION: DistanceLoss2D
+CRITERION: CPMMSELoss
 GPUS:
 - 0
 - 1

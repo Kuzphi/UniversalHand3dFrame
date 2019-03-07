@@ -19,10 +19,9 @@ import torch
 from src import Bar
 from src.core.debug import debug
 from src.core.evaluate import eval_result
-from src.utils.misc import MetricMeter, AverageMeter, to_torch, to_cuda, to_cpu, combine
+from src.utils.misc import AverageMeter, to_torch, to_cuda, to_cpu, combine
 
-def train(cfg, train_loader, model, criterion, optimizer, log):
-    metric = MetricMeter(cfg.METRIC_ITEMS)
+def train(cfg, train_loader, model, metric, log):
     data_time = AverageMeter()
     batch_time = AverageMeter()
 
@@ -32,31 +31,19 @@ def train(cfg, train_loader, model, criterion, optimizer, log):
     bar = Bar('Processing', max=len(train_loader))
     for i, batch in enumerate(train_loader):
         size = batch['weight'].size(0)
-
         # measure data loading time
         data_time.update(time.time() - end)
 
-        # compute output        
-        outputs = model(to_cuda(batch['input']))
-
-        #calculate loss
-        loss = criterion(outputs, batch)
-
-        # compute gradient and do update step
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        #convert output from cuda tensor to cpu tensor
-        outputs = to_cpu(outputs)
+        model.set_batch(batch)
+        model.step()
 
         # debug, print intermediate result
         if cfg.DEBUG:
-            debug(outputs, batch)
+            debug(model.depth_outputs, batch)
 
         # measure accuracy and record loss
-        metric_ = train_loader.dataset.eval_result(outputs, batch, cfg = cfg)
-        metric_['loss'] = loss.item() 
+        metric_ = model.eval_result()
+        metric_['loss'] = model.loss.item() 
         metric.update(metric_, size)
 
         # measure elapsed time
@@ -75,10 +62,8 @@ def train(cfg, train_loader, model, criterion, optimizer, log):
         bar.next()
     log.info(bar.suffix)
     bar.finish()
-    return metric
 
-def validate(cfg, val_loader, model, criterion, log = None):
-    metric = MetricMeter(cfg.METRIC_ITEMS)
+def validate(cfg, val_loader, model, metric = None, log = None):
     data_time = AverageMeter()    
     batch_time = AverageMeter()
 
@@ -102,20 +87,13 @@ def validate(cfg, val_loader, model, criterion, log = None):
             data_time.update(time.time() - end)
             
             # compute output
-            outputs = model(to_cuda(batch['input']))
-
-            #calculate loss
-            if cfg.IS_VALID:
-                loss = criterion(outputs, batch)
-
-            #convert output from cuda tensor to cpu tensor
-            outputs = to_cpu(outputs)
-
+            model.set_batch(batch)
+            model.forward()
             # debug, print intermediate result
             if cfg.DEBUG:
-                debug(outputs, batch)
+                debug(model.outputs, batch)
 
-            preds = val_loader.dataset.get_preds(outputs, batch)
+            preds = model.get_preds()
             all_preds.append(preds)
 
             # measure elapsed time
@@ -131,8 +109,8 @@ def validate(cfg, val_loader, model, criterion, log = None):
                         eta=bar.eta_td)
 
             if cfg.IS_VALID:
-                metric_ = val_loader.dataset.eval_result(outputs, batch)
-                metric_['loss'] = loss.item()
+                metric_ = model.eval_result()
+                metric_['loss'] = model.loss.item()
                 metric.update(metric_, size)
                 for name in metric.names():
                     suffix += '{}: {:.4f} '.format(name, metric[name].avg)
@@ -140,11 +118,8 @@ def validate(cfg, val_loader, model, criterion, log = None):
             bar.suffix  = suffix
             bar.next()
 
-        if log is not None:
+        if log:
             log.info(bar.suffix)
         bar.finish()
-
-    if cfg.IS_VALID:
-        return metric, reduce(combine, all_preds)
 
     return reduce(combine, all_preds)

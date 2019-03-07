@@ -14,11 +14,12 @@ import torch
 from torch.utils.data import DataLoader
 
 import src.core.loss as  loss
+
 from src import model
 from src import dataset
 from src.core import train, validate, debug
 from src.core.log import Log
-from src.utils.misc import get_config, save_checkpoint
+from src.utils.misc import MetricMeter, get_config, save_checkpoint
 def main(args):
     print("Reading configuration file")
     cfg = get_config(args.cfg)
@@ -26,37 +27,25 @@ def main(args):
 
     print("Loading Training Data")
     train_data = eval('dataset.' + cfg.TRAIN.DATASET.NAME)(cfg.TRAIN.DATASET)
+    print("Loading Valid Data")
     valid_data = eval('dataset.' + cfg.VALID.DATASET.NAME)(cfg.VALID.DATASET)
     print ("Train Data Size: ", len(train_data))
     print ("Valid Data Size: ", len(valid_data))
     train_loader = DataLoader(
         train_data,
-        batch_size=cfg.TRAIN.DATASET.BATCH_SIZE * len(cfg.GPUS),
+        batch_size=cfg.TRAIN.DATASET.BATCH_SIZE * len(cfg.MODEL.GPUS),
         shuffle=cfg.TRAIN.DATASET.SHUFFLE,
         num_workers=cfg.WORKERS)
 
     valid_loader = DataLoader(
         valid_data,
-        batch_size=cfg.VALID.DATASET.BATCH_SIZE * len(cfg.GPUS),
+        batch_size=cfg.VALID.DATASET.BATCH_SIZE * len(cfg.MODEL.GPUS),
         num_workers=cfg.WORKERS)
-    
-    print("Loding Loss")
-    criterion = eval('loss.' + cfg.CRITERION)
 
     print("Creating Model")
-    model = eval('model.' + cfg.MODEL.NAME)(**cfg.MODEL)
-    model = torch.nn.DataParallel(model, device_ids=cfg.GPUS).cuda()
+    model = eval('model.' + cfg.MODEL.NAME)(cfg.MODEL)
 
-    if cfg.MODEL.PRETRAINED_WEIGHT_PATH:
-        print("Loading Pretrained Weight")
-        weight = torch.load(cfg.MODEL.PRETRAINED_WEIGHT_PATH)
-        model.load_state_dict(weight)
-
-    print("Creating optimizer and optimizer scheduler")
-    optimizer = eval('torch.optim.' + cfg.OPTIMIZER.NAME)(model.parameters(),**cfg.OPTIMIZER.PARAMETERS)
-    scheduler = eval('torch.optim.lr_scheduler.' + cfg.OPTIMIZER_SCHEDULE.NAME)(optimizer, **cfg.OPTIMIZER_SCHEDULE.PARAMETERS)
-
-    print("Creating log")
+    print("Creating Log")
     log = Log(cfg.LOG.PATH, monitor_item = cfg.LOG.MONITOR_ITEM, metric_item = cfg.METRIC_ITEMS, title = cfg.TAG)
 
     if cfg.RESUME_TRAIN:
@@ -69,15 +58,16 @@ def main(args):
     sgn = -1 if cfg.MAIN_METRIC.endswith('Acc') else 1
 
     for epoch in range(cfg.START_EPOCH, cfg.END_EPOCH):
-        scheduler.step()
-        lr = scheduler.get_lr()[0]
+        lr = model.scheduler.get_lr()[0]
         print('\nEpoch: %d | LR:' % (epoch), lr)
 
         # train for one epoch
-        train_metric = train(cfg.TRAIN, train_loader, model, criterion, optimizer, log)
+        train_metric = MetricMeter(cfg.METRIC_ITEMS)
+        train(cfg.TRAIN, train_loader, model, train_metric, log)
 
         # evaluate on validation set
-        valid_metric, predictions = validate(cfg.VALID,valid_loader, model, criterion, log)
+        valid_metric = MetricMeter(cfg.METRIC_ITEMS)
+        predictions = validate(cfg.VALID,valid_loader, model, valid_metric, log)
 
         # append logger file value should be basic type for json serialized
         epoch_result = {}
@@ -85,7 +75,7 @@ def main(args):
             if item == 'lr':
                 epoch_result['lr'] = float(lr)
                 continue
-            x, y = item.split('_')
+            x , y = item.split('_')
             if x == 'train':
                 epoch_result[item] = train_metric[y].avg
             if x == 'valid':
@@ -95,17 +85,18 @@ def main(args):
 
         # remember best acc and save checkpoint
         new_metric = valid_metric[cfg.MAIN_METRIC].avg
-        is_best = sgn * new_metric < best  #if loss then < if acc then > !!!
+        is_best = sgn * new_metric < best
         best = min(best, sgn * new_metric)
 
         save_checkpoint({
             'epoch': epoch,
-            'state_dict': model.state_dict(),
+            'state_dict': model.depth.state_dict(),
             'best': sgn * best,
-            'optimizer' : optimizer.state_dict(),
+            'optimizer' : model.optimizer.state_dict(),
         }, predictions, cfg, log, is_best, fpath=cfg.CHECKPOINT, snapshot = 5)
 
         cfg.CURRENT_EPOCH = epoch
+        model.update_learning_rate()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train keypoints network')
