@@ -6,7 +6,10 @@
 *.png
 .*
 !.gitignore
-pretrained_weight/*
+pretrained_weight/*.torch
 inference_result/*
+!inference_result/
 data/*
+!data/
 output/*
+!output
