@@ -4,12 +4,12 @@
 *.pickle
 *.json
 *.png
-**/.*
-!.gitignore
+**/._*
+**/.DS_Store
 pretrained_weight/*.torch
 inference_result/*
 !inference_result/
 data/*
 !data/
 output/*
-!output
+!output/
