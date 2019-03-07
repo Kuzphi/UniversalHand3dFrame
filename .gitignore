@@ -4,7 +4,7 @@
 *.pickle
 *.json
 *.png
-.*
+**/.*
 !.gitignore
 pretrained_weight/*.torch
 inference_result/*
