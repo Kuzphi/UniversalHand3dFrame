@@ -40,8 +40,13 @@ class Weakly_direct_regression(BaseModel):
 		preds2d = get_preds_from_heatmap(self.batch['heatmap'])
 		preds3d = torch.zeros((preds2d.size(0), 21, 3))
 
+		root_depth = self.batch['root_depth']
+		index_bone_length = self.batch['index_bone_length']
+
 		preds3d[:,:,:2] = preds2d.clone()
-		preds3d[:,:,2]  = self.outputs['depth']
+		preds3d[:,:,2]  = self.outputs['depth'] * index_bone_length.unsqueeze(1) + root_depth.unsqueeze(1)
+		# preds3d[:,:,2]  = self.batch['relative_depth'] * index_bone_length.unsqueeze(1) + root_depth.unsqueeze(1)
+		
 
 		preds3d[:, :, :2] *= preds3d[:, :, 2:]
 
@@ -62,6 +67,6 @@ class Weakly_direct_regression(BaseModel):
 			
 			# depth = self.outputs['depthmap'].view(bs, -1).gather(1, index).view(bs, 21)
 			# print (self.outputs.keys())
-			loss += nn.functional.smooth_l1_loss(self.outputs['depth'], self.batch['coor2d'][:,:, 2].cuda())
+			loss += nn.functional.smooth_l1_loss(self.outputs['depth'], self.batch['relative_depth'].cuda())
 		return loss
 

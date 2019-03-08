@@ -40,13 +40,18 @@ def get_preds_from_heatmap(scoremaps, softmax = False, return_type = 'torch'):
 
     return keypoint_coords[:,:21,:]
 
-def get_preds(heatmap, depthmap, matrix, return_type = 'torch'):
+def get_preds(heatmap, depthmap, batch, return_type = 'torch'):
     preds_2d = get_preds_from_heatmap(heatmap)
     preds_3d = torch.zeros((preds_2d.shape[0], preds_2d.shape[1], 3))
+
+    matrix = batch['matrix']
+    root_depth = batch['root_depth']
+    index_bone_length = batch['index_bone_length']
+
     for i in range(preds_2d.shape[0]):
         for j in range(preds_2d.shape[1]):
-            pt = preds_2d[i, j]
-            preds_3d[i, j,  2] = depthmap[i, j, int(pt[1]), int(pt[0])].clone()
+            pt = preds_2d[i, j].clone().long()
+            preds_3d[i, j,  2] = depthmap[i, j, pt[1], pt[0]] * index_bone_length[i] + root_depth[i]
             preds_3d[i, j, :2] = preds_2d[i, j].clone()
             
     preds_3d[:,:,:2] *=preds_3d[:,:,2:]

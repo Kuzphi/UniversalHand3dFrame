@@ -94,27 +94,35 @@ class RHD2D(JointsDataset):
 
         coor3d = coor2d.clone()
         coor3d[:,:2] *= coor3d[:, 2:]
-        coor3d = torch.matmul(coor3d, to_torch(matrix).transpose(0, 1))                
+        coor3d = torch.matmul(coor3d, to_torch(matrix).transpose(0, 1))
+
+        root_depth = coor2d[0, 2].clone()
+        index_bone_length = torch.norm(coor3d[9,:] - coor3d[10,:])
 
         for i in range(21):
             heatmap[i] = draw_heatmap(heatmap[i], coor2d[i], self.cfg.HEATMAP.SIGMA)
-            depth[i]   = heatmap[i] * coor2d[i, 2]
+            depth[i]   = heatmap[i] * (coor2d[i, 2] - coor2d[0, 2]) / index_bone_length
+
+        relative_depth = (coor2d[:,2] - coor2d[0, 2]) / index_bone_length
         # pred2d, pred3d = get_preds(heatmap.unsqueeze(0), depth.unsqueeze(0), to_torch(matrix).unsqueeze(0))
 
         # print(pred3d[0] - coor3d)
+
         return {'input': {'img':img,
                           'hand_side': torch.tensor([isleft, 1 - isleft]).float(),                          
                           },
                 'index': index, 
                 'matrix': to_torch(matrix),
-                # 'index_bone_length': index_bone_length,
                 'heatmap': heatmap,
-                'depth' :  depth,
-                # 'gt_depth': gt_depth.float(),
+                'depth' :  depth,                
                 'coor3d': to_torch(coor3d),
-                'coor2d': to_torch(coor2d),
+                'coor2d': to_torch(coor2d),                
+                'root_depth': root_depth,
+                'index_bone_length': index_bone_length,
+                'relative_depth': relative_depth,
                 'weight': 1,
-                'meta': meta}
+                'meta': meta,
+                }
 
     def eval_result(self, outputs, batch, cfg = None):
         preds = get_preds_from_heatmap(outputs['heatmap'][-1])

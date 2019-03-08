@@ -1,6 +1,6 @@
 CURRENT_EPOCH: 0
 TRAIN:
-  DEBUG: True
+  DEBUG: False
   DATASET:
     NAME: Combine2D
     CONTAINS:

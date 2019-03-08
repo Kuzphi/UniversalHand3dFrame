@@ -44,8 +44,9 @@ class two_stream(BaseModel):
 		return {"dis2d": dis_2d, "dis3d": dis_3d}
 
 	def get_preds(self):
-		preds_2d, preds_3d = get_preds(self.batch['heatmap'], self.depth_outputs['heatmap'][-1], self.batch['matrix'])
-		# preds_2d, preds_3d = get_preds(self.rgb_outputs['heatmap'][-1], self.depth_outputs['heatmap'][-1], self.batch['matrix'])
+		# preds_2d, preds_3d = get_preds(self.batch['heatmap'], self.batch['depth'], self.batch)
+		preds_2d, preds_3d = get_preds(self.batch['heatmap'], self.depth_outputs['heatmap'][-1], self.batch)
+		# preds_2d, preds_3d = get_preds(self.rgb_outputs['heatmap'][-1], self.depth_outputs['heatmap'][-1], self.batch)
 		self.preds = {'pose2d':preds_2d, 'pose3d': preds_3d}		
 		return self.preds
 		

@@ -49,21 +49,21 @@ class BaseModel(object):
 		raise NotImplementedError
 
 	def train(self):
-		for key in self.networks:
-			self.networks[key].train()
+		for name in self.networks:
+			self.networks[name].train()
 
 	def eval(self):
-		for key in self.networks:
-			self.networks[key].eval()
+		for name in self.networks:
+			self.networks[name].eval()
 
 	def set_batch(self, batch):
 		self.batch = batch
 
 	def forward(self):
 		assert len(self.networks) == 1, 'undefined forward method'
-		key = self.networks.keys()[0]
+		name = self.networks.keys()[0]
 
-		self.outputs = self.networks[key](to_cuda(self.batch['input']))
+		self.outputs = self.networks[name](to_cuda(self.batch['input']))
 		self.loss 	 = self.criterion()
 		self.outputs = to_cpu(self.outputs)
 
@@ -92,7 +92,8 @@ class BaseModel(object):
 
 	def save(self, path):
 		path = os.path.join(path, 'model')
-		os.makedirs(path)
+		if not os.path.exists(path):
+			os.makedirs(path)
 		for name, net in self.networks.iteritems():
 			fpath = os.path.join(path, 'net_' + name + '.torch')
 			torch.save(net.state_dict(), fpath)
