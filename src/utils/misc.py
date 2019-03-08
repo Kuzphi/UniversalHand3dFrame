@@ -121,6 +121,11 @@ def get_config(fpath, type = 'train'):
         cfg.LOG.PATH = os.path.join(cfg.OUTPUT_DIR,cfg.TAG,'log.json')
         cfg.CHECKPOINT = os.path.join(cfg.OUTPUT_DIR,cfg.TAG)
         cfg.START_EPOCH = cfg.CURRENT_EPOCH #fresuming training
+        if cfg.LOG.MONITOR_ITEM is None:
+            cfg.LOG.MONITOR_ITEM = []
+        for name in cfg.MODEL.OPTIMIZERS:
+            cfg.LOG.MONITOR_ITEM.append(name + '_lr')
+            
     if type == 'infer':
         valid_dataset_name = get_dataset_name(cfg.DATASET)
         cfg.TAG = "_".join([tag, type, cfg.MODEL.NAME, valid_dataset_name])
@@ -133,7 +138,7 @@ def save_config(cfg, fpath):
     configpath = os.path.join(fpath, 'config.yml')
     yaml.dump(cfg, open(configpath,"w"))
 
-def save_checkpoint(state, preds, cfg, log, is_best, fpath, filename='checkpoint.pth.tar', snapshot=None):
+def save_checkpoint(model, preds, cfg, log, is_best, fpath, filename='checkpoint.pth.tar', snapshot=None):
     # preds = to_numpy(preds)
     latest_filepath = os.path.join(fpath, 'latest')
 
@@ -142,11 +147,11 @@ def save_checkpoint(state, preds, cfg, log, is_best, fpath, filename='checkpoint
 
     log.save(latest_filepath)
     save_config(cfg, latest_filepath)
-    torch.save(state, os.path.join(latest_filepath, filename))
+    model.save(latest_filepath)
     pickle.dump(preds, open(os.path.join(latest_filepath, 'preds.pickle'), 'w'))
 
-    if snapshot and state['epoch'] % snapshot == 0:
-        shutil.copytree(latest_filepath, os.path.join(fpath, str(state['epoch'])))
+    if snapshot and cfg.CURRENT_EPOCH % snapshot == 0:
+        shutil.copytree(latest_filepath, os.path.join(fpath, str(cfg.CURRENT_EPOCH)))
 
     if is_best:
         best_path = os.path.join(fpath, "best")

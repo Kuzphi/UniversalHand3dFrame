@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import itertools
 from src.model.networks import *
 from src.utils.misc import to_torch, to_numpy, to_cuda, to_cpu
 class BaseModel(object):
@@ -10,24 +11,36 @@ class BaseModel(object):
 		super(BaseModel, self).__init__()
 		self.cfg = cfg
 		self.name = cfg.NAME
-		self.define_network()
-		self.define_optimizer_and_scheduler()
+		self.define_network(cfg.NETWORKS)
+		self.define_optimizers_and_schedulers(cfg.OPTIMIZERS)
 
-	def define_network(self):
-		print("Setting up network")	
-		self.network = eval(self.cfg.NETWORK.NAME)(**self.cfg.NETWORK)
-		self.network = torch.nn.DataParallel(self.network, device_ids=self.cfg.GPUS).cuda()
+	def define_network(self, cfg):
+		print("Setting up networks")
+		self.networks = {}
+		for name in cfg:
+			self.networks[name] = eval(cfg[name].TYPE)(**cfg[name])
+			self.networks[name] = torch.nn.DataParallel(self.networks[name], device_ids=self.cfg.GPUS).cuda()
+			if cfg[name].PRETRAINED_WEIGHT_PATH:
+				print("Loading %s net's pretrained weight"% name)
+				weight = torch.load(cfg[name].PRETRAINED_WEIGHT_PATH)
+				self.networks[name].load_state_dict(weight, strict = False)
 
-		if self.cfg.NETWORK.PRETRAINED_WEIGHT_PATH:
-			print("Loading Pretrained Weight")
-			weight = torch.load(self.cfg.NETWORK.PRETRAINED_WEIGHT_PATH)
-			self.network.load_state_dict(weight, strict = False)
+	def define_optimizers_and_schedulers(self, cfg):
+		# assert len(self.networks) == 1, 'undefined optimizers method'
+		print("Setting up optimizer and schedulers")
+		self.optimizers = {}
+		self.schedulers = {}
+		for name in cfg:
+			paras = [self.networks[net_name].parameters() for net_name in cfg[name].NETWORKS]
+			paras = itertools.chain(*paras)
+			optimizer = eval('torch.optim.' + cfg[name].TYPE)(paras,**cfg[name].PARAMETERS)
+			self.optimizers[name] = optimizer
 
-	def define_optimizer_and_scheduler(self):
-		print("Setting up optimizer and optimizer scheduler")
-		self.optimizer = eval('torch.optim.' + self.cfg.OPTIMIZER.NAME)(self.network.parameters(),**self.cfg.OPTIMIZER.PARAMETERS)
-		self.scheduler = eval('torch.optim.lr_scheduler.' + self.cfg.OPTIMIZER_SCHEDULE.NAME)(self.optimizer, **self.cfg.OPTIMIZER_SCHEDULE.PARAMETERS)
-		self.scheduler.step()
+			if cfg[name].has_key('SCHEDULER'): #define schduler if exists
+				scheduler_cfg = cfg[name].SCHEDULER
+				scheduler = eval('torch.optim.lr_scheduler.' + scheduler_cfg.TYPE)(optimizer, **scheduler_cfg.PARAMETERS)
+				scheduler.step()
+				self.schedulers[name] = scheduler
 
 	def criterion(self):
 		if self.cfg.has_key('criterion'):
@@ -36,27 +49,37 @@ class BaseModel(object):
 		raise NotImplementedError
 
 	def train(self):
-		self.network.train()
+		for key in self.networks:
+			self.networks[key].train()
 
 	def eval(self):
-		self.network.eval()
+		for key in self.networks:
+			self.networks[key].eval()
 
 	def set_batch(self, batch):
 		self.batch = batch
 
 	def forward(self):
-		self.outputs = self.network(to_cuda(self.batch['input']))
+		assert len(self.networks) == 1, 'undefined forward method'
+		key = self.networks.keys()[0]
+
+		self.outputs = self.networks[key](to_cuda(self.batch['input']))
 		self.loss 	 = self.criterion()
 		self.outputs = to_cpu(self.outputs)
 
 	def step(self):
 		self.forward()
-		self.optimizer.zero_grad()
+		for optimizer in self.optimizers.values():
+			optimizer.zero_grad()
+
 		self.loss.backward()
-		self.optimizer.step()
+
+		for optimizer in self.optimizers.values():
+			optimizer.step()
 
 	def update_learning_rate(self):
-		self.scheduler.step()
+		for scheduler in self.schedulers.values():
+			scheduler.step()
 
 	# set requies_grad=Fasle to avoid computation
 	def set_requires_grad(self, nets, requires_grad=False):
@@ -67,13 +90,22 @@ class BaseModel(object):
 				for param in net.parameters():
 					param.requires_grad = requires_grad
 
-	def backward(self):
-		raise NotImplementedError
+	def save(self, path):
+		path = os.path.join(path, 'model')
+		os.makedirs(path)
+		for name, net in self.networks.iteritems():
+			fpath = os.path.join(path, 'net_' + name + '.torch')
+			torch.save(net.state_dict(), fpath)
+
+		for name, optimizer in self.optimizers.iteritems():
+			fpath = os.path.join(path, 'optimizer_' + name + '.torch')
+			torch.save(optimizer.state_dict(), fpath)
+
+		for name, scheduler in self.schedulers.iteritems():
+			fpath = os.path.join(path, 'scheduler_' + name + '.torch')
+			torch.save(scheduler.state_dict(), fpath)
 
 	def define_evaluation(self):
-		raise NotImplementedError
-
-	def define_scheduler(self):
 		raise NotImplementedError
 		
 	def eval_result(self):

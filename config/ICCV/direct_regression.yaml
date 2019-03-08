@@ -46,21 +46,25 @@ END_EPOCH: 100
 LOG_DIR: ''
 MODEL:
   NAME: Weakly_direct_regression
-  NETWORK: 
-    NAME: CPMWeaklyDirectRegression
-    PRETRAINED_WEIGHT_PATH: 'pretrained_weight/cpmRHD.torch'
-    num_joints: 22
-  OPTIMIZER:
-    NAME: RMSprop
-    PARAMETERS:
-      lr: 1.0e-3
-      momentum: 0
-      weight_decay: 0
-  OPTIMIZER_SCHEDULE:
-    NAME: StepLR
-    PARAMETERS:
-      gamma: 0.1
-      step_size: 30
+  NETWORKS:
+    Regression:
+      TYPE: CPMWeaklyDirectRegression
+      PRETRAINED_WEIGHT_PATH: 'pretrained_weight/cpmRHD.torch'
+      num_joints: 22
+  OPTIMIZERS:
+    GLOBAL:
+      NETWORKS:
+        - Regression
+      TYPE: RMSprop
+      PARAMETERS:
+        lr: 1.0e-3
+        momentum: 0
+        weight_decay: 0
+      SCHEDULER:
+        TYPE: StepLR
+        PARAMETERS:
+          gamma: 0.1
+          step_size: 30
   GPUS:
     - 0
     - 1
@@ -70,7 +74,7 @@ MODEL:
 LOG:
   PATH: output
   MONITOR_ITEM:
-    - lr
+
 METRIC_ITEMS: # the metric that you wanna track during training
   - loss
   - dis2d

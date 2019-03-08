@@ -58,8 +58,14 @@ def main(args):
     sgn = -1 if cfg.MAIN_METRIC.endswith('Acc') else 1
 
     for epoch in range(cfg.START_EPOCH, cfg.END_EPOCH):
-        lr = model.scheduler.get_lr()[0]
-        print('\nEpoch: %d | LR:' % (epoch), lr)
+        epoch_result = {}
+
+        print('\nEpoch: %d: | LR' % (epoch), end = ' ')
+
+        for name, scheduler in model.schedulers.iteritems():
+            print(name, ':', scheduler.get_lr()[0], end = ' ')
+            epoch_result[name + '_lr'] = scheduler.get_lr()[0]
+        print('')
 
         # train for one epoch
         train_metric = MetricMeter(cfg.METRIC_ITEMS)
@@ -70,11 +76,8 @@ def main(args):
         predictions = validate(cfg.VALID,valid_loader, model, valid_metric, log)
 
         # append logger file value should be basic type for json serialized
-        epoch_result = {}
+        
         for item in cfg.LOG.MONITOR_ITEM:
-            if item == 'lr':
-                epoch_result['lr'] = float(lr)
-                continue
             x , y = item.split('_')
             if x == 'train':
                 epoch_result[item] = train_metric[y].avg
@@ -87,15 +90,11 @@ def main(args):
         new_metric = valid_metric[cfg.MAIN_METRIC].avg
         is_best = sgn * new_metric < best
         best = min(best, sgn * new_metric)
-
-        save_checkpoint({
-            'epoch': epoch,
-            'state_dict': model.depth.state_dict(),
-            'best': sgn * best,
-            'optimizer' : model.optimizer.state_dict(),
-        }, predictions, cfg, log, is_best, fpath=cfg.CHECKPOINT, snapshot = 5)
-
         cfg.CURRENT_EPOCH = epoch
+
+        save_checkpoint(model, predictions, cfg, log, is_best, fpath=cfg.CHECKPOINT, snapshot = 5)
+
+        
         model.update_learning_rate()
 
 if __name__ == '__main__':

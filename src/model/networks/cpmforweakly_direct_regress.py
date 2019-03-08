@@ -59,9 +59,9 @@ class OpenPose_CPM(nn.Module):
 		self.stage5 = Repeat(num_joints)
 		self.stage6 = Repeat(num_joints)
 		self.depth  = Repeat(num_joints)
-		self.depth_fc_1 = nn.Linear(32 * 32 * 22, 5000)
-		self.depth_fc_2 = nn.Linear(5000, 3000)
-		self.depth_fc_3 = nn.Linear(3000, 21)
+		self.depth_fc_1 = nn.Linear(32 * 32 * 22, 512)
+		self.depth_fc_2 = nn.Linear(512, 512)
+		self.depth_fc_3 = nn.Linear(512, 21)
 
  		self.upsampler = nn.functional.interpolate
 		# self.upsampler = nn.Upsample(scale_factor = 8, mode = 'bilinear', align_corners = True)
