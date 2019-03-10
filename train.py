@@ -46,16 +46,16 @@ def main(args):
     model = eval('model.' + cfg.MODEL.NAME)(cfg.MODEL)
 
     print("Creating Log")
-    log = Log(cfg.LOG.PATH, monitor_item = cfg.LOG.MONITOR_ITEM, metric_item = cfg.METRIC_ITEMS, title = cfg.TAG)
-
-    if cfg.RESUME_TRAIN:
-        print("Resuming data from checkpoint")
-        checkpoint = torch.load(cfg.CHEKCPOINT_PATH)
-        model.load_state_dict(checkpoint['state_dict'])
-        optimizer.load_state_dict(checkpoint['optimizer'])
+    log = Log(monitor_item = cfg.LOG.MONITOR_ITEM, metric_item = cfg.METRIC_ITEMS, title = cfg.TAG)
 
     best = 1e99
     sgn = -1 if cfg.MAIN_METRIC.endswith('Acc') else 1
+
+    if cfg.RESUME_TRAIN:
+        print("Resuming data from checkpoint")
+        log.resume(cfg.CHECKPOINT)
+        model.resume(cfg.CHECKPOINT)
+        best = log.log['valid_' + cfg.MAIN_METRIC][-1]
 
     for epoch in range(cfg.START_EPOCH, cfg.END_EPOCH):
         epoch_result = {}
@@ -92,7 +92,7 @@ def main(args):
         best = min(best, sgn * new_metric)
         cfg.CURRENT_EPOCH = epoch
 
-        save_checkpoint(model, predictions, cfg, log, is_best, fpath=cfg.CHECKPOINT, snapshot = 5)
+        save_checkpoint(model, predictions, cfg, log, is_best, fpath=cfg.SAVE_PATH, snapshot = 5)
 
         
         model.update_learning_rate()

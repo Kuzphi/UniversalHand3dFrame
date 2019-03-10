@@ -85,6 +85,13 @@ class RHD2D(JointsDataset):
         
         matrix = np.linalg.inv(matrix) #take the inversion of matrix
 
+        coor3d = coor2d.clone()
+        coor3d[:,:2] *= coor3d[:, 2:]
+        coor3d = torch.matmul(coor3d, to_torch(matrix).transpose(0, 1))
+
+        root_depth = coor2d[0, 2].clone()
+        index_bone_length = torch.norm(coor3d[9,:] - coor3d[10,:])
+        relative_depth = (coor2d[:,2] - coor2d[0, 2]) / index_bone_length
         #corresponding depth position in depth map
         index = torch.tensor([i * img.size(1) * img.size(2) + coor2d[i,0].long() * img.size(1) + coor2d[i,1].long() for i in range(21)])
 
@@ -92,21 +99,10 @@ class RHD2D(JointsDataset):
         heatmap = torch.zeros(self.cfg.NUM_JOINTS, img.size(1), img.size(2))
         depth   = torch.zeros(self.cfg.NUM_JOINTS, img.size(1), img.size(2))
 
-        coor3d = coor2d.clone()
-        coor3d[:,:2] *= coor3d[:, 2:]
-        coor3d = torch.matmul(coor3d, to_torch(matrix).transpose(0, 1))
-
-        root_depth = coor2d[0, 2].clone()
-        index_bone_length = torch.norm(coor3d[9,:] - coor3d[10,:])
-
         for i in range(21):
             heatmap[i] = draw_heatmap(heatmap[i], coor2d[i], self.cfg.HEATMAP.SIGMA)
             depth[i]   = heatmap[i] * (coor2d[i, 2] - coor2d[0, 2]) / index_bone_length
 
-        relative_depth = (coor2d[:,2] - coor2d[0, 2]) / index_bone_length
-        # pred2d, pred3d = get_preds(heatmap.unsqueeze(0), depth.unsqueeze(0), to_torch(matrix).unsqueeze(0))
-
-        # print(pred3d[0] - coor3d)
 
         return {'input': {'img':img,
                           'hand_side': torch.tensor([isleft, 1 - isleft]).float(),                          
@@ -114,9 +110,9 @@ class RHD2D(JointsDataset):
                 'index': index, 
                 'matrix': to_torch(matrix),
                 'heatmap': heatmap,
-                'depth' :  depth,                
+                'depth' :  depth,
                 'coor3d': to_torch(coor3d),
-                'coor2d': to_torch(coor2d),                
+                'coor2d': to_torch(coor2d),
                 'root_depth': root_depth,
                 'index_bone_length': index_bone_length,
                 'relative_depth': relative_depth,
@@ -164,4 +160,4 @@ class RHD2D(JointsDataset):
         }
         pickle.dump(res, open(os.path.join(cfg.CHECKPOINT,'dist.pickle'),'w'))
     # def __len__(self):
-    #     return 100
+    #     return 10

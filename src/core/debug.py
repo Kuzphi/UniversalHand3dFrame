@@ -14,7 +14,7 @@ from src.utils.imutils import batch_with_heatmap, plot_hand_3d, im_to_numpy
 
 def debug(outputs, batch):
     img = batch['input']['img']
-    gt_batch_img   = batch_with_heatmap(inputs = img, outputs = batch['depth'])
+    gt_batch_img   = batch_with_heatmap(inputs = img, outputs = batch['heatmap'])
     pred_batch_img = batch_with_heatmap(inputs = img, outputs = outputs['heatmap'][-1])
     
     ax1 = plt.subplot(121)

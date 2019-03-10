@@ -36,8 +36,8 @@ class Weakly_direct_regression(BaseModel):
 		return {"dis2d": dis2d, "dis3d": dis3d}
 
 	def get_preds(self):
-		# preds2d = get_preds_from_heatmap(self.outputs['heatmap'][-1])
-		preds2d = get_preds_from_heatmap(self.batch['heatmap'])
+		preds2d = get_preds_from_heatmap(self.outputs['heatmap'][-1])
+		# preds2d = get_preds_from_heatmap(self.batch['heatmap'])
 		preds3d = torch.zeros((preds2d.size(0), 21, 3))
 
 		root_depth = self.batch['root_depth']

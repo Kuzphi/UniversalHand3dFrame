@@ -25,6 +25,19 @@ class Repeat(nn.Module):
 		out = self.conv7(out)
 		return out
 
+class softmax2d(nn.Module):
+	"""docstring for softmax2d"""
+	def __init__(self, c, w, h):
+		super(softmax2d, self).__init__()
+		self.beta = nn.Parameter(torch.zeros((c,w,h)).uniform_(0, 1))
+		self.softmax2d = nn.Softmax2d()
+
+	def forward(self, x):
+		out = x * self.beta.expand_as(x)
+		out = self.softmax2d(out)
+		return out
+		
+
 class OpenPose_CPM(nn.Module):
 	def __init__(self, num_joints):
 		super(OpenPose_CPM, self).__init__()
@@ -58,9 +71,13 @@ class OpenPose_CPM(nn.Module):
 		self.stage4 = Repeat(num_joints)
 		self.stage5 = Repeat(num_joints)
 		self.stage6 = Repeat(num_joints)
-		# self.depth  = Repeat(num_joints)
+		self.depth  = Repeat(num_joints)
+		self.depth_fc_1 = nn.Linear(32 * 32 * 22, 5000)
+		self.depth_fc_2 = nn.Linear(5000, 3000)
+		self.depth_fc_3 = nn.Linear(3000, 21)
 
- 		self.upsampler = nn.functional.interpolate
+		self.softmax2d = softmax2d(21, 256, 256)
+		self.upsampler = nn.functional.interpolate
 		# self.upsampler = nn.Upsample(scale_factor = 8, mode = 'bilinear', align_corners = True)
 
 	def forward(self, x):
@@ -105,17 +122,33 @@ class OpenPose_CPM(nn.Module):
 		out_6 = torch.cat((out_5, out_0), 1)
 		out_6 = self.stage6(out_6)
 
-		# out_heatmap = self.stage6(out_6)
-		# out_depth   = self.depth(out_6)
-		# out_depth = out_depth.view(-1, 32 * 32 * 22)
 
 		outputs = [out_1, out_2, out_3, out_4, out_5, out_6]
 		outputs = [self.upsampler(out, scale_factor = 8, mode = 'bilinear', align_corners = True) for out in outputs]
-		# depth = self.upsampler(out_depth, scale_factor = 8, mode = 'bilinear', align_corners = True)
-		heatmap = [out[:, :21, ...] for out in outputs]
-		depth   = [out[:, 21:, ...] for out in outputs]
 
-		return {'heatmap': heatmap, "depth":depth}
+		heatmap = [out[:, 21:, ...] for out in outputs]
+		depth   = [out[:, :21, ...] for out in outputs]
+		return {'heatmap': heatmap, 'depth': depth}
+		#stage 2
+		# out = self.upsampler(out_6, scale_factor = 8, mode = 'bilinear', align_corners = True)
+
+		# heatmap = self.softmax2d(out[:, :21, ...])
+		# depth   = out[:, 21:, ...] * heatmap
+
+		# s = heatmap.shape
+
+		# x = heatmap.sum(dim = 3)
+		# weight = torch.arange(s[2]).view(1,1,-1).expand_as(x).float().cuda()
+		# coorX = (x * weight).sum(dim = 2, keepdim = True)
+
+		# y = heatmap.sum(dim = 2)
+		# weight = torch.arange(s[3]).view(1,1,-1).expand_as(y).float().cuda()
+		# coorY = (y * weight).sum(dim = 2, keepdim = True)
+
+		# coorZ   = depth.sum(dim = (2,3), keepdim = True)[...,0]
+
+		# coor = torch.cat((coorX, coorY, coorZ), dim = -1)
+		# return {'coor3d': coor, 'coor2d': coor[:,:,:2]}
 
 def Hand25D(num_joints = 21, **kwargs):
 	return OpenPose_CPM(num_joints * 2)

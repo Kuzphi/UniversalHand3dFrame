@@ -23,25 +23,28 @@ def plot_overlap(logger, names=None):
 
 class Log(object):
     '''Save training process to log file with simple plot function.'''
-    def __init__(self, fpath, monitor_item, metric_item, title = None): 
+    def __init__(self, monitor_item, metric_item, title = None): 
         self.log = dict()
-        self.path = fpath
         self.title = title
         self.monitor_item = monitor_item
         self.log['info'] = ''
-        if os.path.exists(fpath):
-            self.ori_log = json.load(open(fpath))
-            for item in monitor_item:
-                assert self.log.has_key(item), "Loadding Error: {} does not exist in original log file".format(item)
-                self.log[item] = self.ori_log[item]
-        else:            
-            for item in monitor_item:
-                self.log[item] = []                
-            for item in metric_item:
-                self.monitor_item.append('train_' + item)
-                self.monitor_item.append('valid_' + item)
-                self.log['train_' + item] = []
-                self.log['valid_' + item] = []
+        for item in monitor_item:
+            self.log[item] = []                
+        for item in metric_item:
+            self.monitor_item.append('train_' + item)
+            self.monitor_item.append('valid_' + item)
+            self.log['train_' + item] = []
+            self.log['valid_' + item] = []
+
+    def resume(self, fpath):
+        fpath = os.path.join(fpath,'log.json')
+        if not os.path.exists(fpath):
+            raise IOError, '%s does not exist' % fpath
+        print('Resuming log from checkpoint')
+        self.ori_log = json.load(open(fpath))
+        for item in self.monitor_item:
+            assert self.log.has_key(item), "Loadding Error: {} does not exist in original log file".format(item)
+            self.log[item] = self.ori_log[item]
 
     def append(self, update):
         for key in self.monitor_item:

@@ -39,7 +39,7 @@ def train(cfg, train_loader, model, metric, log):
 
         # debug, print intermediate result
         if cfg.DEBUG:
-            debug(model.depth_outputs, batch)
+            debug(model.outputs, batch)
 
         # measure accuracy and record loss
         metric_ = model.eval_result()

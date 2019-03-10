@@ -24,7 +24,6 @@ class Repeat(nn.Module):
 		out = self.relu(self.conv6(out))
 		out = self.conv7(out)
 		return out
-
 class OpenPose_CPM(nn.Module):
 	def __init__(self, num_joints):
 		super(OpenPose_CPM, self).__init__()

@@ -15,9 +15,10 @@ class BaseModel(object):
 		self.define_optimizers_and_schedulers(cfg.OPTIMIZERS)
 
 	def define_network(self, cfg):
-		print("Setting up networks")
+		
 		self.networks = {}
 		for name in cfg:
+			print("Setting up network %s"%name)
 			self.networks[name] = eval(cfg[name].TYPE)(**cfg[name])
 			self.networks[name] = torch.nn.DataParallel(self.networks[name], device_ids=self.cfg.GPUS).cuda()
 			if cfg[name].PRETRAINED_WEIGHT_PATH:
@@ -30,7 +31,7 @@ class BaseModel(object):
 		print("Setting up optimizer and schedulers")
 		self.optimizers = {}
 		self.schedulers = {}
-		for name in cfg:
+		for name in cfg:			
 			paras = [self.networks[net_name].parameters() for net_name in cfg[name].NETWORKS]
 			paras = itertools.chain(*paras)
 			optimizer = eval('torch.optim.' + cfg[name].TYPE)(paras,**cfg[name].PARAMETERS)
@@ -105,6 +106,22 @@ class BaseModel(object):
 		for name, scheduler in self.schedulers.iteritems():
 			fpath = os.path.join(path, 'scheduler_' + name + '.torch')
 			torch.save(scheduler.state_dict(), fpath)
+
+	def resume(self, path):
+		path = os.path.join(path, 'model')
+		if not os.path.exists(path):
+			raise IOError, '%s does not exists' % path
+		for name, net in self.networks.iteritems():
+			fpath = os.path.join(path, 'net_' + name + '.torch')
+			net.load_state_dict(torch.load(fpath))
+
+		for name, optimizer in self.optimizers.iteritems():
+			fpath = os.path.join(path, 'optimizer_' + name + '.torch')
+			optimizer.load_state_dict(torch.load(fpath))
+
+		for name, scheduler in self.schedulers.iteritems():
+			fpath = os.path.join(path, 'scheduler_' + name + '.torch')
+			scheduler.load_state_dict(torch.load(fpath))
 
 	def define_evaluation(self):
 		raise NotImplementedError

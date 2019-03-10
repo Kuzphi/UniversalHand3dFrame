@@ -15,7 +15,7 @@ TRAIN:
       TYPE: Gaussian # Gaussian or Cauchy
       SIGMA: 8 #Ground truth heatmap
     IS_TRAIN: True
-    BATCH_SIZE: 6
+    BATCH_SIZE: 4
     SHUFFLE: True
     NUM_JOINTS: 21
 
@@ -37,7 +37,7 @@ VALID:
       TYPE: Gaussian # Gaussian or Cauchy
       SIGMA: 8 #Ground truth heatmap
     IS_TRAIN: False
-    BATCH_SIZE: 6
+    BATCH_SIZE: 4
     NUM_JOINTS: 21
     
 DATA_DIR: ''
@@ -46,29 +46,32 @@ END_EPOCH: 100
 LOG_DIR: ''
 MODEL:
   NAME: Hand25D
-  NETWORK: 
-    NAME: Hand25D
-    PRETRAINED_WEIGHT_PATH: #pretrained_weight/openpose_hand_with_depth.torch
-    num_joints: 21
-  OPTIMIZER:
-    NAME: Adam
-    PARAMETERS:
-      lr: 0.001
-  OPTIMIZER_SCHEDULE:
-    NAME: StepLR
-    PARAMETERS:
-      gamma: 0.1
-      step_size: 30
+  NETWORKS: 
+    Hand25D:
+      TYPE: Hand25D
+      PRETRAINED_WEIGHT_PATH: pretrained_weight/openpose_hand_with_depth.torch
+      num_joints: 21
+  OPTIMIZERS:
+    GLOBAL:
+      NETWORKS:
+        - Hand25D
+      TYPE: Adam
+      PARAMETERS:
+        lr: 1.e-3
+      SCHEDULER:
+        TYPE: StepLR
+        PARAMETERS:
+          gamma: 0.1
+          step_size: 30
   GPUS:
     - 0
     - 1
     - 2
     - 3
-  STAGE: 2
 LOG:
   PATH: output
   MONITOR_ITEM:
-    - lr
+
 METRIC_ITEMS: # the metric that you wanna track during training
   - loss
   - dis2d

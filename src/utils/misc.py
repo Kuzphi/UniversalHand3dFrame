@@ -102,9 +102,7 @@ def combine(x , y):
     raise Exception("Unrecognized type {}".format(type(x)))
 
 def get_dataset_name(cfg):
-    dataset_name = cfg.NAME
-    if dataset_name.startswith("Combine"):
-        dataset_name += '(' + ','.join(cfg.CONTAINS.keys())+ ')'
+    dataset_name = ','.join(cfg.CONTAINS.keys())
     return dataset_name
 
 def get_config(fpath, type = 'train'):
@@ -113,14 +111,13 @@ def get_config(fpath, type = 'train'):
 
     tag = time.asctime(time.localtime(time.time()))
     tag = tag[4:-5] #remove day of the week and year
-    
+    tag = tag.replace("  "," ").replace(" ","_")
     if type == 'train':
         train_dataset_name = get_dataset_name(cfg.TRAIN.DATASET)
         valid_dataset_name = get_dataset_name(cfg.VALID.DATASET)
-        cfg.TAG = "_".join([tag, type, cfg.MODEL.NAME, train_dataset_name, 'valid', valid_dataset_name])
-        cfg.LOG.PATH = os.path.join(cfg.OUTPUT_DIR,cfg.TAG,'log.json')
-        cfg.CHECKPOINT = os.path.join(cfg.OUTPUT_DIR,cfg.TAG)
-        cfg.START_EPOCH = cfg.CURRENT_EPOCH #fresuming training
+        cfg.TAG = "_".join([tag, cfg.MODEL.NAME, 'train:'+train_dataset_name, 'valid:' + valid_dataset_name])
+        cfg.START_EPOCH = cfg.CURRENT_EPOCH #if resuming training
+        cfg.SAVE_PATH = os.path.join(cfg.OUTPUT_DIR, cfg.TAG)
         if cfg.LOG.MONITOR_ITEM is None:
             cfg.LOG.MONITOR_ITEM = []
         for name in cfg.MODEL.OPTIMIZERS:
@@ -128,17 +125,17 @@ def get_config(fpath, type = 'train'):
             
     if type == 'infer':
         valid_dataset_name = get_dataset_name(cfg.DATASET)
-        cfg.TAG = "_".join([tag, type, cfg.MODEL.NAME, valid_dataset_name])
-        cfg.CHECKPOINT = os.path.join(cfg.OUTPUT_DIR,cfg.TAG)
+        cfg.TAG = "_".join([tag, cfg.MODEL.NAME, 'valid:' + valid_dataset_name])
         cfg.IMG_RESULT = os.path.join(cfg.CHECKPOINT, 'img_result')
     return cfg
 
-def save_config(cfg, fpath):
-    cfg.RESUME_TRAINING = 1
-    configpath = os.path.join(fpath, 'config.yml')
+def save_config(cfg, fpath, tag):
+    cfg.RESUME_TRAIN = 1
+    cfg.CHECKPOINT = os.path.join(cfg.OUTPUT_DIR, cfg.TAG, tag)
+    configpath = os.path.join(fpath, tag, 'config.yml')
     yaml.dump(cfg, open(configpath,"w"))
 
-def save_checkpoint(model, preds, cfg, log, is_best, fpath, filename='checkpoint.pth.tar', snapshot=None):
+def save_checkpoint(model, preds, cfg, log, is_best, fpath, snapshot=None):
     # preds = to_numpy(preds)
     latest_filepath = os.path.join(fpath, 'latest')
 
@@ -146,18 +143,20 @@ def save_checkpoint(model, preds, cfg, log, is_best, fpath, filename='checkpoint
         os.makedirs(latest_filepath)
 
     log.save(latest_filepath)
-    save_config(cfg, latest_filepath)
+    save_config(cfg, fpath, 'latest')
     model.save(latest_filepath)
     pickle.dump(preds, open(os.path.join(latest_filepath, 'preds.pickle'), 'w'))
 
     if snapshot and cfg.CURRENT_EPOCH % snapshot == 0:
         shutil.copytree(latest_filepath, os.path.join(fpath, str(cfg.CURRENT_EPOCH)))
+        save_config(cfg, fpath, str(cfg.CURRENT_EPOCH))
 
     if is_best:
         best_path = os.path.join(fpath, "best")
         if os.path.exists(best_path):
             shutil.rmtree(best_path)
         shutil.copytree(latest_filepath, best_path)
+        save_config(cfg, fpath, 'best')
 
 def save_infer_result(result, metric = None, checkpoint='checkpoint', filename='preds.pickle'):
     if not os.path.exists(checkpoint):

@@ -49,6 +49,7 @@ MODEL:
   NETWORKS:
     Regression:
       TYPE: CPMWeaklyDirectRegression
+      # PRETRAINED_WEIGHT_PATH: 'output/Mar  7 21:58:35_train_Weakly_direct_regression_Combine2D(RHD2D)_valid_Combine2D(RHD2D)/best/model/net_Regression.torch'
       PRETRAINED_WEIGHT_PATH: 'pretrained_weight/cpmRHD.torch'
       num_joints: 22
   OPTIMIZERS:
@@ -57,7 +58,7 @@ MODEL:
         - Regression
       TYPE: RMSprop
       PARAMETERS:
-        lr: 1.0e-3
+        lr: 2.5e-5
         momentum: 0
         weight_decay: 0
       SCHEDULER:
@@ -70,7 +71,7 @@ MODEL:
     - 1
     - 2
     - 3
-  STAGE: 2
+  STAGE: 3
 LOG:
   PATH: output
   MONITOR_ITEM:
