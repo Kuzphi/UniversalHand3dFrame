@@ -30,6 +30,7 @@ def train(cfg, train_loader, model, metric, log):
     end = time.time()
     bar = Bar('Processing', max=len(train_loader))
     for i, batch in enumerate(train_loader):
+        # print(i)
         size = batch['weight'].size(0)
         # measure data loading time
         data_time.update(time.time() - end)

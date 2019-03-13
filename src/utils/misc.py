@@ -78,11 +78,11 @@ def to_cpu(outputs):
 
 def to_cuda(outputs):
     if isinstance(outputs,dict): 
-        return {key: to_cuda(outputs[key]) for key in outputs}
+        return {key: to_cuda(outputs[key]) for key in outputs}        
     if isinstance(outputs,list):
         return [to_cuda(output) for output in outputs]
     if isinstance(outputs, torch.Tensor):
-        return outputs if not outputs.is_cuda else outputs.cuda()
+        return outputs if outputs.is_cuda else outputs.cuda()
 
     raise Exception("Unrecognized type {}".format(type(output)))
     # return outputs

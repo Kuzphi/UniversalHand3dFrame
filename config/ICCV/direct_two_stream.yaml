@@ -22,7 +22,7 @@ TRAIN:
 VALID:
   DEBUG: False
   IS_VALID: True
-  NUM_JOINTS: 21
+  NUM_JOINTS: 21s
   DATASET:
     NAME: Combine2D
     CONTAINS:
@@ -45,23 +45,21 @@ END_EPOCH: 100
 
 LOG_DIR: ''
 MODEL:
-  NAME: Weakly_direct_regression
+  NAME: direct_two_stream
   NETWORKS:
-    Regression:
-      TYPE: CPMWeaklyDirectRegression
+    direct_two_stream:
+      TYPE: two_stream_fusion
       # PRETRAINED_WEIGHT_PATH: 'output/Mar  7 21:58:35_train_Weakly_direct_regression_Combine2D(RHD2D)_valid_Combine2D(RHD2D)/best/model/net_Regression.torch'
-      PRETRAINED_WEIGHT_PATH: 'pretrained_weight/cpmRHD.torch'
+      PRETRAINED_WEIGHT_PATH: #'pretrained_weight/cpmRHD.torch'
       num_joints: 22
 
   OPTIMIZERS:
     Regression:
       NETWORKS:
-        - Regression
-      TYPE: RMSprop
+        - direct_two_stream
+      TYPE: Adam
       PARAMETERS:
-        lr: 2.5e-5
-        momentum: 0
-        weight_decay: 0
+        lr: 2.5e-4
       SCHEDULER:
         TYPE: StepLR
         PARAMETERS:

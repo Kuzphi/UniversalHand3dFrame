@@ -62,8 +62,9 @@ class BaseModel(object):
 
 	def forward(self):
 		assert len(self.networks) == 1, 'undefined forward method'
+		# xx = to_cuda(self.batch['input'])
+		# print("cuda", xx['img'].cuda().is_cuda)
 		name = self.networks.keys()[0]
-
 		self.outputs = self.networks[name](to_cuda(self.batch['input']))
 		self.loss 	 = self.criterion()
 		self.outputs = to_cpu(self.outputs)

@@ -15,3 +15,6 @@ from .OpenPose import OpenPose
 from .Weakly_direct_regression import Weakly_direct_regression
 from .Hand25D import Hand25D
 from .two_stream import two_stream
+from .depth_regularizer import depth_regularizer
+from .direct_two_stream import direct_two_stream
+from .Weakly_direct_regression_with_depth import Weakly_direct_regression_with_depth

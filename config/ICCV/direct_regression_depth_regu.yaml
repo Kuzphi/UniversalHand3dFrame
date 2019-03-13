@@ -45,7 +45,7 @@ END_EPOCH: 100
 
 LOG_DIR: ''
 MODEL:
-  NAME: Weakly_direct_regression
+  NAME: Weakly_direct_regression_with_depth
   NETWORKS:
     Regression:
       TYPE: CPMWeaklyDirectRegression
@@ -53,10 +53,15 @@ MODEL:
       PRETRAINED_WEIGHT_PATH: 'pretrained_weight/cpmRHD.torch'
       num_joints: 22
 
+    DepthRegularizer:
+      TYPE: depth_regularizer
+      PRETRAINED_WEIGHT_PATH:
+
   OPTIMIZERS:
     Regression:
       NETWORKS:
         - Regression
+        - DepthRegularizer
       TYPE: RMSprop
       PARAMETERS:
         lr: 2.5e-5

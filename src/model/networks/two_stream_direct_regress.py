@@ -2,12 +2,14 @@ import torch.nn as nn
 import torch
 
 # print net.params
-__all__ = ['openpose_pose','openpose_hand', 'openpose_face']
+# __all__ = ['openpose_pose','openpose_hand', 'openpose_face']
 
 class Repeat(nn.Module):
-	def __init__(self, num_joints):
+	def __init__(self, num_joints = 21, input_channel = None):
 		super(Repeat, self).__init__()
-		self.conv1 = nn.Conv2d(128 + num_joints, 128, kernel_size = 7, padding =3)
+		if input_channel is None:
+			input_channel = 128 + num_joints
+		self.conv1 = nn.Conv2d(input_channel, 128, kernel_size = 7, padding =3)
 		self.conv2 = nn.Conv2d(128, 128, kernel_size = 7, padding =3)
 		self.conv3 = nn.Conv2d(128, 128, kernel_size = 7, padding =3)
 		self.conv4 = nn.Conv2d(128, 128, kernel_size = 7, padding =3)
@@ -25,25 +27,12 @@ class Repeat(nn.Module):
 		out = self.conv7(out)
 		return out
 
-class softmax2d(nn.Module):
-	"""docstring for softmax2d"""
-	def __init__(self, c, w, h):
-		super(softmax2d, self).__init__()
-		self.beta = nn.Parameter(torch.zeros((c,w,h)).uniform_(0, 1))
-		self.softmax2d = nn.Softmax2d()
-
-	def forward(self, x):
-		out = x * self.beta.expand_as(x)
-		out = self.softmax2d(out)
-		return out
-		
-
 class OpenPose_CPM(nn.Module):
-	def __init__(self, num_joints):
+	def __init__(self, input_channel, num_joints):
 		super(OpenPose_CPM, self).__init__()
 		self.pool    = nn.MaxPool2d(2, padding = 0)
 		self.relu    = nn.ReLU(inplace = True)
-		self.conv1_1 = nn.Conv2d(3, 64, kernel_size = 3, padding =1)
+		self.conv1_1 = nn.Conv2d(input_channel, 64, kernel_size = 3, padding =1)
 		self.conv1_2 = nn.Conv2d(64, 64, kernel_size = 3, padding =1)
 
 		self.conv2_1 = nn.Conv2d(64, 128, kernel_size = 3, padding =1)
@@ -71,17 +60,9 @@ class OpenPose_CPM(nn.Module):
 		self.stage4 = Repeat(num_joints)
 		self.stage5 = Repeat(num_joints)
 		self.stage6 = Repeat(num_joints)
-		self.depth  = Repeat(num_joints)
-		self.depth_fc_1 = nn.Linear(32 * 32 * 22, 5000)
-		self.depth_fc_2 = nn.Linear(5000, 3000)
-		self.depth_fc_3 = nn.Linear(3000, 21)
-
-		self.softmax2d = softmax2d(21, 256, 256)
-		self.upsampler = nn.functional.interpolate
-		# self.upsampler = nn.Upsample(scale_factor = 8, mode = 'bilinear', align_corners = True)
 
 	def forward(self, x):
-		out = self.relu(self.conv1_1(x['img']))
+		out = self.relu(self.conv1_1(x))
 		out = self.relu(self.conv1_2(out))
 		out = self.pool(out)
 
@@ -120,35 +101,52 @@ class OpenPose_CPM(nn.Module):
 		out_5 = self.stage5(out_5)
 
 		out_6 = torch.cat((out_5, out_0), 1)
-		out_6 = self.stage6(out_6)
+		out_6 = self.stage5(out_6)
 
-		#stage 1
-		# outputs = [out_1, out_2, out_3, out_4, out_5, out_6]
-		# outputs = [self.upsampler(out, scale_factor = 8, mode = 'bilinear', align_corners = True) for out in outputs]
+		outputs = [out_1, out_2, out_3, out_4, out_5, out_6]
 
-		# heatmap = [out[:, 21:, ...] for out in outputs]
-		# depth   = [out[:, :21, ...] for out in outputs]
-		# return {'heatmap': heatmap, 'depth': depth}
-		#stage 2
-		out = self.upsampler(out_6, scale_factor = 8, mode = 'bilinear', align_corners = True)
+		return outputs
+class Two_stream_fusion(nn.Module):
+	"""docstring for Two_stream_fusion"""
+	def __init__(self, num_joints = 22):
+		super(Two_stream_fusion, self).__init__()
+		self.depth_net = OpenPose_CPM(input_channel = 1, num_joints = num_joints)
+		self.color_net = OpenPose_CPM(input_channel = 3, num_joints = num_joints)
+		self.depth_brach = Repeat(num_joints, input_channel = 44)
+		self.color_brach = Repeat(num_joints, input_channel = 44)
+		self.depth_fc_1 = nn.Linear(32 * 32 * 22, 512)
+		self.depth_fc_2 = nn.Linear(512, 512)
+		self.depth_fc_3 = nn.Linear(512, 21)
+		self.upsampler = nn.functional.interpolate
 
-		heatmap = self.softmax2d(out[:, :21, ...])
-		depth   = out[:, 21:, ...] * heatmap
+	def forward(self, x):
+		color = self.color_net(x['img'])
+		depth = self.depth_net(x['depthmap'])
 
-		s = heatmap.shape
+		whole = torch.cat((color[-1], depth[-1]), dim = 1)
 
-		x = heatmap.sum(dim = 3)
-		weight = torch.arange(s[2]).view(1,1,-1).expand_as(x).float().cuda()
-		coorX = (x * weight).sum(dim = 2, keepdim = True)
+		# color_hm = self.color_brach(whole)
+		depth_hm = self.depth_brach(whole)
 
-		y = heatmap.sum(dim = 2)
-		weight = torch.arange(s[3]).view(1,1,-1).expand_as(y).float().cuda()
-		coorY = (y * weight).sum(dim = 2, keepdim = True)
+		out_depth = depth_hm.view(-1, 32 * 32 * 22)
 
-		coorZ   = depth.sum(dim = (2,3), keepdim = True)[...,0]
+		out_depth = self.depth_fc_1(out_depth)
+		out_depth = self.depth_fc_2(out_depth)
+		out_depth = self.depth_fc_3(out_depth)
 
-		coor = torch.cat((coorX, coorY, coorZ), dim = -1)
-		return {'coor3d': coor, 'coor2d': coor[:,:,:2]}
+		# color = color + [color_hm]
+		depth = depth + [depth_hm]
 
-def Hand25D(num_joints = 21, **kwargs):
-	return OpenPose_CPM(num_joints * 2)
+		color = [self.upsampler(hm, scale_factor = 8, mode = 'bilinear', align_corners = True) for hm in color]
+		depth = [self.upsampler(hm, scale_factor = 8, mode = 'bilinear', align_corners = True) for hm in depth]
+		return {
+				'color_hm': color,
+				'depth_hm': depth,
+				'depth':out_depth
+		}
+		
+def CPMWeaklyDirectRegression(num_joints = 21, **kwargs):
+	return OpenPose_CPM(num_joints)
+
+def two_stream_fusion(num_joints = 22, ** kwargs):
+	return Two_stream_fusion(num_joints = num_joints)

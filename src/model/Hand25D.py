@@ -36,21 +36,23 @@ class Hand25D(BaseModel):
 		return {"dis2d": dis_2d, "dis3d": dis_3d}
 
 	def get_preds(self):
-		preds_2d, preds_3d = get_preds(self.outputs['heatmap'][-1], self.outputs['depth'][-1], self.batch)
-		# self.preds = {'pose2d':self.outputs['coor2d'], 'pose3d': self.outputs['coor3d']}
-		self.preds = {'pose2d':preds_2d, 'pose3d': preds_3d}
+		#stage 1
+		# preds_2d, preds_3d = get_preds(self.outputs['heatmap'][-1], self.outputs['depth'][-1], self.batch)
+		# self.preds = {'pose2d':preds_2d, 'pose3d': preds_3d}
+		#stage 2
+		self.preds = {'pose2d':self.outputs['coor2d'], 'pose3d': self.outputs['coor3d']}
 		return self.preds
 
 	def criterion(self):
 		criterion = nn.MSELoss()
 		loss = torch.zeros(1).cuda()
-		for heat in self.outputs['heatmap']:
-			loss += criterion(heat, self.batch['heatmap'].cuda())
+		# for heat in self.outputs['heatmap']:
+		# 	loss += criterion(heat, self.batch['heatmap'].cuda())
 
-		for depth in self.outputs['depth']:
-			loss += criterion(depth, self.batch['depth'].cuda())
+		# for depth in self.outputs['depth']:
+		# 	loss += criterion(depth, self.batch['depth'].cuda())
 
 		#stage 2
-		# loss = criterion(self.outputs['coor3d'] - self.batch['coor3d'])
+		loss = criterion(self.outputs['coor3d'], self.batch['coor3d'].cuda())
 		return loss
 
