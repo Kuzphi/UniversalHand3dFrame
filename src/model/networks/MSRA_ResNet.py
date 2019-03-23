@@ -15,6 +15,8 @@ import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 
+__all__ = ['ResNet']
+
 BN_MOMENTUM = 0.1
 
 model_urls = {
@@ -260,7 +262,7 @@ resnet_spec = {18:  (BasicBlock, [2, 2,  2, 2]),
                152: (Bottleneck, [3, 8, 36, 3])}
 
 
-def resnet(num_joints = 21, num_layers = 50, **kargs):
+def ResNet(num_joints = 21, num_layers = 50, **kargs):
 	block_class, layers = resnet_spec[num_layers]
 	model = PoseResNet(block_class, layers, {'heatmap': num_joints, 'depthmap':num_joints})
 	model.init_weights(num_layers, pretrained=True)

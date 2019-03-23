@@ -5,10 +5,11 @@ from __future__ import print_function
 import torch
 import numpy as np
 from torch import nn
-from src.model.networks.MSRA_ResNet import resnet
 from src.model.BaseModel import BaseModel
 from src.core.loss import CPMMSELoss
 from src.core.evaluate import get_preds
+
+__all__ = ['Weakly']
 
 class Weakly(BaseModel):
 	"""docstring for Hand25D"""

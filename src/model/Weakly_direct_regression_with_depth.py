@@ -5,34 +5,47 @@ from __future__ import print_function
 import torch
 import numpy as np
 from torch import nn
-from src.model.networks.MSRA_ResNet import resnet
 from src.model.BaseModel import BaseModel
 from src.core.loss import CPMMSELoss
 from src.core.evaluate import get_preds_from_heatmap
-from src.utils.misc import to_cuda
+from src.utils.misc import to_cuda, to_cpu
+
+__all__ = ['Weakly_direct_regression_with_depth']
 class Weakly_direct_regression_with_depth(BaseModel):
 	"""docstring for Weakly_direct_regression_with_depth"""
 	def __init__(self, cfg):
 		super(Weakly_direct_regression_with_depth, self).__init__(cfg)
-		if cfg.STAGE == 1: #train heatmap
-			pass
-			# self.set_requires_grad(self.networks[].module.depth)			
-		if cfg.STAGE == 2: #train only depth network
-			for name, net in self.networks.iteritems():
-				for net_name in net.module.__dict__['_modules']:
-					if 'depth' in net_name:
-						continue
-					self.set_requires_grad(net.module.__dict__['_modules'][net_name])
-			# for param in self.network.module.stage6.parameters():
-			# 		print(param.requires_grad)
+		# if cfg.STAGE == 1: #train heatmap
+		# 	pass
+		# 	# self.set_requires_grad(self.networks[].module.depth)			
+		# if cfg.STAGE == 2: #train only depth network
+		# 	for name, net in self.networks.iteritems():
+		# 		for net_name in net.module.__dict__['_modules']:
+		# 			if 'depth' in net_name:
+		# 				continue
+		# 			self.set_requires_grad(net.module.__dict__['_modules'][net_name])
+		# 	# for param in self.network.module.stage6.parameters():
+		# 	# 		print(param.requires_grad)
 
-		if cfg.STAGE == 3: #train both networks
-			pass
+		# if cfg.STAGE == 3: #train both networks
+		# 	pass
 
 	def forward(self):
 		self.outputs = self.networks['Regression'](to_cuda(self.batch['input']))
-		self.outputs['pred_depth'] = self.networks['DepthRegularizer'](self.outputs['depth'])
-		self.loss 	 = self.criterion()
+
+		root_depth = self.batch['root_depth']
+		index_bone_length = self.batch['index_bone_length']	
+		depthmap_max = self.batch['depthmap_max']
+		depthmap_range = self.batch['depthmap_range']
+
+		reg_input = torch.zeros(self.batch['coor3d'].shape).cuda()
+		reg_input[:, :, :2] = self.batch['coor2d'][:, :, :2].cuda().clone()
+		reg_input[:, :, 2] = self.outputs['depth'] * index_bone_length.unsqueeze(1).cuda() + root_depth.unsqueeze(1).cuda()
+		reg_input[:, :, 2] = (depthmap_max.unsqueeze(1).cuda() - reg_input[:, :, 2]) / depthmap_range.unsqueeze(1).cuda()
+		reg_input = reg_input.view(reg_input.size(0), -1, 1, 1)
+		self.outputs['depthmap'] = self.networks['DepthRegularizer'](reg_input).squeeze()
+		self.loss = self.criterion()
+
 		self.outputs = to_cpu(self.outputs)
 
 	def eval_result(self):
@@ -66,7 +79,7 @@ class Weakly_direct_regression_with_depth(BaseModel):
 		L1Loss = nn.L1Loss()
 		loss = torch.zeros(1).cuda()
 		loss += CPMMSELoss(self.outputs, self.batch)
-		loss += nn.functional.smooth_l1_loss(self.outputs['depth'], self.batch['relative_depth'].cuda())
-		loss += L1Loss(self.outputs, self.batch['depthmap'].float().cuda())
+		loss += nn.functional.smooth_l1_loss(self.outputs['depth'], self.batch['relative_depth'].cuda()) * 0.1 
+		loss += L1Loss(self.outputs['depthmap'], self.batch['depthmap'].float().cuda())
 		return loss
 

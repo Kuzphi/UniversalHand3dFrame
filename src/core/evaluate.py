@@ -152,9 +152,8 @@ def AUC(dist):
     y = np.array([1. * (i + 1)/ len(x)  for i in range(len(x))])
     return (x, y)
 
-def calc_auc(dist, limx = -1, limy = 1e99):
+def calc_auc(x, y, limx = -1, limy = 1e99):
     """ Given x and y values it calculates the approx. integral and normalizes it: area under curve"""
-    x, y = AUC(dist)
     # x = x * 1000 #meter to million meter
     # print (x.min(), x.max())
     l, r = 0, 0

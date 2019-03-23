@@ -58,16 +58,7 @@ def main(args):
 		best = log.log['valid_' + cfg.MAIN_METRIC][-1]
 
 	for epoch in range(cfg.START_EPOCH, cfg.END_EPOCH):
-		epoch_result = {}
-
 		print('\nEpoch: %d: | LR' % (epoch), end = ' ')
-
-		for name, optimizer in model.optimizers.iteritems():
-			for param_group in optimizer.param_groups:
-				lr = param_group['lr']
-			print(name, ':', lr, end = ' ')
-			epoch_result[name + '_lr'] = lr
-		print('')
 
 		# train for one epoch
 		train_metric = MetricMeter(cfg.METRIC_ITEMS)
@@ -77,26 +68,17 @@ def main(args):
 		valid_metric = MetricMeter(cfg.METRIC_ITEMS)
 		predictions = validate(cfg.VALID,valid_loader, model, valid_metric, log)
 
-		# append logger file value should be basic type for json serialized
-		
-		for item in cfg.LOG.MONITOR_ITEM:
-			x , y = item.split('_')
-			if x == 'train':
-				epoch_result[item] = train_metric[y].avg
-			if x == 'valid':
-				epoch_result[item] = valid_metric[y].avg
+		#value of the appended logger file should be basic type for json serializing
 
-		log.append(epoch_result)
+		monitor_metric = None #add monitor item if there is one
+		log.append(train = train_metric.to_dict(), valid = valid_metric.to_dict(), monitor = monitor_metric)
 
 		# remember best acc and save checkpoint
 		new_metric = valid_metric[cfg.MAIN_METRIC].avg
 		is_best = sgn * new_metric < best
 		best = min(best, sgn * new_metric)
 		cfg.CURRENT_EPOCH = epoch
-
 		save_checkpoint(model, predictions, cfg, log, is_best, fpath=cfg.SAVE_PATH, snapshot = 5)
-
-		
 		model.update_learning_rate()
 
 if __name__ == '__main__':

@@ -4,7 +4,8 @@ from __future__ import print_function
 
 import itertools
 from src.model.networks import *
-from src.utils.misc import to_torch, to_numpy, to_cuda, to_cpu
+from src.utils.misc import to_torch, to_numpy, to_cuda, to_cpu, combine
+__all__ = ['BaseModel']
 class BaseModel(object):
 	"""docstring for BaseModel"""
 	def __init__(self, cfg):
@@ -124,8 +125,17 @@ class BaseModel(object):
 			fpath = os.path.join(path, 'scheduler_' + name + '.torch')
 			scheduler.load_state_dict(torch.load(fpath))
 
+	def collect_batch_result(self):
+        self.collection.append(self.batch_result)
+
+    def get_epoch_result(self):
+    	self.get_epoch_result = reduce(self.collection, combine)
+
 	def define_evaluation(self):
 		raise NotImplementedError
 		
-	def eval_result(self):
+	def eval_batch_result(self):
+		raise NotImplementedError
+
+	def eval_epoch_result(self):
 		raise NotImplementedError

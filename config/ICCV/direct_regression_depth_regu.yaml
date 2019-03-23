@@ -49,14 +49,21 @@ MODEL:
   NETWORKS:
     Regression:
       TYPE: CPMWeaklyDirectRegression
-      # PRETRAINED_WEIGHT_PATH: 'output/Mar  7 21:58:35_train_Weakly_direct_regression_Combine2D(RHD2D)_valid_Combine2D(RHD2D)/best/model/net_Regression.torch'
       PRETRAINED_WEIGHT_PATH: 'pretrained_weight/cpmRHD.torch'
       num_joints: 22
 
     DepthRegularizer:
       TYPE: depth_regularizer
-      PRETRAINED_WEIGHT_PATH:
+      PRETRAINED_WEIGHT_PATH: 'output/Mar_13_04:57:05_depth_regularizer_train:RHD2D_valid:RHD2D/best/model/net_DepthRegularizer.torch'
 
+    Generator:
+      TYPE: generator
+      PRETRAINED_WEIGHT_PATH: 
+
+    Discrimator:
+      TYPE: discrimator
+      PRETRAINED_WEIGHT_PATH: 
+        
   OPTIMIZERS:
     Regression:
       NETWORKS:

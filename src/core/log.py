@@ -25,14 +25,16 @@ class Log(object):
     '''Save training process to log file with simple plot function.'''
     def __init__(self, monitor_item, metric_item, title = None): 
         self.log = dict()
-        self.title = title
-        self.monitor_item = monitor_item
+        self.title = title        
         self.log['info'] = ''
+
+        self.metric_item = metric_item
+        self.monitor_item = monitor_item
+        
         for item in monitor_item:
-            self.log[item] = []                
+            self.log[item] = []
+
         for item in metric_item:
-            self.monitor_item.append('train_' + item)
-            self.monitor_item.append('valid_' + item)
             self.log['train_' + item] = []
             self.log['valid_' + item] = []
 
@@ -46,19 +48,36 @@ class Log(object):
             assert self.log.has_key(item), "Loadding Error: {} does not exist in original log file".format(item)
             self.log[item] = self.ori_log[item]
 
-    def append(self, update):
-        for key in self.monitor_item:
-            assert update.has_key(key), "{} does not found in update".format(key)
-            self.log[key].append(update[key])
+    def append(self, train = None, valid = None, monitor = None):
+        
+        def update(required_keys, updates, prefix = ''):
+            for key in required_keys:
+            assert updates.has_key(prefix + key), "{} does not found in update".format(key)
+            self.log[key].append(updates[key])
+
+        if train is not None:
+            update(self.metric_item, train, 'train_')
+        if valid is not None:
+            update(self.metric_item, valid, 'valid_')
+        if monitor is not None:
+            update(self.monitor_item, monitor)
+        
 
     def plot(self, plot_item=None):
-        plot_item = self.log.keys() if plot_item == None else plot_item        
+        if plot_item == None:
+            plot_item = []
+            for key in self.log.keys():
+                if isinstance(self.log[key], list):
+                    plot_item.append(key)
+        plot_item = self.log.keys()  else plot_item        
         for key in plot_item:
-            assert self.log.has_key(key), "log file does not contain {}".format(key)
+            assert self.log.has_key(key), "log file does not contain {}".format(key)            
+            assert isinstance(self.log[key], list):, "unable to plot {}, whose value is not a list".format(key)
             x = range(len(self[key]))
             y = np.array(self[key]).astype(np.float)
             plt.plot(x, y)
-        plt.legend([self.title + '(' + key + ')' for key in self.log])
+            
+        plt.legend([self.title + '(' + key + ')' for key in plot_item])
         plt.grid(True)
 
     def save(self, fpath):

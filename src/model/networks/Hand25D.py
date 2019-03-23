@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch
 
 # print net.params
-__all__ = ['openpose_pose','openpose_hand', 'openpose_face']
+__all__ = ['Hand25D']
 
 class Repeat(nn.Module):
 	def __init__(self, num_joints):
@@ -38,8 +38,9 @@ class softmax2d(nn.Module):
 		return out
 		
 
-class OpenPose_CPM(nn.Module):
-	def __init__(self, num_joints):
+class Hand25D(nn.Module):
+	
+	def __init__(self, num_joints = 21, **kwargs):
 		super(OpenPose_CPM, self).__init__()
 		self.pool    = nn.MaxPool2d(2, padding = 0)
 		self.relu    = nn.ReLU(inplace = True)
@@ -150,5 +151,3 @@ class OpenPose_CPM(nn.Module):
 		coor = torch.cat((coorX, coorY, coorZ), dim = -1)
 		return {'coor3d': coor, 'coor2d': coor[:,:,:2]}
 
-def Hand25D(num_joints = 21, **kwargs):
-	return OpenPose_CPM(num_joints * 2)

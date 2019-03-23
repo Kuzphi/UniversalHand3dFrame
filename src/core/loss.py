@@ -25,28 +25,35 @@ from src.utils.misc import to_torch
 def CPMMSELoss(outputs, batch):
 	criterion = nn.MSELoss()
 	loss = torch.zeros(1).cuda()
-	target = batch['heatmap'].cuda()
+	target = batch['color_hm'].cuda()
 	for pred in outputs['heatmap']:
 		loss += criterion(pred, target)
 	return loss
 
-def get_preds_from_heatmap(scoremaps, softmax = False):
-    """ Performs detection per scoremap for the hands keypoints. """
-    s = scoremaps.shape
-    assert len(s) == 4, "This function was only designed for 4D Scoremaps(B * C * H * W)."
-    # assert (s[2] < s[1]) and (s[2] < s[0]), "Probably the input is not correct, because [H, W, C] is expected."
+# Defines the GAN loss which uses either LSGAN or the regular GAN.
+# When LSGAN is used, it is basically same as MSELoss,
+# but it abstracts away the need to create the target label tensor
+# that has the same size as the input
+class GANLoss(nn.Module):
+    def __init__(self, use_lsgan=True, target_real_label=1.0, target_fake_label=0.0):
+        super(GANLoss, self).__init__()
+        self.register_buffer('real_label', torch.tensor(target_real_label))
+        self.register_buffer('fake_label', torch.tensor(target_fake_label))
+        if use_lsgan:
+            self.loss = nn.MSELoss()
+        else:
+            self.loss = nn.BCELoss()
 
-    keypoint_coords = torch.zeros((s[0], s[1], 2))
-    keypoint_coords = keypoint_coords.cuda()
-    x = scoremaps.sum(dim = 3)
-    weight = torch.arange(s[2]).view(1,1,-1).expand_as(x).float().cuda()
-    keypoint_coords[:,:,1] = torch.sum(x * weight, dim = 2) / x.sum(dim = 2)
+    def get_target_tensor(self, input, target_is_real):
+        if target_is_real:
+            target_tensor = self.real_label
+        else:
+            target_tensor = self.fake_label
+        return target_tensor.expand_as(input)
 
-    y = scoremaps.sum(dim = 2)
-    weight = torch.arange(s[3]).view(1,1,-1).expand_as(y).float().cuda()
-    keypoint_coords[:,:,0] = torch.sum(y * weight, dim = 2) / y.sum(dim = 2)
-    return keypoint_coords[:,:21,:]
-
+    def __call__(self, input, target_is_real):
+        target_tensor = self.get_target_tensor(input, target_is_real)
+        return self.loss(input, target_tensor)
 # def DistanceLoss2D(outputs, batch):
 # 	preds = get_preds_from_heatmap(outputs['heatmap'][-1], softmax = True)
 # 	diff = batch['coor'].cuda() - preds

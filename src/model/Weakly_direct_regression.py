@@ -5,11 +5,10 @@ from __future__ import print_function
 import torch
 import numpy as np
 from torch import nn
-from src.model.networks.MSRA_ResNet import resnet
 from src.model.BaseModel import BaseModel
 from src.core.loss import CPMMSELoss
 from src.core.evaluate import get_preds_from_heatmap
-
+__all__ = ['Weakly_direct_regression']
 class Weakly_direct_regression(BaseModel):
 	"""docstring for Weakly_direct_regression"""
 	def __init__(self, cfg):

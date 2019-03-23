@@ -5,11 +5,11 @@ from __future__ import print_function
 import torch
 import numpy as np
 from torch import nn
-from src.model.networks.MSRA_ResNet import resnet
+from src.model.networks.MSRA_ResNet import ResNet
 from src.model.BaseModel import BaseModel
 from src.core.loss import CPMMSELoss
 from src.core.evaluate import get_preds_from_heatmap
-
+__all__ = ['direct_two_stream']
 class direct_two_stream(BaseModel):
 	"""docstring for direct_two_stream"""
 	def __init__(self, cfg):
@@ -53,11 +53,11 @@ class direct_two_stream(BaseModel):
 	def criterion(self):
 		loss = torch.zeros(1).cuda()
 		criterion = nn.MSELoss()
-		# for hm in self.outputs['color_hm']:
-		# 	loss += criterion(hm, self.batch['color_hm'].cuda())
+		for hm in self.outputs['color_hm']:
+			loss += criterion(hm, self.batch['color_hm'].cuda())
 
-		for hm in self.outputs['depth_hm']:
-			loss += criterion(hm, self.batch['depth_hm'].cuda())
+		# for hm in self.outputs['depth_hm']:
+		# 	loss += criterion(hm, self.batch['depth_hm'].cuda())
 		
 		loss += nn.functional.smooth_l1_loss(self.outputs['depth'], self.batch['relative_depth'].cuda())
 		return loss

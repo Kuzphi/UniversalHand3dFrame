@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch
 
 # print net.params
-__all__ = ['renderhand']
+__all__ = ['RenderHand']
 
 class Repeat(nn.Module):
 	def __init__(self, channel, num_class):
@@ -49,9 +49,9 @@ class Repeat(nn.Module):
 
 
 
-class OpenPose_CPM(nn.Module):
-	def __init__(self, num_class):
-		super(OpenPose_CPM, self).__init__()
+class RenderHand(nn.Module):
+	def __init__(self, num_class = 22, **kwargs):
+		super(RenderHand, self).__init__()
 		self.pool    = nn.MaxPool2d(2, padding = 0)
 		self.relu    = nn.ReLU(inplace = True)
 		self.conv1_1 = nn.Conv2d(  3,  64, kernel_size = 3, padding =1)
@@ -149,6 +149,3 @@ class OpenPose_CPM(nn.Module):
 		out_7   = torch.cat((wrist,thumb0, index0, middle0, ring0, pinky0), 1)
 
 		return [out_1, out_2, out_3, out_4, out_5, out_6, out_7]
-
-def renderhand(num_classes = 22, **kwargs):
-	return OpenPose_CPM(num_classes)

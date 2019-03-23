@@ -9,7 +9,7 @@ from src.model.BaseModel import BaseModel
 from src.core.loss import CPMMSELoss
 from src.core.evaluate import get_preds_from_heatmap
 from src.utils.misc import to_cuda
-
+__all__ = ['depth_regularizer']
 class depth_regularizer(BaseModel):
 	"""docstring for depth_regularizer"""
 	def __init__(self, cfg):

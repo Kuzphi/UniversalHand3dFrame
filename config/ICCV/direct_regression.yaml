@@ -50,7 +50,7 @@ MODEL:
     Regression:
       TYPE: CPMWeaklyDirectRegression
       # PRETRAINED_WEIGHT_PATH: 'output/Mar  7 21:58:35_train_Weakly_direct_regression_Combine2D(RHD2D)_valid_Combine2D(RHD2D)/best/model/net_Regression.torch'
-      PRETRAINED_WEIGHT_PATH: 'pretrained_weight/cpmRHD.torch'
+      PRETRAINED_WEIGHT_PATH: 'Mar_13_04:52:55_direct_two_stream_train:RHD2D_valid:RHD2D/best/model/net_direct_two_stream.torch'
       num_joints: 22
 
   OPTIMIZERS:

@@ -5,11 +5,9 @@ from __future__ import print_function
 import torch
 import numpy as np
 from torch import nn
-from src.model.networks.MSRA_ResNet import resnet
 from src.model.BaseModel import BaseModel
-from src.core.loss import CPMMSELoss
 from src.core.evaluate import get_preds
-
+__all__ = ['Hand25D']
 class Hand25D(BaseModel):
 	"""docstring for Hand25D"""
 	def __init__(self, cfg):
