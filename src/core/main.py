@@ -8,26 +8,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-<<<<<<< HEAD
-import logging
-import time
-import os
-
-from easydict import EasyDict as edict
-import numpy as np
-import torch
-
-from src import Bar
-from src.core.debug import debug
-from src.core.evaluate import eval_result
-from src.utils.misc import AverageMeter, to_torch, to_cuda, to_cpu, 
-=======
 import time
 import torch
 
 from src import Bar
 from src.utils.misc import AverageMeter
->>>>>>> d0987b7c2a23918e053a5bd00bba7b56eb911e72
 
 def train(cfg, train_loader, model, metric, log):
     data_time = AverageMeter()
@@ -49,11 +34,7 @@ def train(cfg, train_loader, model, metric, log):
 
         # debug, print intermediate result
         if cfg.DEBUG:
-<<<<<<< HEAD
-            debug(model.outputs, batch)
-=======
             model.debug()
->>>>>>> d0987b7c2a23918e053a5bd00bba7b56eb911e72
 
         #calculate the result
         model.batch_result(type = 'train')
@@ -116,11 +97,7 @@ def validate(cfg, val_loader, model, metric = None, log = None):
             model.forward()
             # debug, print intermediate result
             if cfg.DEBUG:
-<<<<<<< HEAD
-                debug(model.outputs, batch)
-=======
                 model.debug()
->>>>>>> d0987b7c2a23918e053a5bd00bba7b56eb911e72
 
             model.batch_result(type = 'valid')
 
@@ -137,11 +114,7 @@ def validate(cfg, val_loader, model, metric = None, log = None):
                         eta=bar.eta_td)
 
             if cfg.IS_VALID:
-<<<<<<< HEAD
-                metric_ = model.eval_result()
-=======
                 metric_ = model.eval_batch_result()
->>>>>>> d0987b7c2a23918e053a5bd00bba7b56eb911e72
                 metric.update(metric_, size)
                 for name in metric.names():
                     suffix += '{}: {:.4f} '.format(name, metric[name].avg)

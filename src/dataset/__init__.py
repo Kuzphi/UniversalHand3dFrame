@@ -8,16 +8,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-<<<<<<< HEAD
-from .twoDimension import *
-from .threeDimension import *
-
-from .Combine2D import Combine2D
-from .Combine3D import Combine3D
-
-from .Testdataset import Test
-from .BaseDataset import JointsDataset, InferenceDataset
-=======
 import os
 for name in os.listdir(os.path.dirname(__file__)):
     if name[0] == '.' or name == '__init__.py' or name[-3:] != '.py':
@@ -118,4 +108,3 @@ class InferenceDataset(Dataset):
     def eval_result(self, outputs, batch, cfg = None,  **kwargs):
         #should be same as self.cfg.metric item
         pass
->>>>>>> d0987b7c2a23918e053a5bd00bba7b56eb911e72

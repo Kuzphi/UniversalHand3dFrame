@@ -11,39 +11,13 @@ from __future__ import print_function
 import os
 from abc import abstractmethod
 from torch.utils.data import Dataset
-<<<<<<< HEAD
-
-class JointsDataset(Dataset):
-=======
 class BaseDataset(object):
 
->>>>>>> d0987b7c2a23918e053a5bd00bba7b56eb911e72
     def __init__(self, cfg):
         self.cfg = cfg
         self.is_train = cfg.IS_TRAIN
         self.db = self._get_db()
 
-<<<<<<< HEAD
-    def _get_db(self):
-        raise NotImplementedError
-
-    def evaluate(self, cfg, preds, output_dir, *args, **kwargs):
-        raise NotImplementedError
-
-    def __len__(self):
-        return len(self.db)
-
-    @abstractmethod
-    def __getitem__(self, idx):
-        #return a dict which contains at least input, target, target_weight, meta
-        #input itself is a dict as well
-        pass
-
-    @abstractmethod
-    def eval_result(self, outputs, batch, cfg = None,  **kwargs):
-        #should be same as self.cfg.metric item
-        pass
-=======
     @abstractmethod
     def _get_db(self):
         raise NotImplementedError
@@ -86,7 +60,6 @@ class JointsDataset(Dataset):
             if idx < len(dataset):
                 return self.reprocess(dataset[idx])
             idx -= len(dataset)
->>>>>>> d0987b7c2a23918e053a5bd00bba7b56eb911e72
 
 class InferenceDataset(Dataset):
     """docstring for InferenceDataset"""
