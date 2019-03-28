@@ -13,3 +13,4 @@ data/*
 !data/
 output/*
 !output/
+*.pth
