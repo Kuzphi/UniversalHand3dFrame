@@ -1,0 +1,15 @@
+*.pyc
+*.npy
+*.jpg
+*.pickle
+*.json
+*.png
+**/._*
+**/.DS_Store
+pretrained_weight/*.torch
+inference_result/*
+!inference_result/
+data/*
+!data/
+output/*
+!output/

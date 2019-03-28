@@ -1,0 +1,85 @@
+CURRENT_EPOCH: 0
+TRAIN:
+  DEBUG: False
+  DATASET:
+    NAME: JointsDataset
+    CONTAINS:
+      RHD2D:
+        ROOT: data/RHD/cropped/training/    
+        DATA_JSON_PATH: data/RHD/cropped/training/cropped_anno.pickle
+    TRANSFORMS:
+      RESIZE: 256
+      FLIP: False
+      COLOR_NORISE: True
+    HEATMAP:
+      TYPE: Gaussian # Gaussian or Cauchy
+      SIGMA: 8 #Ground truth heatmap
+    IS_TRAIN: True
+    BATCH_SIZE: 4
+    SHUFFLE: True
+    NUM_JOINTS: 21
+
+VALID:
+  DEBUG: False
+  IS_VALID: True
+  NUM_JOINTS: 21
+  DATASET:
+    NAME: JointsDataset
+    CONTAINS:
+      RHD2D:
+        ROOT: data/RHD/cropped/evaluation/   
+        DATA_JSON_PATH: data/RHD/cropped/evaluation/cropped_anno.pickle
+    TRANSFORMS:
+      RESIZE: 256
+      FLIP: False
+      COLOR_NORISE: False
+    HEATMAP:
+      TYPE: Gaussian # Gaussian or Cauchy
+      SIGMA: 8 #Ground truth heatmap
+    IS_TRAIN: False
+    BATCH_SIZE: 4
+    NUM_JOINTS: 21
+    
+DATA_DIR: ''
+END_EPOCH: 100
+
+LOG_DIR: ''
+MODEL:
+  NAME: Hand25D
+  NETWORKS: 
+    Hand25D:
+      TYPE: Hand25D
+      PRETRAINED_WEIGHT_PATH: output/Mar_10_01_43_35_Hand25D_train_RHD2D_valid_RHD2D/best/model/net_Hand25D.torch
+      #pretrained_weight/openpose_hand_with_depth.torch
+      num_joints: 21
+  OPTIMIZERS:
+    GLOBAL:
+      NETWORKS:
+        - Hand25D
+      TYPE: Adam
+      PARAMETERS:
+        lr: 1.e-3
+      SCHEDULER:
+        TYPE: StepLR
+        PARAMETERS:
+          gamma: 0.1
+          step_size: 30
+  GPUS:
+    - 0
+    - 1
+    - 2
+    - 3
+LOG:
+  PATH: output
+  MONITOR_ITEM:
+
+METRIC_ITEMS: # the metric that you wanna track during training
+  - loss
+  - dis2d
+  - dis3d
+MAIN_METRIC: dis3d
+
+OUTPUT_DIR: output/
+START_EPOCH: 0
+WORKERS: 6
+RESUME_TRAIN: 0

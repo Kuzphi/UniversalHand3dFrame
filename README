@@ -1,0 +1,20 @@
+Requirement
+pytorch 0.4.1
+numpy 1.14.3
+
+Training and testing on RHD dataset:
+
+Train 3D model
+CUDA_VISIBLE_DEVICES=0,1,2,3 python train.py --cfg config/RHDTrainCfg.yaml
+
+Train 2D model
+CUDA_VISIBLE_DEVICES=0,1,2,3 python train.py --cfg config/2D/RHDTrainCfg.yaml
+
+Training result would be in output/{time} +{train}  + {name of training dataset}
+
+Testing
+CUDA_VISIBLE_DEVICES=X,X,X,X python infer.py --cfg config/2D/RHDInferCfg.yaml
+infer result would be in infer_result/ follow the same pattern with training
+
+For training or testing on different dataset, checkout the corresponding configuration file in config/ and config/2D/
+

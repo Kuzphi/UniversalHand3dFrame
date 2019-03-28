@@ -1,0 +1,78 @@
+TRAIN:
+  DEBUG: True
+  METRIC_ITEMS: # the metric that you wanna track during training
+  - loss
+  - dis
+  DATASET:
+    NAME: Combine3D
+    CONTAINS:
+      RealHandRealBG3D:
+        ROOT: 'data/TencentHand/RealHandRealBG'
+      RHD3D:
+        ROOT: data/RHD/cropped/training/    
+        DATA_JSON_PATH: data/RHD/cropped/training/cropped_anno.pickle
+    TRANSFORMS:
+      RESIZE: 256
+      FLIP: True 
+      COLOR_NORISE: True
+    IS_TRAIN: True
+    BATCH_SIZE: 6
+    SHUFFLE: True
+    NUM_JOINTS: 21
+
+VALID:
+  DEBUG: False
+  IS_VALID: True
+  NUM_JOINTS: 21
+  METRIC_ITEMS:
+    - loss
+    - dis
+  DATASET:
+    NAME: RHD3D
+    ROOT: data/RHD/cropped/evaluation/   
+    DATA_JSON_PATH: data/RHD/cropped/evaluation/cropped_anno.pickle
+    BATCH_SIZE: 2
+
+    IS_TRAIN: False
+    TRANSFORMS:
+      RESIZE: 256
+      FLIP: False
+      COLOR_NORISE: True
+METRIC_ITEMS: # the metric that you wanna track during training
+  - loss
+  - dis
+CRITERION: DistanceLoss
+GPUS:
+- 0
+- 1
+- 2
+- 3
+LOG_DIR: ''
+MODEL:
+  NAME: ICCV17
+  PRETRAINED_WEIGHT_PATH: 'pretrained_weight/iccv17-rhd-stb.torch'
+  num_joints: 21
+OPTIMIZER:
+  NAME: RMSprop
+  PARAMETERS:
+    lr: 2.5e-05
+    momentum: 0
+    weight_decay: 0
+OPTIMIZER_SCHEDULE:
+  NAME: StepLR
+  PARAMETERS:
+    gamma: 0.1
+    step_size: 30
+LOG:
+  PATH: output
+  MONITOR_ITEM:
+    - lr
+    
+CURRENT_EPOCH: 0
+OUTPUT_DIR: output/
+START_EPOCH: 0
+WORKERS: 12
+RESUME_TRAIN: 0
+MAIN_METRIC: loss
+DATA_DIR: ''
+END_EPOCH: 100

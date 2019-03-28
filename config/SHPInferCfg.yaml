@@ -1,0 +1,37 @@
+CURRENT_EPOCH: 0
+IS_VALID: True #validate or just inference
+DATASET:
+  NAME: SHP
+  ROOT: '/data/liangjianData/test'
+  IS_TRAIN: False
+  BATCH_SIZE: 20
+  SHUFFLE: 0
+  DATA_JSON_PATH: data/SHP/labels
+  NUM_JOINTS: 21
+  TRANSFORMS:
+    RESIZE: 256
+  PICK:
+    - B1Random
+    - B1Counting
+
+METRIC_ITEMS: # the metric that you wanna track during training
+  - loss
+  - dis
+GPUS:
+  - 0
+  - 1
+  - 2
+  - 3
+LOG_DIR: ''
+MODEL:
+  NAME: ICCV17
+  PRETRAINED_WEIGHT_PATH: 'output/Nov  1 21:27:42_train_ICCV17_RHD_Tencent/best/checkpoint.pth.tar'
+  # PRETRAINED_WEIGHT_PATH: 'pretrained_weight/iccv17-rhd-stb.torch'
+  num_joints: 21
+CRITERION: DistanceLoss #CPMMSELoss
+OUTPUT_DIR: infer_result/
+START_EPOCH: 0
+WORKERS: 1
+DARW_RESULT: False
+DEBUG: False
+POST_INFER: True
