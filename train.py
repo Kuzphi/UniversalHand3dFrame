@@ -24,11 +24,24 @@ def main(args):
 	print("Reading configuration file")
 	cfg = get_config(args.cfg)
 	cfg.DEBUG = args.debug
+<<<<<<< HEAD
 
 	print("Loading Training Data")
 	train_data = eval('dataset.' + cfg.TRAIN.DATASET.NAME)(cfg.TRAIN.DATASET)
 	print("Loading Valid Data")
 	valid_data = eval('dataset.' + cfg.VALID.DATASET.NAME)(cfg.VALID.DATASET)
+=======
+	print("Creating Model")
+	model = eval('model.' + cfg.MODEL.NAME)(cfg.MODEL)
+
+	print("Creating Log")
+	log = Log(monitor_item = cfg.LOG.MONITOR_ITEM, metric_item = cfg.METRIC_ITEMS, title = cfg.TAG)
+
+	print("Loading Training Data")
+	train_data = eval('dataset.' + cfg.TRAIN.DATASET.NAME)(cfg.TRAIN.DATASET, model.reprocess)
+	print("Loading Valid Data")
+	valid_data = eval('dataset.' + cfg.VALID.DATASET.NAME)(cfg.VALID.DATASET, model.reprocess)
+>>>>>>> d0987b7c2a23918e053a5bd00bba7b56eb911e72
 	print ("Train Data Size: ", len(train_data))
 	print ("Valid Data Size: ", len(valid_data))
 	train_loader = DataLoader(
@@ -42,12 +55,15 @@ def main(args):
 		batch_size=cfg.VALID.DATASET.BATCH_SIZE * len(cfg.MODEL.GPUS),
 		num_workers=cfg.WORKERS)
 
+<<<<<<< HEAD
 	print("Creating Model")
 	model = eval('model.' + cfg.MODEL.NAME)(cfg.MODEL)
 
 	print("Creating Log")
 	log = Log(monitor_item = cfg.LOG.MONITOR_ITEM, metric_item = cfg.METRIC_ITEMS, title = cfg.TAG)
 
+=======
+>>>>>>> d0987b7c2a23918e053a5bd00bba7b56eb911e72
 	best = 1e99
 	sgn = -1 if cfg.MAIN_METRIC.endswith('Acc') else 1
 

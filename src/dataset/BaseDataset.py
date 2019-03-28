@@ -11,13 +11,19 @@ from __future__ import print_function
 import os
 from abc import abstractmethod
 from torch.utils.data import Dataset
+<<<<<<< HEAD
 
 class JointsDataset(Dataset):
+=======
+class BaseDataset(object):
+
+>>>>>>> d0987b7c2a23918e053a5bd00bba7b56eb911e72
     def __init__(self, cfg):
         self.cfg = cfg
         self.is_train = cfg.IS_TRAIN
         self.db = self._get_db()
 
+<<<<<<< HEAD
     def _get_db(self):
         raise NotImplementedError
 
@@ -37,6 +43,50 @@ class JointsDataset(Dataset):
     def eval_result(self, outputs, batch, cfg = None,  **kwargs):
         #should be same as self.cfg.metric item
         pass
+=======
+    @abstractmethod
+    def _get_db(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def __getitem__(self, idx):
+        raise NotImplementedError
+
+
+
+class JointsDataset(Dataset):
+    """docstring for JointsDataset"""
+    def __init__(self, cfg, reprocess):
+        super(JointsDataset, self).__init__(cfg)
+        self.datasets = []
+        self.reprocess = reprocess
+        self.len = 0
+        for key in cfg.CONTAINS:
+            # print (key)
+            cfg.CONTAINS[key].HEATMAP = cfg.HEATMAP
+            cfg.CONTAINS[key].IS_TRAIN = cfg.IS_TRAIN
+            cfg.CONTAINS[key].TRANSFORMS = cfg.TRANSFORMS
+            cfg.CONTAINS[key].NUM_JOINTS = cfg.NUM_JOINTS
+            self.datasets.append( eval(key)(cfg.CONTAINS[key]))
+            self.len += len(self.datasets[-1])
+            
+        self.use_softmax = False
+        if cfg.has_key('SOFTMAX'):
+            self.use_softmax = cfg.SOFTMAX
+
+    def __len__(self):
+        # return 10
+        return self.len
+
+    def _get_db(self):
+        pass
+
+    def __getitem__(self, idx):
+        for dataset in self.datasets:
+            if idx < len(dataset):
+                return self.reprocess(dataset[idx])
+            idx -= len(dataset)
+>>>>>>> d0987b7c2a23918e053a5bd00bba7b56eb911e72
 
 class InferenceDataset(Dataset):
     """docstring for InferenceDataset"""

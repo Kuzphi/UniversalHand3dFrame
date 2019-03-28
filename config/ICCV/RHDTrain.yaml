@@ -2,7 +2,11 @@ CURRENT_EPOCH: 0
 TRAIN:
   DEBUG: False
   DATASET:
+<<<<<<< HEAD
     NAME: Combine3D
+=======
+    NAME: JointsDataset
+>>>>>>> d0987b7c2a23918e053a5bd00bba7b56eb911e72
     CONTAINS:
       RHD3D:
         ROOT: data/RHD/cropped/training/    
@@ -23,7 +27,11 @@ VALID:
   DEBUG: False
   IS_VALID: True
   DATASET:
+<<<<<<< HEAD
     NAME: Combine3D
+=======
+    NAME: JointsDataset
+>>>>>>> d0987b7c2a23918e053a5bd00bba7b56eb911e72
     CONTAINS:
       RHD3D:
         ROOT: data/RHD/cropped/evaluation/   

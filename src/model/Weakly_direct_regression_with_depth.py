@@ -7,14 +7,20 @@ import numpy as np
 from torch import nn
 from src.model.BaseModel import BaseModel
 from src.core.loss import CPMMSELoss
+<<<<<<< HEAD
 from src.core.evaluate import get_preds_from_heatmap
 from src.utils.misc import to_cuda, to_cpu
+=======
+from src.utils.misc import to_cuda, to_cpu
+from src.model.utils.evaluate import get_preds_from_heatmap
+>>>>>>> d0987b7c2a23918e053a5bd00bba7b56eb911e72
 
 __all__ = ['Weakly_direct_regression_with_depth']
 class Weakly_direct_regression_with_depth(BaseModel):
 	"""docstring for Weakly_direct_regression_with_depth"""
 	def __init__(self, cfg):
 		super(Weakly_direct_regression_with_depth, self).__init__(cfg)
+<<<<<<< HEAD
 		# if cfg.STAGE == 1: #train heatmap
 		# 	pass
 		# 	# self.set_requires_grad(self.networks[].module.depth)			
@@ -29,6 +35,10 @@ class Weakly_direct_regression_with_depth(BaseModel):
 
 		# if cfg.STAGE == 3: #train both networks
 		# 	pass
+=======
+		
+	def reprocess(self, cfg):
+>>>>>>> d0987b7c2a23918e053a5bd00bba7b56eb911e72
 
 	def forward(self):
 		self.outputs = self.networks['Regression'](to_cuda(self.batch['input']))
@@ -54,7 +64,11 @@ class Weakly_direct_regression_with_depth(BaseModel):
 		dis2d = torch.norm(self.batch['coor2d'][:, :, :2] - self.preds['pose2d'], dim = -1).mean()
 		return {"dis2d": dis2d, "dis3d": dis3d}
 
+<<<<<<< HEAD
 	def get_preds(self):
+=======
+	def get_batch_preds(self):
+>>>>>>> d0987b7c2a23918e053a5bd00bba7b56eb911e72
 		preds2d = get_preds_from_heatmap(self.outputs['heatmap'][-1])
 		# preds2d = get_preds_from_heatmap(self.batch['heatmap'])
 		preds3d = torch.zeros((preds2d.size(0), 21, 3))
