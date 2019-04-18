@@ -2,13 +2,9 @@ CURRENT_EPOCH: 0
 TRAIN:
   DEBUG: False
   DATASET:
-<<<<<<< HEAD
-    NAME: Combine2D
-=======
     NAME: JointsDataset
->>>>>>> d0987b7c2a23918e053a5bd00bba7b56eb911e72
     CONTAINS:
-      RHD2D:
+      RHD:
         ROOT: data/RHD/cropped/training/    
         DATA_JSON_PATH: data/RHD/cropped/training/cropped_anno.pickle
     TRANSFORMS:
@@ -19,7 +15,7 @@ TRAIN:
       TYPE: Gaussian # Gaussian or Cauchy
       SIGMA: 8 #Ground truth heatmap
     IS_TRAIN: True
-    BATCH_SIZE: 6
+    BATCH_SIZE: 2
     SHUFFLE: True
     NUM_JOINTS: 22
 
@@ -28,13 +24,9 @@ VALID:
   IS_VALID: True
   NUM_JOINTS: 21
   DATASET:
-<<<<<<< HEAD
-    NAME: Combine2D
-=======
     NAME: JointsDataset
->>>>>>> d0987b7c2a23918e053a5bd00bba7b56eb911e72
     CONTAINS:
-      RHD2D:
+      RHD:
         ROOT: data/RHD/cropped/evaluation/   
         DATA_JSON_PATH: data/RHD/cropped/evaluation/cropped_anno.pickle
     TRANSFORMS:
@@ -45,7 +37,7 @@ VALID:
       TYPE: Gaussian # Gaussian or Cauchy
       SIGMA: 8 #Ground truth heatmap
     IS_TRAIN: False
-    BATCH_SIZE: 6
+    BATCH_SIZE: 2
     NUM_JOINTS: 22
     
 DATA_DIR: ''
@@ -53,7 +45,7 @@ END_EPOCH: 100
 
 LOG_DIR: ''
 MODEL:
-  NAME: Weakly
+  NAME: Weakly_GAN
   NETWORKS:
     Regression:
       TYPE: CPMWeaklyDirectRegression
@@ -61,21 +53,29 @@ MODEL:
       num_joints: 22
 
     DepthRegularizer:
-      TYPE: depth_regularizer
+      TYPE: DepthRegularizer
       PRETRAINED_WEIGHT_PATH: 'output/Mar_13_04:57:05_depth_regularizer_train:RHD2D_valid:RHD2D/best/model/net_DepthRegularizer.torch'
 
     Generator:
-      TYPE: generator
-      PRETRAINED_WEIGHT_PATH: 
+      TYPE: Generator
+      input_nc: 3
+      output_nc: 1
+      ngf: 64
+      model_type: resnet_9blocks
+      PRETRAINED_WEIGHT_PATH: 'pretrained_weight/best_net_netG.torch'
 
-    Discrimator:
-      TYPE: discrimator
-      PRETRAINED_WEIGHT_PATH: 
+    Discriminator:
+      TYPE: Discriminator
+      input_nc: 4
+      ndf: 64
+      norm: instance
+      model_type: n_layers
+      PRETRAINED_WEIGHT_PATH: 'pretrained_weight/best_net_netD.torch'
 
   OPTIMIZERS:
     D:
       NETWORKS:
-        - Discrimator
+        - Discriminator
       TYPE: Adam
       PARAMETERS:
         lr: 1.e-4
@@ -86,10 +86,10 @@ MODEL:
         - DepthRegularizer
         - Regression
       TYPE: Adam
-      PARAMERTERS:
+      PARAMETERS:
         lr: 1.e-4
         betas: [0.5, 0.999]
-  GPUS: [0,1,2,3]
+  GPUS: [0]
 LOG:
   PATH: output
   MONITOR_ITEM:

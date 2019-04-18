@@ -5,11 +5,14 @@ from __future__ import print_function
 import torch
 import numpy as np
 from torch import nn
-from src.model.BaseModel import BaseModel
-from src.core.loss import CPMMSELoss
-from src.core.evaluate import get_preds_from_heatmap
+
 from src.utils.misc import to_cuda
+from src.model.BaseModel import BaseModel
+from src.model.utils.loss import CPMMSELoss
+from src.model.utils.evaluation import get_preds_from_heatmap
+from src.model.utils.data_reprocess import reprocess
 __all__ = ['depth_regularizer']
+
 class depth_regularizer(BaseModel):
 	"""docstring for depth_regularizer"""
 	def __init__(self, cfg):
@@ -40,11 +43,17 @@ class depth_regularizer(BaseModel):
 
 		for optimizer in self.optimizers.values():
 			optimizer.step()
-			
-	def eval_result(self):
+	
+	def reprocess(self, input, reprocess_cfg):
+		return reprocess(input, reprocess_cfg)
+
+	def get_batch_result(self):
 		return {}
 
-	def get_preds(self):
+	def eval_batch_result(self):
+		return {}
+		
+	def eval_epoch_result(self):
 		return {}
 
 	def criterion(self):

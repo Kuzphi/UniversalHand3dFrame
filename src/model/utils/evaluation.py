@@ -7,22 +7,61 @@ import torch
 
 from random import randint
 from src.utils.transforms import transform, transform_preds
-from src.utils.misc import to_torch
+from src.utils.misc import to_torch, to_numpy
 __all__ = ['accuracy', 'AverageMeter']
 
-def get_preds_from_heatmap(scoremaps):
+def get_preds_from_heatmap(scoremaps, softmax = False, return_type = 'torch'):
     """ Performs detection per scoremap for the hands keypoints. """
     s = scoremaps.shape
     assert len(s) == 4, "This function was only designed for 4D Scoremaps(B * C * H * W)."
     # assert (s[2] < s[1]) and (s[2] < s[0]), "Probably the input is not correct, because [H, W, C] is expected."
 
-    keypoint_coords = np.zeros((s[0], s[1], 2))
-    for idx in range(s[0]):
-        for i in range(s[1]):
-            v, u = np.unravel_index(np.argmax(scoremaps[idx, i, :, :]), (s[2], s[3]))
-            keypoint_coords[idx, i, 0] = v
-            keypoint_coords[idx, i, 1] = u
-    return to_torch(keypoint_coords[:,:21,:])
+    keypoint_coords = torch.zeros((s[0], s[1], 2))
+
+    if softmax:
+        x = scoremaps.sum(dim = 3)
+        weight = torch.arange(s[2]).view(1,1,-1).expand_as(x).float()
+        keypoint_coords[:,:,1] = torch.sum(x * weight, dim = 2) / x.sum(dim = 2)
+
+        y = scoremaps.sum(dim = 2)
+        weight = torch.arange(s[3]).view(1,1,-1).expand_as(y).float()
+        keypoint_coords[:,:,0] = torch.sum(y * weight, dim = 2) / y.sum(dim = 2)
+
+    else:
+
+        for idx in range(s[0]):
+            for i in range(s[1]):
+                v, u = np.unravel_index(np.argmax(scoremaps[idx, i, :, :]), (s[2], s[3]))
+                keypoint_coords[idx, i, 0] = u
+                keypoint_coords[idx, i, 1] = v #do not know why but need reverse it !
+    
+    if return_type == 'numpy':
+        return to_numpy(keypoint_coords[:,:21,:])
+
+    return keypoint_coords[:,:21,:]
+
+def get_preds(heatmap, depthmap, batch, return_type = 'torch'):
+    preds_2d = get_preds_from_heatmap(heatmap)
+    preds_3d = torch.zeros((preds_2d.shape[0], preds_2d.shape[1], 3))
+
+    matrix = batch['matrix']
+    root_depth = batch['root_depth']
+    index_bone_length = batch['index_bone_length']
+
+    for i in range(preds_2d.shape[0]):
+        for j in range(preds_2d.shape[1]):
+            pt = preds_2d[i, j].clone().long()
+            preds_3d[i, j,  2] = depthmap[i, j, pt[1], pt[0]] * index_bone_length[i] + root_depth[i]
+            preds_3d[i, j, :2] = preds_2d[i, j].clone()
+            
+    preds_3d[:,:,:2] *=preds_3d[:,:,2:]
+    for i in range(preds_3d.shape[0]):
+        preds_3d[i, :, :] = torch.matmul(preds_3d[i, :, :], matrix[i].transpose(0, 1))
+
+    if return_type == 'numpy':
+        return to_numpy(preds_2d), to_numpy(preds_3d)
+
+    return preds_2d, preds_3d
 
 def calc_dists(preds, target):
     preds = preds.float()
@@ -108,20 +147,31 @@ def final_preds(output, center, scale, res):
 
     return preds
 
-    
-class AverageMeter(object):
-    """Computes and stores the average and current value"""
-    def __init__(self):
-        self.reset()
+def AUC(dist):
+    x = np.array(sorted(list(dist)))
+    y = np.array([1. * (i + 1)/ len(x)  for i in range(len(x))])
+    return (x, y)
 
-    def reset(self):
-        self.val = 0
-        self.avg = 0
-        self.sum = 0
-        self.count = 0
-
-    def update(self, val, n=1):
-        self.val = val
-        self.sum += val * n
-        self.count += n
-        self.avg = self.sum / self.count
+def calc_auc(dist, limx = -1, limy = 1e99):
+    """ Given x and y values it calculates the approx. integral and normalizes it: area under curve"""
+    x, y = AUC(dist)
+    # x = x * 1000 #meter to million meter
+    # print (x.min(), x.max())
+    l, r = 0, 0
+    for i in range(len(x)):
+        if limx > x[i]:
+            l = i + 1
+        if limy > x[i]:
+            r = i + 1
+    # print("l: ",l, x[l], "r: ", r, x[r - 1])
+    tx = x[l:r]
+    ty = y[l:r]    
+    integral = np.trapz(ty, tx)
+    norm = np.trapz(np.ones_like(ty), tx)
+    # norm = x[-1] - x[]
+    # if limy < 1e98 and limy > x[-1]:
+    #     add = limy - x[-1]
+    #     integral += add
+    #     norm += add
+    # print(integral , norm)
+    return integral / norm

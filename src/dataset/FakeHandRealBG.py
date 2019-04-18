@@ -25,8 +25,9 @@ from src.dataset import BaseDataset
 from src.utils.imutils import im_to_torch, im_to_numpy, draw_heatmap
 from src.utils.misc import to_torch
 from src.utils.imutils import load_image, resize, plot_hand
-from src.core.evaluate import calc_auc, AUC, calc_auc
 
+
+__all__ = ['FakeHandRealBG2D']
 class FakeHandRealBG2D(BaseDataset):
     """docstring for TencentHand"""
     def __init__(self, cfg):

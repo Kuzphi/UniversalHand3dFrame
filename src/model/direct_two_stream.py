@@ -5,10 +5,11 @@ from __future__ import print_function
 import torch
 import numpy as np
 from torch import nn
-from src.model.networks.MSRA_ResNet import ResNet
 from src.model.BaseModel import BaseModel
-from src.core.loss import CPMMSELoss
-from src.core.evaluate import get_preds_from_heatmap
+from src.model.utils.loss import CPMMSELoss
+from src.model.utils.evaluation import get_preds_from_heatmap
+from src.model.networks.MSRA_ResNet import ResNet
+
 __all__ = ['direct_two_stream']
 class direct_two_stream(BaseModel):
 	"""docstring for direct_two_stream"""

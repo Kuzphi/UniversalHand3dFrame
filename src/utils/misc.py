@@ -37,11 +37,12 @@ class MetricMeter(object):
             self.metric[name] = AverageMeter()
 
     def update(self, metric_update, size):
-        for name in self.metric:
-            if metric_update.has_key(name):
+        for name in metric_update:
+            if self.metric.has_key(name):
                 self.metric[name].update(metric_update[name], size)
             else:
-                raise Exception("{} does not found in update dic".format(name))
+                warnings.warn("{} does not found in metric".format(name), RuntimeWarning)
+
     def __getitem__(self, idx):
         return self.metric[idx]
 

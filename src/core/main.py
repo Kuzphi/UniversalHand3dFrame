@@ -22,7 +22,7 @@ def train(cfg, train_loader, model, metric, log):
     model.train()
     end = time.time()
     bar = Bar('Processing', max=len(train_loader))
-    collections = []
+    model.collections = []
     for i, batch in enumerate(train_loader):
         # print(i)
         size = batch['weight'].size(0)
@@ -37,7 +37,7 @@ def train(cfg, train_loader, model, metric, log):
             model.debug()
 
         #calculate the result
-        model.batch_result(type = 'train')
+        model.get_batch_result(type = 'train')
 
         #put the result of this batch into collection for epoch result eval
         model.collect_batch_result()
@@ -56,7 +56,7 @@ def train(cfg, train_loader, model, metric, log):
                     bt=batch_time.avg,
                     total=bar.elapsed_td,
                     eta=bar.eta_td)
-        for name in metric.names():
+        for name in metric_.keys():
             suffix += '{}: {:.4f} '.format(name, metric[name].avg)
         bar.suffix  = suffix
         bar.next()
@@ -66,7 +66,10 @@ def train(cfg, train_loader, model, metric, log):
 
     model.get_epoch_result()
     metric_ = model.eval_epoch_result()
-    metric.update(metric_)
+    metric.update(metric_, 1)
+
+    
+    print("".join(["%s : %.4f"%(key, metric_[key]) for key in metric_]))
     return model.epoch_result
 
 def validate(cfg, val_loader, model, metric = None, log = None):
@@ -77,7 +80,7 @@ def validate(cfg, val_loader, model, metric = None, log = None):
     model.eval()
 
     num_samples = len(val_loader.dataset)
-    collections = []
+    model.collections = []
 
     idx = 0
     bar = Bar('Processing', max=len(val_loader))
@@ -99,8 +102,11 @@ def validate(cfg, val_loader, model, metric = None, log = None):
             if cfg.DEBUG:
                 model.debug()
 
-            model.batch_result(type = 'valid')
+            model.get_batch_result(type = 'valid')
 
+            #put the result of this batch into collection for epoch result eval
+            model.collect_batch_result()
+            
             # measure elapsed time
             batch_time.update(time.time() - end)
             end = time.time()
@@ -116,7 +122,7 @@ def validate(cfg, val_loader, model, metric = None, log = None):
             if cfg.IS_VALID:
                 metric_ = model.eval_batch_result()
                 metric.update(metric_, size)
-                for name in metric.names():
+                for name in metric_.keys():
                     suffix += '{}: {:.4f} '.format(name, metric[name].avg)
 
             bar.suffix  = suffix
@@ -127,4 +133,7 @@ def validate(cfg, val_loader, model, metric = None, log = None):
         bar.finish()
 
     model.get_epoch_result()
+    metric_ = model.eval_epoch_result()
+    metric.update(metric_, 1)
+    print("".join(["%s : %.4f"%(key, metric_[key]) for key in metric_]))
     return model.epoch_result

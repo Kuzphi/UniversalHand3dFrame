@@ -13,11 +13,9 @@ import time
 import torch
 from torch.utils.data import DataLoader
 
-import src.core.loss as  loss
-
 from src import model
 from src import dataset
-from src.core import train, validate, debug
+from src.core import train, validate
 from src.core.log import Log
 from src.utils.misc import MetricMeter, get_config, save_checkpoint
 def main(args):
@@ -57,7 +55,9 @@ def main(args):
 		best = log.log['valid_' + cfg.MAIN_METRIC][-1]
 
 	for epoch in range(cfg.START_EPOCH, cfg.END_EPOCH):
-		print('\nEpoch: %d: | LR' % (epoch), end = ' ')
+		LR = ' '.join("{}:{}".format(k, v.param_groups[0]['lr']) for k,v in model.optimizers.items())
+
+		print('Epoch: %d |LR %s' % (epoch, LR))
 
 		# train for one epoch
 		train_metric = MetricMeter(cfg.METRIC_ITEMS)

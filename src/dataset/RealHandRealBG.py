@@ -25,12 +25,12 @@ from src.dataset import BaseDataset
 from src.utils.imutils import im_to_torch, im_to_numpy, draw_heatmap
 from src.utils.misc import to_torch
 from src.utils.imutils import load_image, resize, plot_hand
-from src.core.evaluate import calc_auc, AUC, calc_auc
 
+__all__ = ['RealHandRealBG2D']
 class RealHandRealBG2D(BaseDataset):
     """docstring for TencentHand"""
     def __init__(self, cfg):
-        super(RealHandRealBG2D, self).__init__(cfg)
+        super(RealHandRealBG2D, self).__init__()
 
     def _get_db(self):
         self.names = ['Model1Tap','Model1Fist', 'Model1ArmRotate', 'Model1WristRotate']

@@ -6,8 +6,8 @@ import torch
 import numpy as np
 from torch import nn
 from src.model.BaseModel import BaseModel
-from src.core.loss import CPMMSELoss
-from src.core.evaluate import get_preds
+from src.model.utils.loss import CPMMSELoss
+from src.model.utils.evaluation import get_preds
 from src.utils.misc import to_torch, to_numpy, to_cuda, to_cpu
 
 __all__ = ['two_stream']

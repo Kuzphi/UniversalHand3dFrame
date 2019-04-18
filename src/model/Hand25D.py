@@ -6,7 +6,7 @@ import torch
 import numpy as np
 from torch import nn
 from src.model.BaseModel import BaseModel
-from src.core.evaluate import get_preds
+from src.model.utils.evaluation import get_preds
 __all__ = ['Hand25D']
 class Hand25D(BaseModel):
 	"""docstring for Hand25D"""

@@ -7,15 +7,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-
-import os
-for name in os.listdir(os.path.dirname(__file__)):
-    if name[0] == '.' or name == '__init__.py' or name[-3:] != '.py':
-        continue
-    module = __import__(name[:-3], locals(), globals(), ['*'])
-    for key in module.__all__:
-    	locals()[key] = getattr(module, key)
-
+from abc import abstractmethod
 __all__ = ['JointsDataset', 'InferenceDataset']
 
 class BaseDataset(object):
@@ -36,19 +28,17 @@ class BaseDataset(object):
     def __getitem__(self, idx):
         raise NotImplementedError
 
-class JointsDataset(Dataset):
+class JointsDataset(BaseDataset):
     """docstring for JointsDataset"""
     def __init__(self, cfg, reprocess):
         super(JointsDataset, self).__init__(cfg)
         self.datasets = []
         self.reprocess = reprocess
         self.len = 0
+        self.cfg = cfg
         for key in cfg.CONTAINS:
-            # print (key)
-            cfg.CONTAINS[key].HEATMAP = cfg.HEATMAP
+            cfg.CONTAINS[key].REPROCESS = cfg.REPROCESS
             cfg.CONTAINS[key].IS_TRAIN = cfg.IS_TRAIN
-            cfg.CONTAINS[key].TRANSFORMS = cfg.TRANSFORMS
-            cfg.CONTAINS[key].NUM_JOINTS = cfg.NUM_JOINTS
             self.datasets.append( eval(key)(cfg.CONTAINS[key]))
             self.len += len(self.datasets[-1])            
 
@@ -60,12 +50,12 @@ class JointsDataset(Dataset):
         pass
 
     def __getitem__(self, idx):
-        for dataset in self.datasets:
+        for name, dataset in zip(self.cfg.CONTAINS, self.datasets):
             if idx < len(dataset):
-                return self.reprocess(dataset[idx])
+                return self.reprocess(dataset[idx], self.cfg.CONTAINS[name].REPROCESS)
             idx -= len(dataset)
 
-class InferenceDataset(Dataset):
+class InferenceDataset(BaseDataset):
     """docstring for InferenceDataset"""
     def __init__(self, cfg):
         super(InferenceDataset, self).__init__()
@@ -108,3 +98,12 @@ class InferenceDataset(Dataset):
     def eval_result(self, outputs, batch, cfg = None,  **kwargs):
         #should be same as self.cfg.metric item
         pass
+
+import os
+for name in os.listdir(os.path.dirname(__file__)):
+    if name[0] == '.' or name == '__init__.py' or name[-3:] != '.py':
+        continue
+
+    module = __import__(name[:-3], locals(), globals(), ['*'])
+    for key in module.__all__:
+        locals()[key] = getattr(module, key)

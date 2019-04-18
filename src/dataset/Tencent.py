@@ -22,7 +22,7 @@ from easydict import EasyDict as edict
 from src.dataset import BaseDataset
 from src.utils.imutils import im_to_torch, load_image
 from src.utils.misc import to_torch
-
+__all__ =['TencentHand']
 class TencentHand(BaseDataset):
     """docstring for TencentHand"""
     def __init__(self, cfg):

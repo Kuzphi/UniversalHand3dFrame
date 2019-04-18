@@ -25,8 +25,8 @@ from src.dataset import BaseDataset
 from src.utils.imutils import im_to_torch, draw_heatmap
 from src.utils.misc import to_torch
 from src.utils.imutils import load_image
-from src.core.evaluate import get_preds_from_heatmap
 
+__all__ = ['CMU']
 class CMU(BaseDataset):
     """docstring for CMU"""
     def __init__(self, cfg):

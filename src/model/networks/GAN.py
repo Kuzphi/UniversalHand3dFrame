@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.nn import init
 import functools
 from torch.optim import lr_scheduler
-__all__ = ['define_D', 'define_G', 'define_C']
+__all__ = ['Discriminator', 'Generator', 'define_C']
 ###############################################################################
 # Helper Functions
 ###############################################################################
@@ -55,17 +55,15 @@ def init_weights(net, init_type='normal', gain=0.02):
         elif classname.find('BatchNorm2d') != -1:
             init.normal_(m.weight.data, 1.0, gain)
             init.constant_(m.bias.data, 0.0)
-
+    
     print('initialize network with %s' % init_type)
     net.apply(init_func)
 
 
+
 def init_net(net, init_type='normal', gpu_ids=[]):
-    if len(gpu_ids) > 0:
-        assert(torch.cuda.is_available())
-        # net.to(gpu_ids[0])
-        # net = torch.nn.DataParallel(net, gpu_ids)
-        net = torch.nn.DataParallel(net).cuda()
+    assert(torch.cuda.is_available())
+    net = torch.nn.DataParallel(net).cuda()
     init_weights(net, init_type)
     return net
 
@@ -77,7 +75,7 @@ def print_network(net):
     print('Total number of parameters: %d' % num_params)
 
 
-def define_G(input_nc, output_nc, ngf, model_type, norm='batch', use_dropout=False, init_type='normal', gpu_ids=[]):
+def Generator(input_nc, output_nc, ngf, model_type, norm='batch', use_dropout=False, init_type='normal', gpu_ids=[], **kwargs):
     netG = None
     norm_layer = get_norm_layer(norm_type=norm)
 
@@ -94,7 +92,7 @@ def define_G(input_nc, output_nc, ngf, model_type, norm='batch', use_dropout=Fal
     return init_net(netG, init_type, gpu_ids)
 
 
-def define_D(input_nc, ndf, model_type, n_layers_D=3, norm='batch', use_sigmoid=False, init_type='normal', gpu_ids=[]):
+def Discriminator(input_nc, ndf, model_type, n_layers_D=3, norm='batch', use_sigmoid=False, init_type='normal', gpu_ids=[], **kwargs):
     netD = None
     norm_layer = get_norm_layer(norm_type=norm)
 

@@ -1,0 +1,113 @@
+CURRENT_EPOCH: 0
+TRAIN:
+  DEBUG: False
+  DATASET:
+    NAME: JointsDataset
+    IS_TRAIN: True
+    BATCH_SIZE: 6
+    SHUFFLE: True
+    CONTAINS:
+      STB:
+        ROOT: data/STB/2dcrop
+        DATA_JSON_PATH: data/STB/2dcrop/label.pickle
+        PICK:
+          - B2Counting
+          - B3Counting
+          - B4Counting
+          - B5Counting
+          - B6Counting
+          - B2Random
+          - B3Random
+          - B4Random
+          - B5Random
+          - B6Random
+    REPROCESS:
+      TRANSFORMS:
+        RESIZE: 256
+        FLIP: False
+        COLOR_NORISE: True
+      HEATMAP:
+        TYPE: Gaussian # Gaussian or Cauchy
+        SIGMA: 8 #Ground truth heatmap
+      NUM_JOINTS: 22
+    
+    
+
+VALID:
+  DEBUG: False
+  IS_VALID: True
+  NUM_JOINTS: 21
+  DATASET:
+    NAME: JointsDataset
+    IS_TRAIN: False
+    BATCH_SIZE: 6
+    CONTAINS:
+      STB:
+        ROOT: data/STB/2dcrop
+        DATA_JSON_PATH: data/STB/2dcrop/label.pickle
+        PICK:
+          - B1Counting
+          - B1Random
+    REPROCESS:
+      TRANSFORMS:
+        RESIZE: 256
+        FLIP: False
+        COLOR_NORISE: False
+      HEATMAP:
+        TYPE: Gaussian # Gaussian or Cauchy
+        SIGMA: 8 #Ground truth heatmap
+      NUM_JOINTS: 22
+
+DATA_DIR: ''
+END_EPOCH: 100
+
+LOG_DIR: ''
+MODEL:
+  NAME: Weakly_direct_regression_with_depth
+  NETWORKS:
+    Regression:
+      TYPE: CPMWeaklyDirectRegression
+      PRETRAINED_WEIGHT_PATH: 'output/Apr_14_16:55:37_Weakly_direct_regression_train:STB_valid:STB/best/model/net_Regression.torch'
+      num_joints: 22
+
+    DepthRegularizer:
+      TYPE: DepthRegularizer
+      PRETRAINED_WEIGHT_PATH: output/Mar_13_17:37:40_Weakly_direct_regression_with_depth_train:RHD2D_valid:RHD2D/best/model/net_DepthRegularizer.torch
+
+        
+  OPTIMIZERS:
+    Regression:
+      NETWORKS:
+        - Regression
+        - DepthRegularizer
+      TYPE: RMSprop
+      PARAMETERS:
+        lr: 2.5e-5
+        momentum: 0
+        weight_decay: 0
+      SCHEDULER:
+        TYPE: StepLR
+        PARAMETERS:
+          gamma: 0.1
+          step_size: 30
+  GPUS:
+    - 0
+    - 1
+    - 2
+    - 3
+  STAGE: 3
+LOG:
+  PATH: output
+  MONITOR_ITEM:
+
+METRIC_ITEMS: # the metric that you wanna track during training
+  - loss
+  - dis2d
+  - dis3d
+  - AUC_20_50
+MAIN_METRIC: dis3d
+
+OUTPUT_DIR: output/
+START_EPOCH: 0
+WORKERS: 6
+RESUME_TRAIN: 0

@@ -2,7 +2,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import os
+import torch
 import itertools
+from functools import reduce
+from src.model.utils import loss
 from src.model.networks import *
 from src.utils.misc import to_torch, to_numpy, to_cuda, to_cpu, combine
 __all__ = ['BaseModel']
@@ -47,7 +51,6 @@ class BaseModel(object):
 	def criterion(self):
 		if self.cfg.has_key('criterion'):
 			return eval('loss.' + self.cfg.CRITERION)(model.batch, model.output)
-
 		raise NotImplementedError
 
 	def train(self):
@@ -125,11 +128,15 @@ class BaseModel(object):
 			fpath = os.path.join(path, 'scheduler_' + name + '.torch')
 			scheduler.load_state_dict(torch.load(fpath))
 
-	def collect_batch_result(self):
-        self.collection.append(self.batch_result)
+	def get_batch_result(self):
+		raise NotImplementedError
 
-    def get_epoch_result(self):
-    	self.get_epoch_result = reduce(self.collection, combine)
+	def collect_batch_result(self):
+		self.collections.append(self.batch_result)
+
+	def get_epoch_result(self):
+		self.epoch_result = reduce(combine, self.collections)
+		return self.epoch_result
 
 	def define_evaluation(self):
 		raise NotImplementedError

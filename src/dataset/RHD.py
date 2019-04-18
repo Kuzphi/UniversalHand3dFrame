@@ -21,13 +21,14 @@ import torch
 import numpy as np
 from easydict import EasyDict as edict
 
-from src.dataset.BaseDataset import BaseDataset
-
+from src.dataset import BaseDataset
+from src.utils.imutils import load_image
+from src.utils.misc import to_torch
 __all__  = ['RHD']
 class RHD(BaseDataset):
 
     def __init__(self, cfg):
-        super(RHD, self).__init__()
+        super(RHD, self).__init__(cfg)
 
     def _get_db(self):
         self.anno = pickle.load(open(self.cfg.DATA_JSON_PATH))
@@ -142,8 +143,8 @@ class RHD(BaseDataset):
         image_path   = os.path.join(self.cfg.ROOT, 'color', name + '.png')
         img = load_image(image_path)# already / 255 with C * W * H
         
-        depth_path = os.path.join(self.cfg.ROOT, 'depth', name + '.pickle')
-        depthmap = pickle.load(open(depth_path)).unsqueeze(0)
+        depth_path = os.path.join(self.cfg.ROOT, 'depth', name + '.torch')
+        depthmap = torch.load(depth_path).unsqueeze(0)
 
         coor2d = label['project']
         matrix = label['K']
@@ -155,7 +156,7 @@ class RHD(BaseDataset):
         coor2d[:,:2] = coor2d[:,:2].long().float() 
         return {"img": img,
                 "matrix": matrix,
-                "coord2d": coor2d,
+                "coor2d": coor2d,
                 "depthmap": depthmap,
                 "meta": meta
                 }
