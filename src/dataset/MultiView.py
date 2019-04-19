@@ -27,44 +27,41 @@ from src.utils.misc import to_torch
 from src.utils.imutils import load_image, resize, im_to_numpy
 from src.model.utils.evaluation import get_preds_from_heatmap
 from src.model.utils.evaluation import calc_auc, AUC, calc_auc
-__all__ = ['Multiview']
-class Multiview(BaseDataset):
-	"""docstring for Multiview"""
-	def __init__(self, cfg):
-		super(Multiview, self).__init__(cfg)
+__all__ = ['MultiView']
 
+from src.dataset import RHD
+from src.dataset import STB
+
+class MultiView(BaseDataset):
+	"""docstring for MultiView"""
+	def __init__(self, cfg):
+		super(MultiView, self).__init__(cfg)
+		# self.depth_daset = RHD(cfg.DEPTH_CFG)		
 	def _get_db(self):
-		self.name = self.cfg.PICK
-		self.db = pickle.load(open(self.cfg.DATA_JSON_PATH))
-		self.all = 1500 * len(self.cfg.PICK)
+		self.db = []
+		for idx in self.cfg.PICK:			
+			self.db += [str(idx) + '/' + x[:-4] for x in os.listdir('data/multiview/2dCrop/%s/image' % idx)]
+		self.all = len(self.db)
+		self.depth_db = os.listdir('data/RHD/cropped/training/depth')
 		return self.db
 	
 	def __len__(self):
 		# return 100
 		return self.all
 	def __getitem__(self, idx):
-		name = self.name[idx // 1500]
-		coor2d = self.db[name]['sk']['coor2d'][idx % 1500,:,:]
-		matrix = self.db[name]['sk']['matrix'][idx % 1500]
+		tok = self.db[idx].split('/')
 
-		name = name.split('_')
-		image_path   = os.path.join(self.cfg.ROOT, name[0], 'SK_' + str(idx % 1500) + '.png')
+		image_path   = os.path.join(self.cfg.ROOT, tok[0], 'image', tok[1] + '.jpg')
 		img = load_image(image_path, mode = 'RGB')
-		depth_path = os.path.join(self.cfg.ROOT, name[0], 'SK_depth_{}.pickle'.format(idx % 1500))
-		depthmap = pickle.load(open(depth_path)).unsqueeze(0)
-
-		# coor2d = label['project']
-		# assert coor2d[:, :2].min() >= 0 and coor2d[:, :2].max() < 320
-		
-
-		# coor2d = torch.matmul(coor3d, to_torch(matrix).transpose(0, 1))
-		meta = edict({'name': name})
+		label_path = os.path.join(self.cfg.ROOT, tok[0], 'annotation', tok[1] + '.torch')
+		label = torch.load(label_path)
+		depth_path = 'data/RHD/cropped/training/depth/' + self.depth_db[random.randint(0, len(self.depth_db) - 1)]
+		depthmap = torch.load(depth_path).unsqueeze(0)
+		meta = edict({'name': self.db[idx]})
 		return {'img':img,
 				'depthmap': depthmap,
-				# 'index': index, 
-				'matrix': to_torch(matrix),
-				'coor2d': to_torch(coor2d),
+				'matrix': to_torch(label['matrix']).float(),
+				'coor2d': label['coor2d'].float(),
 				'meta': meta,
 				}
-
 	

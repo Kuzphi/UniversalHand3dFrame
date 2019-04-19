@@ -69,6 +69,7 @@ class Weakly_direct_regression_with_depth(BaseModel):
 
 		root_depth = coor2d[0, 2].clone()
 		index_bone_length = torch.norm(coor3d[9,:] - coor3d[10,:]).float()
+		
 		relative_depth = (coor2d[:,2] - root_depth) / index_bone_length
 
 		depthmap *= float(2**16 - 1)

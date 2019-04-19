@@ -127,6 +127,7 @@ def get_config(fpath, type = 'train'):
     if type == 'infer':
         valid_dataset_name = get_dataset_name(cfg.DATASET)
         cfg.TAG = "_".join([tag, cfg.MODEL.NAME, 'valid:' + valid_dataset_name])
+        cfg.CHECKPOINT = os.path.join(cfg.OUTPUT_DIR, cfg.TAG, tag)
         cfg.IMG_RESULT = os.path.join(cfg.CHECKPOINT, 'img_result')
     return cfg
 
