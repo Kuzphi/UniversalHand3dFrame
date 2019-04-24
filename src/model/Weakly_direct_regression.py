@@ -49,7 +49,6 @@ class Weakly_direct_regression(BaseModel):
 
 		root_depth = coor2d[0, 2].clone()
 		index_bone_length = torch.norm(coor3d[9,:] - coor3d[10,:])
-		print(index_bone_length)
 		relative_depth = (coor2d[:,2] - root_depth) / index_bone_length
 
 		heatmap = torch.zeros(reprocess_cfg.NUM_JOINTS, img.size(1), img.size(2))
@@ -96,7 +95,7 @@ class Weakly_direct_regression(BaseModel):
 			preds3d[i, :, :] = torch.matmul(preds3d[i, :, :], self.batch['matrix'][i].transpose(0,1))
 
 		dis2d = torch.norm(self.batch['coor2d'][..., :2] - preds2d, dim = -1)
-		dis3d = torch.norm(self.batch['coor3d'] - preds3d, dim = -1) * 1000
+		dis3d = torch.norm(self.batch['coor3d'] - preds3d, dim = -1) #* 1000
 		
 		
 		self.batch_result = {'coor2d': preds2d, 
@@ -107,8 +106,10 @@ class Weakly_direct_regression(BaseModel):
 		return self.batch_result
 
 	def eval_epoch_result(self):
+		median = torch.median(self.epoch_result['dis3d'].view(-1))
 		AUC_20_50 = calc_auc(self.epoch_result['dis3d'].view(-1), 20, 50)
 		return {
+			"median": median,
 			"AUC_20_50":AUC_20_50}
 
 	def criterion(self):

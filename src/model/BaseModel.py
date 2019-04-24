@@ -27,7 +27,7 @@ class BaseModel(object):
 			self.networks[name] = eval(cfg[name].TYPE)(**cfg[name])
 			self.networks[name] = torch.nn.DataParallel(self.networks[name], device_ids=self.cfg.GPUS).cuda()
 			if cfg[name].PRETRAINED_WEIGHT_PATH:
-				print("Loading %s net's pretrained weight"% name)
+				print("Loading %s net's pretrained weight from %s"% (name, cfg[name].PRETRAINED_WEIGHT_PATH))
 				weight = torch.load(cfg[name].PRETRAINED_WEIGHT_PATH)
 				self.networks[name].load_state_dict(weight, strict = False)
 

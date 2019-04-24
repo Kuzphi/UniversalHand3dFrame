@@ -9,8 +9,6 @@ TRAIN:
     CONTAINS:
       MultiView:
         ROOT: data/multiview/2dCrop
-        # PICK:
-        #   - 3
         PICK: [3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]
     REPROCESS:
       TRANSFORMS:
@@ -47,25 +45,29 @@ VALID:
       NUM_JOINTS: 22
 
     
+    
 DATA_DIR: ''
 END_EPOCH: 100
 
 LOG_DIR: ''
 MODEL:
-  NAME: Weakly_direct_regression
+  NAME: Weakly_direct_regression_with_depth
   NETWORKS:
     Regression:
       TYPE: CPMWeaklyDirectRegression
-      PRETRAINED_WEIGHT_PATH: 'pretrained_weight/cpmRHD.torch'
-      # PRETRAINED_WEIGHT_PATH: 'output/Mar  7 21:58:35_train_Weakly_direct_regression_Combine2D(RHD2D)_valid_Combine2D(RHD2D)/best/model/net_Regression.torch'
-      # PRETRAINED_WEIGHT_PATH: output/Mar_13_17:37:40_Weakly_direct_regression_with_depth_train:RHD2D_valid:RHD2D/best/model/net_Regression.torch
-      # PRETRAINED_WEIGHT_PATH: output/Apr_17_23:02:20_Weakly_direct_regression_train:MultiView_valid:MultiView/best/model/net_Regression.torch
+      # PRETRAINED_WEIGHT_PATH: 'pretrained_weight/cpmRHD.torch'
+      PRETRAINED_WEIGHT_PATH: output/Apr_17_23:02:20_Weakly_direct_regression_train:MultiView_valid:MultiView/best/model/net_Regression.torch
       num_joints: 22
 
+    DepthRegularizer:
+      TYPE: DepthRegularizer
+      PRETRAINED_WEIGHT_PATH: output/Mar_13_04:57:05_depth_regularizer_train:RHD2D_valid:RHD2D/best/model/net_DepthRegularizer.torch
+        
   OPTIMIZERS:
     Regression:
       NETWORKS:
         - Regression
+        - DepthRegularizer
       TYPE: RMSprop
       PARAMETERS:
         lr: 2.5e-5

@@ -3,9 +3,9 @@ IS_VALID: True #validate or just inference
 DATASET:
   NAME: JointsDataset
   CONTAINS:
-    RHD:
-      ROOT: data/RHD/cropped/evaluation/   
-      DATA_JSON_PATH: data/RHD/cropped/evaluation/cropped_anno.pickle
+    MultiView:
+      ROOT: data/multiview/2dCrop
+      PICK: [1, 2]
   REPROCESS:
     TRANSFORMS:
       RESIZE: 256
@@ -25,8 +25,9 @@ MODEL:
   NETWORKS:
     Regression:
       TYPE: CPMWeaklyDirectRegression
-      # PRETRAINED_WEIGHT_PATH: '/home/liangjic/cycada/cyclegan/checkpoints/direct_with_depth_2/best_Regression.torch'
-      PRETRAINED_WEIGHT_PATH: 'output/Mar_13_17:37:40_Weakly_direct_regression_with_depth_train:RHD2D_valid:RHD2D/best/model/net_Regression.torch'
+      PRETRAINED_WEIGHT_PATH: /home/liangjic/cycada/cyclegan/checkpoints/multi/best_Regression.torch
+      # PRETRAINED_WEIGHT_PATH: output/Apr_22_13:30:46_Weakly_direct_regression_train:RHD_valid:RHD/best/model/net_Regression.torch
+      # PRETRAINED_WEIGHT_PATH: 'output/c/best/model/net_Regression.torch'
       num_joints: 22
 
   OPTIMIZERS:
