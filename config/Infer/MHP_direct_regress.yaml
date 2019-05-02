@@ -25,9 +25,8 @@ MODEL:
   NETWORKS:
     Regression:
       TYPE: CPMWeaklyDirectRegression
-      PRETRAINED_WEIGHT_PATH: /home/liangjic/cycada/cyclegan/checkpoints/multi/best_Regression.torch
-      # PRETRAINED_WEIGHT_PATH: output/Apr_22_13:30:46_Weakly_direct_regression_train:RHD_valid:RHD/best/model/net_Regression.torch
-      # PRETRAINED_WEIGHT_PATH: 'output/c/best/model/net_Regression.torch'
+      # PRETRAINED_WEIGHT_PATH: /home/liangjic/cycada/cyclegan/checkpoints/multi/best_Regression.torch
+      PRETRAINED_WEIGHT_PATH: 'output/Apr_24_12:40:06_Weakly_direct_regression_train:MultiView_valid:MultiView/best/model/net_Regression.torch'
       num_joints: 22
 
   OPTIMIZERS:
